@@ -1,0 +1,6 @@
+venv/
+docs/build/
+centreon_sdk.egg-info/
+dist/
+__pycache__/
+.idea
