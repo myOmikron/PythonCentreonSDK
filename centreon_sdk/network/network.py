@@ -19,4 +19,3 @@ class Network:
         elif verb == HTTPVerb.POST:
             response = self.client.post(self.config.vars["URL"], params=params, data=data)
         return response.text
-    
