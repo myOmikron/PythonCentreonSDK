@@ -1,5 +1,6 @@
 import enum
 import httpx
+import json
 
 
 class HTTPVerb(enum.Enum):
@@ -8,14 +9,36 @@ class HTTPVerb(enum.Enum):
 
 
 class Network:
+    """This class is used to manage the network
+
+    :param config: Config to use
+    :type config: :ref:object_config:
+    """
     def __init__(self, config):
         self.config = config
-        self.client = httpx.Client()
+        self.client = httpx.Client(verify=False)
 
-    def make_request(self, verb, *, params, data):
+    def make_request(self, verb, *, params=None, data=None, header=None):
+        """This method is used to make request to the REST endpoint
+
+        :param verb: HTTP Verb to use
+        :type :ref:object_http_verb:
+        :param params: Optional: dict to get encoded in url
+        :type params: dict
+        :param data: Optional: dict to get encoded in body
+        :type data: dict
+        :param header: Optional: Alternative header to use
+        :type header: dict
+
+        :return: json encoded string
+        :rtype: str
+        """
         response = None
         if verb == HTTPVerb.GET:
-            response = self.client.get(self.config.vars["URL"], params=params)
+            if header:
+                response = self.client.get(self.config.vars["URL"], params=params, headers=header)
+            else:
+                response = self.client.get(self.config.vars["URL"], params=params)
         elif verb == HTTPVerb.POST:
-            response = self.client.post(self.config.vars["URL"], params=params, data=data)
-        return response.text
+            response = self.client.post(self.config.vars["URL"], params=params, data=data, headers=header)
+        return json.loads(response.text)
