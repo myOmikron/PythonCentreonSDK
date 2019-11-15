@@ -28,37 +28,26 @@ def pack_locals(kwargs):
     return ret_dict
 
 
-def substitute_vars(var_dict):
-    """This method is used to substitute the names of the variables of own classes
-
-    :param var_dict: Dict, which holds the variables to process
-    :type var_dict: dict
-
-    :return: New dict, which holds all variable names, changed and unchanged
-    :rtype: dict
-    """
-    ret_dict = {}
-    for item in var_dict:
-        if item == "id":
-            ret_dict["id_unique"] = var_dict["id"]
-        else:
-            ret_dict[item] = var_dict[item]
-    return ret_dict
+def replace_keys_from_dict(old_key, new_key, dict_to_use):
+    return _replace_keys_from_dict(old_key, new_key, dict_to_use)
 
 
-def resubstitute_vars(var_dict):
-    """This method is sued to resubstitute the names of the variables of own classes
+def _replace_keys_from_dict(old_key, new_key, layer):
 
-    :param var_dict: Dict, which holds the variables to process
-    :type var_dict: dict
+    if isinstance(layer, list):
+        for items in layer:
+            _replace_keys_from_dict(old_key, new_key, items)
 
-    :return: Returns new dict, which holds all variables names, changed and unchanged
-    :rtype: dict
-    """
-    ret_dict = {}
-    for item in var_dict:
-        if item == "id_unique":
-            ret_dict["id"] = var_dict["id_unique"]
-        else:
-            ret_dict[item] = var_dict[item]
-    return ret_dict
+    elif isinstance(layer, dict):
+        to_delete = []
+
+        for key in layer:
+            if key == old_key:
+                to_delete.append(key)
+            _replace_keys_from_dict(old_key, new_key, layer[key])
+
+        for key in to_delete:
+            layer[new_key] = layer[old_key]
+            del layer[key]
+
+    return layer

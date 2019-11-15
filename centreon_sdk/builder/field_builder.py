@@ -20,5 +20,5 @@ class FieldBuilder:
         :return: Returns the field query string
         :rtype: list
         """
-        var_dict = method_utils.resubstitute_vars(self.args)
+        var_dict = method_utils.replace_keys_from_dict("id_unique", "id", self.args)
         return ",".join([item for item in var_dict if var_dict[item]])
