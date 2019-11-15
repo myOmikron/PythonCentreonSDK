@@ -2,6 +2,8 @@ import enum
 import httpx
 import json
 
+from centreon_sdk.util import method_utils
+
 
 class HTTPVerb(enum.Enum):
     GET = 1
@@ -41,4 +43,8 @@ class Network:
                 response = self.client.get(self.config.vars["URL"], params=params)
         elif verb == HTTPVerb.POST:
             response = self.client.post(self.config.vars["URL"], params=params, data=data, headers=header)
-        return json.loads(response.text)
+
+        print(response.__dict__)
+        json_decoded = json.loads(response.text)
+        json_decoded = method_utils.replace_keys_from_dict("id", "id_unique", json_decoded)
+        return json_decoded
