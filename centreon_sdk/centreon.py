@@ -6,9 +6,9 @@ from centreon_sdk.util.method_utils import pack_locals
 
 
 class Centreon:
-    def __init__(self, username, password):
+    def __init__(self, username, password, url):
         self.config = Config()
-        self.config.vars["URL"] = "https://centreon.omikron.pw/centreon/api/index.php"
+        self.config.vars["URL"] = url
         self.network = Network(self.config)
 
         self.config.vars["header"] = {"centreon-auth-token": self.get_auth_token(username, password)}
