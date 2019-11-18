@@ -1,5 +1,7 @@
 from centreon_sdk.network.network import Network, HTTPVerb
+from centreon_sdk.objects.host import Host
 from centreon_sdk.objects.host_status import HostStatus
+from centreon_sdk.objects.macro import Macro
 from centreon_sdk.objects.service_status import ServiceStatus
 from centreon_sdk.util.config import Config
 from centreon_sdk.util.method_utils import pack_locals
@@ -11,8 +13,9 @@ class Centreon:
         self.config.vars["URL"] = url
         self.network = Network(self.config)
 
-        self.config.vars["header"] = {"centreon-auth-token": self.get_auth_token(username, password)}
-        
+        if "header" not in self.config.vars:
+            self.config.vars["header"] = {"centreon-auth-token": self.get_auth_token(username, password)}
+
     def get_auth_token(self, username, password):
         """This method is used to receive the authentication token
 
@@ -27,7 +30,7 @@ class Centreon:
         data_dict = {"username": username,
                      "password": password}
         param_dict = {"action": "authenticate"}
-        response = self.network.make_request(HTTPVerb.POST, data=data_dict, params=param_dict)
+        response = self.network.make_request(HTTPVerb.POST, data=data_dict, params=param_dict, encode_json=False)
         return response["authToken"]
 
     def get_host_status(self, *, viewType=None, fields=None, status=None, hostgroup=None, instance=None, search=None,
@@ -35,20 +38,31 @@ class Centreon:
         """This method is used to get the host status
 
         :param viewType: Select a predefined filter like in the monitoring view. One of *all*, *unhandled*, *problems*
+        :type viewType: str
         :param fields: The field list you want to get, separated by a ",". Use :ref:class_field_builder: to simplify \
         the query
+        :type fields: str
         :param status: The status of hosts you want to get. One of *up*, *down*, *unreachable*, *pending*, *all*
+        :type status: str
         :param hostgroup: Hostgroup id filter
+        :type hostgroup: str
         :param instance: Instance id filter
+        :type instance: str
         :param search: Search pattern applied on host name
+        :type search: str
         :param critically: Specify critically
+        :type critically: str
         :param sortType: The sort type, selected in the field list
-        :param order: ASC or DESC
+        :type sortType: str
+        :param order: *ASC* or *DESC*
+        :type order: str
         :param limit: Limit the number of lines, you want to receive
+        :type limit: int
         :param number: Specify page number
+        :type number: int
 
-        :return: List of hosts
-        :rtype: list
+        :return: Returns a list of HostStatus
+        :rtype: list of :ref:`class_host_status`:
         """
         param_dict = pack_locals(locals())
         param_dict["object"] = "centreon_realtime_hosts"
@@ -58,25 +72,43 @@ class Centreon:
         return [HostStatus(**x) for x in response]
 
     def get_service_status(self, *, viewType=None, fields=None, status=None, hostgoup=None, servicegroup=None,
-                           instance=None, search=None, searchHost=None, searchOutput=None, critically=None,
+                           instance=None, search=None, searchHost=None, searchOutput=None, criticality=None,
                            sortType=None, order=None, limit=None, number=None):
         """This method is used to get information about the service status
 
         :param viewType: Select a predefined filter like in the monitoring view. One of *all*, *unhandled*, *problems*
-        :param fields: The field list you want to get, separated by a ",". Use :ref:class_field_builder: to
-        :param status:
-        :param hostgoup:
-        :param servicegroup:
-        :param instance:
-        :param search:
-        :param searchHost:
-        :param searchOutput:
-        :param critically:
-        :param sortType:
-        :param order:
-        :param limit:
-        :param number:
-        :return:
+        :type viewType: str
+        :param fields: The field list you want to get, separated by a ",". Use :ref:class_field_builder: to simplify \
+        the query
+        :type fields: str
+        :param status: The status of services you want to get. One of *ok*, *warning*, *critical*, *unknown*,
+        *pending*, *all*
+        :type status: str
+        :param hostgoup: Hostgroup id filter
+        :type hostgoup: str
+        :param servicegroup: Servicegroup id filter
+        :type servicegroup: str
+        :param instance: Instance id filter
+        :type instance: str
+        :param search: Search pattern applied on the service
+        :type search: str
+        :param searchHost: Search pattern applied on the host
+        :type searchHost: str
+        :param searchOutput: Search pattern apllied on the ouput
+        :type searchOutput: str
+        :param criticality: A specific criticity
+        :type criticality: str
+        :param sortType: The sort type, selected in the field list
+        :type sortType: str
+        :param order: *ASC* or *DESC*
+        :type order: str
+        :param limit: number of line you want
+        :type limit: int
+        :param number: page number
+        :type number: int
+
+        :return: Returns a list of ServiceStatus
+        :rtype: list of :ref:`class_service_status`:
         """
         param_dict = pack_locals(locals())
         param_dict["object"] = "centreon_realtime_hosts"
@@ -85,10 +117,12 @@ class Centreon:
         response = self.network.make_request(HTTPVerb.GET, params=param_dict, header=self.config.vars["header"])
         return [ServiceStatus(**x) for x in response]
 
-    def submit_results(self, *, host, service=None, status, output, updatetime, perfdata=None):
-        raise NotImplementedError
-
     def list_hosts(self):
+        """This method is used to list all available hosts
+
+        :return: Returns hosts available in centreon
+        :rtype: list of :ref:`class_host`:
+        """
         param_dict = {"action": "action",
                       "object": "centreon_clapi"}
         data_dict = {"object": "host",
@@ -97,14 +131,25 @@ class Centreon:
         print(self.config.vars["header"])
         response = self.network.make_request(HTTPVerb.POST, params=param_dict, header=self.config.vars["header"],
                                              data=data_dict)
-        return response
+        response = response["result"]
+        return [Host(**x) for x in response]
 
-    def get_parameters(self, hostname):
+    def get_macro(self, hostname):
+        """This method is used to get the macros for a specific hostname
+
+        :param hostname: Hostname to use
+        :type hostname: str
+
+        :return: Returns list of macros
+        :rtype: list of :ref:`class_macro`:
+        """
         param_dict = {"action": "action",
                       "object": "centreon_clapi"}
-        data_dict = {"action": "getparam",
+        data_dict = {"action": "getmacro",
                      "object": "host",
-                     "values": hostname + ";address"}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, header=self.config.vars["header"],
-                                             data=data_dict)
-        return response
+                     "values": hostname}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict,
+                                             header=self.config.vars["header"])
+        response = response["result"]
+        return [Macro(**x) for x in response]
+
