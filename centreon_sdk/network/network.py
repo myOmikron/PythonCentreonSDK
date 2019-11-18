@@ -20,7 +20,7 @@ class Network:
         self.config = config
         self.client = httpx.Client(verify=False)
 
-    def make_request(self, verb, *, params=None, data=None, header=None):
+    def make_request(self, verb, *, params=None, data=None, header=None, encode_json=True):
         """This method is used to make request to the REST endpoint
 
         :param verb: HTTP Verb to use
@@ -42,9 +42,14 @@ class Network:
             else:
                 response = self.client.get(self.config.vars["URL"], params=params)
         elif verb == HTTPVerb.POST:
-            response = self.client.post(self.config.vars["URL"], params=params, data=data, headers=header)
+            if encode_json:
+                response = self.client.post(self.config.vars["URL"], params=params, data=json.dumps(data),
+                                            headers=header)
+            else:
+                response = self.client.post(self.config.vars["URL"], params=params, data=data, headers=header)
 
-        print(response.__dict__)
         json_decoded = json.loads(response.text)
         json_decoded = method_utils.replace_keys_from_dict("id", "id_unique", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("macro name", "macro_name", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("macro value", "macro_value", json_decoded)
         return json_decoded
