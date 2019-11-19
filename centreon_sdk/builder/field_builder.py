@@ -18,7 +18,7 @@ class FieldBuilder:
         """This method is used to build the field query string
 
         :return: Returns the field query string
-        :rtype: list
+        :rtype: str
         """
         var_dict = method_utils.replace_keys_from_dict("id_unique", "id", self.args)
         return ",".join([item for item in var_dict if var_dict[item]])
