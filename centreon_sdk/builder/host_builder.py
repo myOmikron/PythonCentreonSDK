@@ -14,7 +14,7 @@ class HostBuilder:
     :param host_group: Optional: Host groups of the host
     :type host_group: list of str
     """
-    def __init__(self, host_name, host_alias="", host_address="", host_template=[], instance="", host_group=[]):
+    def __init__(self, host_name, instance, host_alias="", host_address="", host_template=[], host_group=[]):
         self.host_name = host_name
         self.host_alias = host_alias
         self.host_address = host_address
