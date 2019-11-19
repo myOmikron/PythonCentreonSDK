@@ -141,6 +141,27 @@ class Centreon:
         response = response["result"]
         return [Host(**x) for x in response]
 
+    def add_host(self, host_add_str):
+        """This method is used to add a new host to centreon
+
+        :param host_add_str: Host add string. Use :ref:`class_host_builder` to generate it
+        :type host_add_str: str
+
+        :return: Returns True if operation was successful
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "add",
+                     "object": "host",
+                     "values": host_add_str}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict,
+                                             header=self.config.vars["header"])
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
     def get_macro(self, hostname):
         """This method is used to get the macros for a specific hostname
 
