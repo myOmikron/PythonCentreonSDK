@@ -8,6 +8,15 @@ from centreon_sdk.util.method_utils import pack_locals
 
 
 class Centreon:
+    """This class is the base class to communicate with the Centreon API
+
+    :param username: Username to use for authentication
+    :type username: str
+    :param password: Password to use for authentication
+    :type password: str
+    :param url: URL to use for requests
+    :type url: str
+    """
     def __init__(self, username, password, url):
         self.config = Config()
         self.config.vars["URL"] = url
@@ -127,8 +136,6 @@ class Centreon:
                       "object": "centreon_clapi"}
         data_dict = {"object": "host",
                      "action": "show"}
-
-        print(self.config.vars["header"])
         response = self.network.make_request(HTTPVerb.POST, params=param_dict, header=self.config.vars["header"],
                                              data=data_dict)
         response = response["result"]
