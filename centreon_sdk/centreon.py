@@ -160,11 +160,44 @@ class Centreon:
         return False
 
     def del_host(self, host_name):
+        """This method is used to delete a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
         param_dict = {"action": "action",
                       "object": "centreon_clapi"}
         data_dict = {"action": "del",
                      "object": "host",
                      "values": host_name}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def set_host_param(self, host_name, param_name, param_value):
+        """This method is used to set a param for a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param param_name: Name of the param
+        :type param_name: str
+        :param param_value: Value of the param
+        :type param_value: str
+
+        :return: Returns True, if operation was successful
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "setparam",
+                     "object": "host",
+                     "values": ";".join([host_name, param_name, param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
         if "result" in response:
             if isinstance(response["result"], list):
