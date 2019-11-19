@@ -205,11 +205,32 @@ class Centreon:
                     return True
         return False
 
-    def get_macro(self, hostname):
+    def get_host_params(self, host_name, params):
+        """This method is used to get parameter(s) from hosts
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param params: List of the parameters you want to receive
+        :type params: list of str
+
+        :return: Returns a dict with the wanted results
+        :rtype: dict
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "getparam",
+                     "object": "host",
+                     "values": host_name + ";" + "|".join(params)}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if len(params) == 1:
+            return {params[0]: response["result"][0]}
+        return response["result"][0]
+
+    def get_macro(self, host_name):
         """This method is used to get the macros for a specific hostname
 
-        :param hostname: Hostname to use
-        :type hostname: str
+        :param host_name: Hostname to use
+        :type host_name: str
 
         :return: Returns list of macros
         response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
@@ -221,5 +242,5 @@ class Centreon:
                       "object": "centreon_clapi"}
         data_dict = {"action": "getmacro",
                      "object": "host",
-                     "values": hostname}
+                     "values": host_name}
         raise NotImplementedError
