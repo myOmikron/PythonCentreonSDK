@@ -1,7 +1,6 @@
 from centreon_sdk.network.network import Network, HTTPVerb
 from centreon_sdk.objects.host import Host
 from centreon_sdk.objects.host_status import HostStatus
-from centreon_sdk.objects.macro import Macro
 from centreon_sdk.objects.service_status import ServiceStatus
 from centreon_sdk.util.config import Config
 from centreon_sdk.util.method_utils import pack_locals
@@ -21,7 +20,6 @@ class Centreon:
         self.config = Config()
         self.config.vars["URL"] = url
         self.network = Network(self.config)
-
         if "header" not in self.config.vars:
             self.config.vars["header"] = {"centreon-auth-token": self.get_auth_token(username, password)}
 
@@ -39,7 +37,8 @@ class Centreon:
         data_dict = {"username": username,
                      "password": password}
         param_dict = {"action": "authenticate"}
-        response = self.network.make_request(HTTPVerb.POST, data=data_dict, params=param_dict, encode_json=False)
+        response = self.network.make_request(HTTPVerb.POST, data=data_dict, params=param_dict, use_encode_json=False,
+                                             use_header=False)
         return response["authToken"]
 
     def get_host_status(self, *, viewType=None, fields=None, status=None, hostgroup=None, instance=None, search=None,
@@ -77,7 +76,7 @@ class Centreon:
         param_dict["object"] = "centreon_realtime_hosts"
         param_dict["action"] = "list"
 
-        response = self.network.make_request(HTTPVerb.GET, header=self.config.vars["header"], params=param_dict)
+        response = self.network.make_request(HTTPVerb.GET, params=param_dict)
         return [HostStatus(**x) for x in response]
 
     def get_service_status(self, *, viewType=None, fields=None, status=None, hostgoup=None, servicegroup=None,
@@ -123,7 +122,7 @@ class Centreon:
         param_dict["object"] = "centreon_realtime_hosts"
         param_dict["action"] = "list"
 
-        response = self.network.make_request(HTTPVerb.GET, params=param_dict, header=self.config.vars["header"])
+        response = self.network.make_request(HTTPVerb.GET, params=param_dict)
         return [ServiceStatus(**x) for x in response]
 
     def list_hosts(self):
@@ -136,8 +135,7 @@ class Centreon:
                       "object": "centreon_clapi"}
         data_dict = {"object": "host",
                      "action": "show"}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, header=self.config.vars["header"],
-                                             data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
         response = response["result"]
         return [Host(**x) for x in response]
 
@@ -154,8 +152,20 @@ class Centreon:
         data_dict = {"action": "add",
                      "object": "host",
                      "values": host_add_str}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict,
-                                             header=self.config.vars["header"])
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def del_host(self, host_name):
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "del",
+                     "object": "host",
+                     "values": host_name}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
         if "result" in response:
             if isinstance(response["result"], list):
                 if len(response["result"]) == 0:
@@ -169,6 +179,9 @@ class Centreon:
         :type hostname: str
 
         :return: Returns list of macros
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        response = response["result"]
+        return [Macro(**x) for x in response]
         :rtype: list of :ref:`class_macro`:
         """
         param_dict = {"action": "action",
@@ -176,8 +189,4 @@ class Centreon:
         data_dict = {"action": "getmacro",
                      "object": "host",
                      "values": hostname}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict,
-                                             header=self.config.vars["header"])
-        response = response["result"]
-        return [Macro(**x) for x in response]
-
+        raise NotImplementedError

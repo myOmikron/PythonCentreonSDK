@@ -20,7 +20,7 @@ class Network:
         self.config = config
         self.client = httpx.Client(verify=False)
 
-    def make_request(self, verb, *, params=None, data=None, header=None, encode_json=True):
+    def make_request(self, verb, *, params=None, data=None, use_encode_json=True, use_header=True):
         """This method is used to make request to the REST endpoint
 
         :param verb: HTTP Verb to use
@@ -29,24 +29,22 @@ class Network:
         :type params: dict
         :param data: Optional: dict to get encoded in body
         :type data: dict
-        :param header: Optional: Alternative header to use
-        :type header: dict
+        :param use_encode_json: Optional: Set False to do not use json serialization in data
+        :type use_encode_json: bool
+        :param use_header: Optional: Set false to do not use header
+        :type use_header: bool
 
         :return: json encoded string
         :rtype: str
         """
         response = None
+        header = self.config.vars["header"] if use_header else None
+        data = json.dumps(data) if use_encode_json else data
+
         if verb == HTTPVerb.GET:
-            if header:
-                response = self.client.get(self.config.vars["URL"], params=params, headers=header)
-            else:
-                response = self.client.get(self.config.vars["URL"], params=params)
+            response = self.client.get(self.config.vars["URL"], params=params, headers=header)
         elif verb == HTTPVerb.POST:
-            if encode_json:
-                response = self.client.post(self.config.vars["URL"], params=params, data=json.dumps(data),
-                                            headers=header)
-            else:
-                response = self.client.post(self.config.vars["URL"], params=params, data=data, headers=header)
+            response = self.client.post(self.config.vars["URL"], params=params, data=data, headers=header)
 
         json_decoded = json.loads(response.text)
         json_decoded = method_utils.replace_keys_from_dict("id", "id_unique", json_decoded)
