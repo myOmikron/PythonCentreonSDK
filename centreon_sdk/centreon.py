@@ -315,3 +315,89 @@ class Centreon:
                 if len(response["result"]) == 0:
                     return True
         return False
+
+    def host_get_template(self, host_name):
+        """This method is used to get the templates linked to a specific host
+
+        :param host_name: Name of the host
+        :type host_name: str
+
+        :return: Returns a list of used templates (id, name)
+        :rtype: list of dict
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "gettemplate",
+                     "object": "host",
+                     "values": host_name}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        return response["result"]
+
+    def host_set_template(self, host_name, template_name):
+        """This method is used to set a template, if other templates are linked to the host, they are removed
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param template_name: Name of the template
+        :type template_name: str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "settemplate",
+                     "object": "host",
+                     "values": ";".join([host_name, template_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def host_add_template(self, host_name, template_name):
+        """This method is used to add a template to a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param template_name: Name of the template
+        :type template_name: str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "addtemplate",
+                     "object": "host",
+                     "values": ";".join([host_name, template_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def host_del_template(self, host_name, template_name):
+        """This method is used to remove a template from a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param template_name: Name of the template
+        :type template_name: str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "deltemplate",
+                     "object": "host",
+                     "values": ";".join([host_name, template_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
