@@ -41,7 +41,7 @@ class Centreon:
                                              use_header=False)
         return response["authToken"]
 
-    def get_host_status(self, *, viewType=None, fields=None, status=None, hostgroup=None, instance=None, search=None,
+    def host_status_get(self, *, viewType=None, fields=None, status=None, hostgroup=None, instance=None, search=None,
                         critically=None, sortType=None, order=None, limit=None, number=None):
         """This method is used to get the host status
 
@@ -79,7 +79,7 @@ class Centreon:
         response = self.network.make_request(HTTPVerb.GET, params=param_dict)
         return [HostStatus(**x) for x in response]
 
-    def get_service_status(self, *, viewType=None, fields=None, status=None, hostgoup=None, servicegroup=None,
+    def service_status_get(self, *, viewType=None, fields=None, status=None, hostgoup=None, servicegroup=None,
                            instance=None, search=None, searchHost=None, searchOutput=None, criticality=None,
                            sortType=None, order=None, limit=None, number=None):
         """This method is used to get information about the service status
@@ -125,7 +125,7 @@ class Centreon:
         response = self.network.make_request(HTTPVerb.GET, params=param_dict)
         return [ServiceStatus(**x) for x in response]
 
-    def list_hosts(self):
+    def host_list(self):
         """This method is used to list all available hosts
 
         :return: Returns hosts available in centreon
@@ -139,7 +139,7 @@ class Centreon:
         response = response["result"]
         return [Host(**x) for x in response]
 
-    def add_host(self, host_add_str):
+    def host_add(self, host_add_str):
         """This method is used to add a new host to centreon
 
         :param host_add_str: Host add string. Use :ref:`class_host_builder` to generate it
@@ -159,7 +159,7 @@ class Centreon:
                     return True
         return False
 
-    def del_host(self, host_name):
+    def host_del(self, host_name):
         """This method is used to delete a host
 
         :param host_name: Name of the host
@@ -180,7 +180,7 @@ class Centreon:
                     return True
         return False
 
-    def set_host_param(self, host_name, param_name, param_value):
+    def host_set_param(self, host_name, param_name, param_value):
         """This method is used to set a param for a host
 
         :param host_name: Name of the host
@@ -205,7 +205,7 @@ class Centreon:
                     return True
         return False
 
-    def get_host_params(self, host_name, params):
+    def host_get_params(self, host_name, params):
         """This method is used to get parameter(s) from hosts
 
         :param host_name: Name of the host
@@ -226,7 +226,7 @@ class Centreon:
             return {params[0]: response["result"][0]}
         return response["result"][0]
 
-    def get_macro(self, host_name):
+    def marco_get(self, host_name):
         """This method is used to get the macros for a specific hostname
 
         :param host_name: Hostname to use
