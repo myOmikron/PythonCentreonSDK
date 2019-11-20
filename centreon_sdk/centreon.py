@@ -1,6 +1,7 @@
 from centreon_sdk.network.network import Network, HTTPVerb
 from centreon_sdk.objects.host import Host
 from centreon_sdk.objects.host_status import HostStatus
+from centreon_sdk.objects.macro import Macro
 from centreon_sdk.objects.service_status import ServiceStatus
 from centreon_sdk.util.config import Config
 from centreon_sdk.util.method_utils import pack_locals
@@ -226,16 +227,36 @@ class Centreon:
             return {params[0]: response["result"][0]}
         return response["result"][0]
 
-    def marco_get(self, host_name):
-        """This method is used to get the macros for a specific hostname
+    def host_set_instance(self, host_name, instance):
+        """This method is used to set the instance poller for a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param instance: Instance of the instance
+        :type instance: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "setinstance",
+                     "object": "host",
+                     "values": host_name + ";" + instance}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def host_get_macro(self, host_name):
+        """This method is used to get the macros for a specific host
 
         :param host_name: Hostname to use
         :type host_name: str
 
         :return: Returns list of macros
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        response = response["result"]
-        return [Macro(**x) for x in response]
         :rtype: list of :ref:`class_macro`:
         """
         param_dict = {"action": "action",
@@ -243,4 +264,54 @@ class Centreon:
         data_dict = {"action": "getmacro",
                      "object": "host",
                      "values": host_name}
-        raise NotImplementedError
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        response = response["result"]
+        return [Macro(**x) for x in response]
+
+    def host_set_macro(self, host_name, macro_name, macro_value):
+        """This method is used to set a macro for a specific host
+
+        :param host_name: Hostname to use
+        :type host_name: str
+        :param macro_name: Name of the macro
+        :type macro_name: str
+        :param macro_value: Value of the macro
+        :type macro_value: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "setmacro",
+                     "object": "host",
+                     "values": ";".join([host_name, macro_name, macro_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def host_del_macro(self, host_name, macro_name):
+        """This method is used to delete a macro for a specific host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param macro_name: Name of the macro
+        :type macro_name: str
+
+        :return: Returns True if the operation is successful
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "delmacro",
+                     "object": "host",
+                     "values": ";".join([host_name, macro_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
