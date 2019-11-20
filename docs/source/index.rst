@@ -7,14 +7,6 @@ Welcome to Python Centreon SDK's documentation!
 ===============================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+    sdk/index.rst
+    examples/index.rst
