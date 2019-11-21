@@ -401,3 +401,28 @@ class Centreon:
                 if len(response["result"]) == 0:
                     return True
         return False
+
+    def host_apply_template(self, host_name, template_name):
+        """This method is used to apply a template to a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param template_name: Name of the template
+        :type template_name: str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "applytpl",
+                     "object": "host",
+                     "values": ";".join([host_name, template_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    
