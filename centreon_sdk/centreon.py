@@ -658,6 +658,7 @@ class Centreon:
             if isinstance(response["result"], list):
                 if len(response["result"]) == 0:
                     return True
+        return False
 
     def host_del_contact(self, host_name, contact_names):
         """This method is used to delete contact(s) for a host
@@ -680,3 +681,4 @@ class Centreon:
             if isinstance(response["result"], list):
                 if len(response["result"]) == 0:
                     return True
+        return False
