@@ -682,3 +682,89 @@ class Centreon:
                 if len(response["result"]) == 0:
                     return True
         return False
+
+    def host_get_host_group(self, host_name):
+        """This method is used to get the host group of a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+
+        :return: Returns dict of host groups
+        :rtype: dict
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "gethostgroup",
+                     "object": "host",
+                     "values": host_name}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        return response["result"]
+
+    def host_add_host_group(self, host_name, host_group_names):
+        """This method is used to add host group(s) to a host
+
+        :param host_name: Name of a host
+        :type host_name: str
+        :param host_group_names: List of the names of the host group(s)
+        :type host_group_names; list of str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "addhostgroup",
+                     "object": "host",
+                     "values": ";".join([host_name, "|".join(host_group_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def host_set_host_group(self, host_name, host_group_names):
+        """This method is used to set the host group(s) to a host
+
+        :param host_name: Name of a host
+        :type host_name: str
+        :param host_group_names: List of the names of the host group(s)
+        :type host_group_names; list of str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "sethostgroup",
+                     "object": "host",
+                     "values": ";".join([host_name, "|".join(host_group_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def host_del_host_group(self, host_name, host_group_names):
+        """This method is used to delete host group(s) from a host
+
+        :param host_name: Name of a host
+        :type host_name: str
+        :param host_group_names: List of the names of the host group(s)
+        :type host_group_names; list of str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "delhostgroup",
+                     "object": "host",
+                     "values": ";".join([host_name, "|".join(host_group_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
