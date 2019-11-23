@@ -425,4 +425,18 @@ class Centreon:
                     return True
         return False
 
-    
+    def host_get_parent(self, host_name):
+        """This method is used to get the parent of a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+
+        :return: Returns 
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "getparent",
+                     "object": "host",
+                     "values": host_name}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        return response["result"]
