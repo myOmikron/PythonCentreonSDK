@@ -440,3 +440,158 @@ class Centreon:
                      "values": host_name}
         response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
         return response["result"]
+
+    def host_set_parent(self, host_name, parent_names):
+        """This method is used to set the parent of a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param parent_names: List of names of the parent
+        :type parent_names: list
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "setparent",
+                     "object": "host",
+                     "values": ";".join([host_name, "|".join(parent_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def host_add_parent(self, host_name, parent_names):
+        """This method is used to add a parent to a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param parent_names: List of names of the parent host
+        :type parent_names: list of str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "addparent",
+                     "object": "host",
+                     "values": ";".join([host_name, "|".join(parent_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def host_del_parent(self, host_name, parent_names):
+        """This method is used to delete a parent from a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param parent_names: List of names of the parent host
+        :type parent_names: list of str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "delparent",
+                     "object": "host",
+                     "values": ";".join([host_name, "|".join(parent_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def host_get_contact_group(self, host_name):
+        """This method is used to get the information about the contact group
+
+        :param host_name: Name of the host
+        :type host_name: str
+
+        :return: Returns a dict, which holds the contact group information
+        :rtype: dict
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "getcontactgroup",
+                     "object": "host",
+                     "values": host_name}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        return response["result"]
+
+    def host_add_contact_group(self, host_name, contact_group_names):
+        """This method is used to add a contact group to a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param contact_group_names: List of names of the contact group
+        :type contact_group_names: list of str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "addcontactgroup",
+                     "object": "host",
+                     "values": ";".join([host_name, "|".join(contact_group_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def host_set_contact_group(self, host_name, contact_group_names):
+        """This method is used to set contact group(s) to a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param contact_group_names: List of the names of the contact group(s)
+        :type contact_group_names: list of str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "setcontactgroup",
+                     "object": "host",
+                     "values": ";".join([host_name, "|".join(contact_group_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def host_del_contact_group(self, host_name, contact_group_names):
+        """This method is used to delete contact group(s) from a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param contact_group_names: List of the contact group(s)
+        :type contact_group_names: list of str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "delcontactgroup",
+                     "object": "host",
+                     "values": ";".join([host_name, "|".join(contact_group_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
