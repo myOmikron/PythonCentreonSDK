@@ -595,3 +595,88 @@ class Centreon:
                 if len(response["result"]) == 0:
                     return True
         return False
+
+    def host_get_contact(self, host_name):
+        """This method is used to get the contacts applied to a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+
+        :return: Returns the list of contacts
+        :rtype: dict
+        """
+
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "getcontact",
+                     "object": "host",
+                     "values": host_name}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        return response["result"]
+
+    def host_add_contact(self, host_name, contact_names):
+        """This method is used to add contact(s) to a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param contact_names: List of contact names
+        :type contact_names: list of str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "addcontact",
+                     "object": "host",
+                     "values": ";".join([host_name, "|".join(contact_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def host_set_contact(self, host_name, contact_names):
+        """This method is used to set contact(s) for a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param contact_names: List of names of the contact(s)
+        :type contact_names: list of str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "setcontact",
+                     "object": "host",
+                     "values": ";".join([host_name, "|".join(contact_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+
+    def host_del_contact(self, host_name, contact_names):
+        """This method is used to delete contact(s) for a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param contact_names: List of names of the contact(s)
+        :type contact_names: list of str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "delcontact",
+                     "object": "host",
+                     "values": ";".join([host_name, "|".join(contact_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
