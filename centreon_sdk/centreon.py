@@ -768,3 +768,45 @@ class Centreon:
                 if len(response["result"]) == 0:
                     return True
         return False
+
+    def host_enable(self, host_name):
+        """This method is used to enable a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "enable",
+                     "object": "host",
+                     "values": host_name}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
+
+    def host_disable(self, host_name):
+        """This method is used to enable a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        param_dict = {"action": "action",
+                      "object": "centreon_clapi"}
+        data_dict = {"action": "disable",
+                     "object": "host",
+                     "values": host_name}
+        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        if "result" in response:
+            if isinstance(response["result"], list):
+                if len(response["result"]) == 0:
+                    return True
+        return False
