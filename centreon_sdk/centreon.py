@@ -1,8 +1,10 @@
 from centreon_sdk.network.network import Network, HTTPVerb
+from centreon_sdk.objects.acl_action import ACLAction
 from centreon_sdk.objects.host import Host
 from centreon_sdk.objects.host_status import HostStatus
 from centreon_sdk.objects.macro import Macro
 from centreon_sdk.objects.service_status import ServiceStatus
+from centreon_sdk.util import method_utils
 from centreon_sdk.util.config import Config
 from centreon_sdk.util.method_utils import pack_locals
 
@@ -21,8 +23,9 @@ class Centreon:
         self.config = Config()
         self.config.vars["URL"] = url
         self.network = Network(self.config)
-        if "header" not in self.config.vars:
-            self.config.vars["header"] = {"centreon-auth-token": self.get_auth_token(username, password)}
+        self.config.vars["header"] = {"centreon-auth-token": self.get_auth_token(username, password)}
+        self.config.vars["param_dict_clapi"] = {"action": "action",
+                                                "object": "centreon_clapi"}
 
     def get_auth_token(self, username, password):
         """This method is used to receive the authentication token
@@ -132,11 +135,9 @@ class Centreon:
         :return: Returns hosts available in centreon
         :rtype: list of :ref:`class_host`:
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"object": "host",
                      "action": "show"}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         response = response["result"]
         return [Host(**x) for x in response]
 
@@ -148,17 +149,11 @@ class Centreon:
 
         :return: Returns True if operation was successful
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "add",
                      "object": "host",
                      "values": host_add_str}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_del(self, host_name):
         """This method is used to delete a host
@@ -169,17 +164,11 @@ class Centreon:
         :return: Returns True if the operation was successful
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "del",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_set_param(self, host_name, param_name, param_value):
         """This method is used to set a param for a host
@@ -194,17 +183,11 @@ class Centreon:
         :return: Returns True, if operation was successful
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "setparam",
                      "object": "host",
                      "values": ";".join([host_name, param_name, param_value])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_get_params(self, host_name, params):
         """This method is used to get parameter(s) from hosts
@@ -217,12 +200,10 @@ class Centreon:
         :return: Returns a dict with the wanted results
         :rtype: dict
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "getparam",
                      "object": "host",
                      "values": host_name + ";" + "|".join(params)}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         if len(params) == 1:
             return {params[0]: response["result"][0]}
         return response["result"][0]
@@ -238,17 +219,11 @@ class Centreon:
         :return: Returns True if the operation was successful
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "setinstance",
                      "object": "host",
                      "values": host_name + ";" + instance}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_get_macro(self, host_name):
         """This method is used to get the macros for a specific host
@@ -259,12 +234,10 @@ class Centreon:
         :return: Returns list of macros
         :rtype: list of :ref:`class_macro`:
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "getmacro",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         response = response["result"]
         return [Macro(**x) for x in response]
 
@@ -281,17 +254,11 @@ class Centreon:
         :return: Returns True if the operation was successful
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "setmacro",
                      "object": "host",
                      "values": ";".join([host_name, macro_name, macro_value])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_del_macro(self, host_name, macro_name):
         """This method is used to delete a macro for a specific host
@@ -304,17 +271,11 @@ class Centreon:
         :return: Returns True if the operation is successful
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "delmacro",
                      "object": "host",
                      "values": ";".join([host_name, macro_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_get_template(self, host_name):
         """This method is used to get the templates linked to a specific host
@@ -325,12 +286,10 @@ class Centreon:
         :return: Returns a list of used templates (id, name)
         :rtype: list of dict
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "gettemplate",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         return response["result"]
 
     def host_set_template(self, host_name, template_name):
@@ -344,17 +303,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "settemplate",
                      "object": "host",
                      "values": ";".join([host_name, template_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_add_template(self, host_name, template_name):
         """This method is used to add a template to a host
@@ -367,17 +320,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "addtemplate",
                      "object": "host",
                      "values": ";".join([host_name, template_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_del_template(self, host_name, template_name):
         """This method is used to remove a template from a host
@@ -390,17 +337,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "deltemplate",
                      "object": "host",
                      "values": ";".join([host_name, template_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_apply_template(self, host_name, template_name):
         """This method is used to apply a template to a host
@@ -413,17 +354,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "applytpl",
                      "object": "host",
                      "values": ";".join([host_name, template_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_get_parent(self, host_name):
         """This method is used to get the parent of a host
@@ -433,12 +368,10 @@ class Centreon:
 
         :return: Returns 
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "getparent",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         return response["result"]
 
     def host_set_parent(self, host_name, parent_names):
@@ -452,17 +385,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "setparent",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(parent_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_add_parent(self, host_name, parent_names):
         """This method is used to add a parent to a host
@@ -475,17 +402,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "addparent",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(parent_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_del_parent(self, host_name, parent_names):
         """This method is used to delete a parent from a host
@@ -498,17 +419,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "delparent",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(parent_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_get_contact_group(self, host_name):
         """This method is used to get the information about the contact group
@@ -519,12 +434,10 @@ class Centreon:
         :return: Returns a dict, which holds the contact group information
         :rtype: dict
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "getcontactgroup",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         return response["result"]
 
     def host_add_contact_group(self, host_name, contact_group_names):
@@ -538,17 +451,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "addcontactgroup",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(contact_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_set_contact_group(self, host_name, contact_group_names):
         """This method is used to set contact group(s) to a host
@@ -561,17 +468,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "setcontactgroup",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(contact_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_del_contact_group(self, host_name, contact_group_names):
         """This method is used to delete contact group(s) from a host
@@ -584,17 +485,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "delcontactgroup",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(contact_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_get_contact(self, host_name):
         """This method is used to get the contacts applied to a host
@@ -605,13 +500,10 @@ class Centreon:
         :return: Returns the list of contacts
         :rtype: dict
         """
-
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "getcontact",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         return response["result"]
 
     def host_add_contact(self, host_name, contact_names):
@@ -625,17 +517,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "addcontact",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(contact_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_set_contact(self, host_name, contact_names):
         """This method is used to set contact(s) for a host
@@ -648,17 +534,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "setcontact",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(contact_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_del_contact(self, host_name, contact_names):
         """This method is used to delete contact(s) for a host
@@ -671,17 +551,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "delcontact",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(contact_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_get_host_group(self, host_name):
         """This method is used to get the host group of a host
@@ -692,12 +566,10 @@ class Centreon:
         :return: Returns dict of host groups
         :rtype: dict
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "gethostgroup",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         return response["result"]
 
     def host_add_host_group(self, host_name, host_group_names):
@@ -711,17 +583,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "addhostgroup",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(host_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_set_host_group(self, host_name, host_group_names):
         """This method is used to set the host group(s) to a host
@@ -734,17 +600,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "sethostgroup",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(host_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_del_host_group(self, host_name, host_group_names):
         """This method is used to delete host group(s) from a host
@@ -757,17 +617,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "delhostgroup",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(host_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_enable(self, host_name):
         """This method is used to enable a host
@@ -778,17 +632,11 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "enable",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def host_disable(self, host_name):
         """This method is used to enable a host
@@ -799,14 +647,151 @@ class Centreon:
         :return: Returns True on success
         :rtype: bool
         """
-        param_dict = {"action": "action",
-                      "object": "centreon_clapi"}
         data_dict = {"action": "disable",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=param_dict, data=data_dict)
-        if "result" in response:
-            if isinstance(response["result"], list):
-                if len(response["result"]) == 0:
-                    return True
-        return False
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_reload(self):
+        """This method is used to reload the ACL
+
+        :return: Returns True on success
+        :rtype: bool
+        """
+        data_dict = {"action": "reload",
+                     "object": "acl"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_last_reload(self, format_str=None):
+        """This method is used to retrieve information about when the last reload of the ACL was done
+
+        :param format_str: Optional: This format string is used to get the time in a human readable format \
+        d - Day, m - Month, Y - Year, H - Hour, i - Minute, s - Second
+        :type format_str: str
+
+        :return: Returns the time in the specified format
+        :rtype: str
+        """
+        data_dict = {"action": "reload",
+                     "object": "acl"}
+        if format_str:
+            data_dict["values"] = format_str
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def acl_action_show(self):
+        """This method is used to show the available ACL actions
+
+        :return: Returns a list of ACL actions
+        :rtype: list of dict
+        """
+        data_dict = {"action": "show",
+                     "object": "aclaction"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def acl_action_add(self, acl_action_name, acl_action_description):
+        """This method is used to add an ACL action
+
+        :param acl_action_name: Name of the ACL action
+        :type acl_action_name: str
+        :param acl_action_description: Description of the ACL action
+        :type acl_action_description: str
+
+        :return: Returns True, if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "aclaction",
+                     "values": ";".join([acl_action_name, acl_action_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_action_del(self, acl_action_name):
+        """This method is used to delete an ACL action
+
+        :param acl_action_name: Name of the ACL action
+        :type acl_action_name: str
+
+        :return: Returns True, if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "aclaction",
+                     "values": acl_action_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_action_set_param(self, acl_action_name, param_name, param_value):
+        """This method is used to set a parameter of an ACL action
+
+        :param acl_action_name: Name of the ACL action
+        :type acl_action_name: str
+        :param param_name: Name of the param
+        :type param_name: str
+        :param param_value: Value of the param
+        :type param_value: str
+
+        :return: Returns True, if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "aclaction",
+                     "values": ";".join([acl_action_name, param_name, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_action_get_acl_group(self, acl_action_name):
+        """This method is used to retrieve the ACL groups that are linked to a specific ACL action
+
+        :param acl_action_name: Name of the ACL action
+        :type acl_action_name: str
+
+        :return: Returns a list of all ACL groups linked to the ACL action
+        :rtype: list
+        """
+        data_dict = {"action": "getaclgroup",
+                     "object": "aclaction",
+                     "values": acl_action_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def acl_action_grant(self, acl_action_name, acl_actions=None, enable_all=False):
+        """This method is used to grant ACL actions
+
+        :param acl_action_name: Name of the ACL action to modify
+        :type acl_action_name: str
+        :param acl_actions: Optional: List of ACL actions you want to grant, required if enable_all is False
+        :type acl_actions: list of :ref:`class_acl_action`
+        :param enable_all: Optional: Set True, if you want to grant all available ACL actions
+        :type enable_all: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "grant",
+                     "object": "aclaction",
+                     "values": ";".join([acl_action_name, "|".join(acl_actions if not enable_all else ["*"])])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_action_revoke(self, acl_action_name, acl_actions=None, disable_all=False):
+        """This method is used to revoke ACL actions
+
+        :param acl_action_name: Name of the ACL action to modify
+        :type acl_action_name: str
+        :param acl_actions: Optional: List of ACL actions you want to revoke, required if disable_all is False
+        :type acl_actions: list of :ref:`class_acl_action`
+        :param disable_all: Optional: Set True, if you want to revoke all available ACL actions
+        :type disable_all: bool
+
+        :return: Returns True on if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "revoke",
+                     "object": "aclaction",
+                     "values": ";".join([acl_action_name, "|".join(acl_actions if not disable_all else ["*"])])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
