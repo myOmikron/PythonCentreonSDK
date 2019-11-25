@@ -46,7 +46,10 @@ class Network:
         elif verb == HTTPVerb.POST:
             response = self.client.post(self.config.vars["URL"], params=params, data=data, headers=header)
 
-        json_decoded = json.loads(response.text)
+        if not response.status_code == 200:
+            print(response.text)
+            return
+        json_decoded: dict = json.loads(response.text)
         json_decoded = method_utils.replace_keys_from_dict("id", "id_unique", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("macro name", "macro_name", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("macro value", "macro_value", json_decoded)
