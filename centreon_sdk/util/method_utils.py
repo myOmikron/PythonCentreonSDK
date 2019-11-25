@@ -28,6 +28,22 @@ def pack_locals(kwargs):
     return ret_dict
 
 
+def check_if_empty_list(response):
+    """This method is used to check if the result in a dict is an empty list
+
+    :param response: Response get from the centreon server
+    :type response: dict
+
+    :return: Returns True, if response["result"] is an empty list
+    :rtype: bool
+    """
+    if "result" in response:
+        if isinstance(response["result"], list):
+            if len(response["result"]) == 0:
+                return True
+    return False
+
+
 def replace_keys_from_dict(old_key, new_key, dict_to_use):
     return _replace_keys_from_dict(old_key, new_key, dict_to_use)
 
