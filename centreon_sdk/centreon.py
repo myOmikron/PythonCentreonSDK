@@ -1187,3 +1187,120 @@ class Centreon:
                      "values": ";".join([acl_group_name, acl_contact_group_name])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         return method_utils.check_if_empty_list(response)
+
+    def acl_menu_show(self):
+        """This method is used to show the available ACL menus
+
+        :return: Returns a list of ACL menus
+        :rtype: list of dict
+        """
+        data_dict = {"action": "show",
+                     "object": "aclmenu"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def acl_menu_add(self, acl_menu_name, acl_menu_alias):
+        """This method is used to add a new ACL menu
+
+        :param acl_menu_name: Name of the ACL menu
+        :type acl_menu_name: str
+        :param acl_menu_alias: Alias of the ACL menu
+        :type acl_menu_alias: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "aclmenu",
+                     "values": ";".join([acl_menu_name, acl_menu_alias])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_menu_del(self, acl_menu_name):
+        """This method is used to delete a ACL menu
+
+        :param acl_menu_name: Name of the ACL menu
+        :type acl_menu_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "aclmenu",
+                     "values": acl_menu_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_menu_set_param(self, acl_menu_name, param_name, param_value):
+        """This method is used to set parameters for an ACL menu
+
+        :param acl_menu_name: Name of the ACL menu
+        :type acl_menu_name: str
+        :param param_name: Name of the param
+        :type param_name: :ref:`class_acl_menu`
+        :param param_value: Value of the param
+        :type param_value: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "aclmenu",
+                     "values": ";".join([acl_menu_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_menu_get_acl_group(self, acl_menu_name):
+        """This method is used to get the ACL groups that are linked to a menu rule
+
+        :param acl_menu_name: Name of the ACL menu
+        :type acl_menu_name: str
+
+        :return: Returns a list of ACL groups
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getaclgroup",
+                     "object": "aclmenu",
+                     "values": acl_menu_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def acl_menu_grant(self, acl_menu_name, grant_children_menu, menu_names, read_only=False):
+        """This method is used to grant read & write or read only access to an ACL menu
+
+        :param acl_menu_name: Name of the ACL menu
+        :type acl_menu_name: str
+        :param grant_children_menu: Set True if the access to all children of the menu should be granted
+        :type grant_children_menu: bool
+        :param menu_names: Name of menus. Example: [Home] > [Poller statistics] -> ["Home", "Poller statistics"]
+        :type menu_names: list of str
+        :param read_only: Optional: Specify True, if you only want to grant read only access to the menu
+        :type read_only: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "grantrw" if not read_only else "grantro",
+                     "object": "aclmenu",
+                     "values": ";".join([acl_menu_name, "1" if grant_children_menu else "0", ";".join(menu_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def acl_menu_revoke(self, acl_menu_name, grant_children_menu, menu_names):
+        """This method is used to revoke the access to an ACL menu
+
+        :param acl_menu_name: Name of the ACL menu
+        :type acl_menu_name: str
+        :param grant_children_menu: Set True if the access to all children of the menu should be revoked
+        :type grant_children_menu: bool
+        :param menu_names: Name of menus. Example: [Home] > [Poller statistics] -> ["Home", "Poller statistics"]
+        :type menu_names: list of str
+
+        :return: Returns True if the operation is successful
+        :rtype: bool
+        """
+        data_dict = {"action": "revoke",
+                     "object": "aclmenu",
+                     "values": ";".join([acl_menu_name, "1" if grant_children_menu else "0", ";".join(menu_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
