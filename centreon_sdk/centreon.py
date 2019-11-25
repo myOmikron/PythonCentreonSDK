@@ -1,5 +1,5 @@
 from centreon_sdk.network.network import Network, HTTPVerb
-from centreon_sdk.objects.acl_action import ACLAction
+from centreon_sdk.objects.acl_group import ACLGroupParam
 from centreon_sdk.objects.host import Host
 from centreon_sdk.objects.host_status import HostStatus
 from centreon_sdk.objects.macro import Macro
@@ -793,5 +793,397 @@ class Centreon:
         data_dict = {"action": "revoke",
                      "object": "aclaction",
                      "values": ";".join([acl_action_name, "|".join(acl_actions if not disable_all else ["*"])])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_show(self):
+        """This method is used to retrieve information about ACL groups
+
+        :return: Returns a list of ACL groups
+        :rtype: list of dict
+        """
+        data_dict = {"action": "show",
+                     "object": "aclgroup"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def acl_group_add(self, acl_group_name, acl_group_alias):
+        """This method is used to add an ACL group
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_group_alias: Alias of the ACL group
+        :type acl_group_alias: str
+
+        :return: Returns True, if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, acl_group_alias])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_del(self, acl_group_name):
+        """This method is used to delete an ACL group
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+
+        :return: Returns True, if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "aclgroup",
+                     "values": acl_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_set_param(self, acl_group_name, param_name, param_value):
+        """This method is used to change a specific paremeter of an ACL group
+
+        :param acl_group_name: Name of the ACL group to modify
+        :type acl_group_name: str
+        :param param_name: Name of the param
+        :type param_name: :ref:`class_acl_group_param`
+        :param param_value: Value of the param
+        :type param_value: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_get_menu(self, acl_group_name):
+        """This method is used to retrieve the menu rules that are linked to a specific ACL group
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+
+        :return: Returns list of menu rules
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getmenu",
+                     "object": "aclgroup",
+                     "values": acl_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def acl_group_get_action(self, acl_group_name):
+        """This method is used to retrieve the action rules that are linked to a specific ACL group
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+
+        :return: Returns list of action rules
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getaction",
+                     "object": "aclgroup",
+                     "values": acl_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def acl_group_get_resource(self, acl_group_name):
+        """This method is used to retrieve the resource rules that are linked to a specific ACL group
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+
+        :return: Returns list of resource rules
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getresource",
+                     "object": "aclgroup",
+                     "values": acl_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def acl_group_get_contact(self, acl_group_name):
+        """This method is used to retrieve the contacts that are linked to a specific ACL group
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+
+        :return: Returns list of contacts
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getcontact",
+                     "object": "aclgroup",
+                     "values": acl_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def acl_group_get_contact_group(self, acl_group_name):
+        """This method is used to retrieve the contact groups that are linked to a specific ACL group
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+
+        :return: Returns list of contact groups
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getcontactgroup",
+                     "object": "aclgroup",
+                     "values": acl_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def acl_group_set_menu(self, acl_group_name, acl_menus):
+        """This method is used to set the linked menu rules. Overwrites existing rules
+
+        :param acl_group_name: Name of ACL group
+        :type acl_group_name: str
+        :param acl_menus: List of ACL menu rules
+        :type acl_menus: list of str
+
+        :return: Returns True if the operation is successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setmenu",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, "|".join(acl_menus)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_set_action(self, acl_group_name, acl_actions):
+        """This method is used to set the linked action rules. Overwrites existing rules
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_actions: List of ACL action rules
+        :type acl_actions: list of str
+
+        :return: Returns True if the operation is successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setacction",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, "|".join(acl_actions)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_set_resource(self, acl_group_name, acl_resources):
+        """This method is used to set the linked resource rules. Overwrites existing rules
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_resources: List of ACL resource rules
+        :type acl_resources: list of str
+
+        :return: Returns True if operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setresource",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, "|".join(acl_resources)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_add_menu(self, acl_group_name, acl_menus):
+        """This method is used to add menu rules to the ACL group. Appends to existing rules
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_menus: List of ACL menu rules
+        :type acl_menus: list of str
+
+        :return: Returns True if operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addmenu",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, "|".join(acl_menus)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_add_action(self, acl_group_name, acl_actions):
+        """This method is used to add action rules to the ACL group. Appends to existing rules
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_actions: List of ACL action rules
+        :type acl_actions: list of str
+
+        :return: Returns True if operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addaction",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, "|".join(acl_actions)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_add_resource(self, acl_group_name, acl_resources):
+        """This method is used to add resource rules to the ACL group. Appends to existing rules
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_resources: List of ACL resource rules
+        :type acl_resources: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addresource",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, "|".join(acl_resources)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_del_menu(self, acl_group_name, acl_menu_name):
+        """This method is used to delete a menu rule linked to the ACL group
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_menu_name: Name of the menu rule
+        :type acl_menu_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delmenu",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, acl_menu_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_del_action(self, acl_group_name, acl_action_name):
+        """This method is used to delete a action rule linked to the ACL group
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_action_name: Name of the action rule
+        :type acl_action_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delaction",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, acl_action_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_del_resource(self, acl_group_name, acl_resource_name):
+        """This method is used to delete a resource rule linked to the ACL group
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_resource_name: Name of the resource rule
+        :type acl_resource_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delresource",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, acl_resource_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_set_contact(self, acl_group_name, acl_contact_names):
+        """This method is used to set contact to a specific ACL group. Overwrites existing contacts
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_contact_names: List of contacts
+        :type acl_contact_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setcontact",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, "|".join(acl_contact_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_set_contact_group(self, acl_group_name, acl_contact_group_names):
+        """This method is used to set contact groups to a specific ACL group. Overwrites existing contact groups
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_contact_group_names: List of contact groups
+        :type acl_contact_group_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setcontactgroup",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, "|".join(acl_contact_group_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_add_contact(self, acl_group_name, acl_contact_names):
+        """This method is used to add contacts to a specific ACL group. Appends to existing contacts
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_contact_names: List of contacts
+        :type acl_contact_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addcontact",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, "|".join(acl_contact_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_add_contact_group(self, acl_group_name, acl_contact_group_names):
+        """This method is used to add contact groups to a specific ACL group. Appends to existing contact groups
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_contact_group_names: List of contact groups
+        :type acl_contact_group_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addcontactgroup",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, "|".join(acl_contact_group_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_del_contact(self, acl_group_name, acl_contact_name):
+        """This method is used to delete a contact from a specific ACL group
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_contact_name: Name of the contact
+        :type acl_contact_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delcontact",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, acl_contact_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_group_del_contact_group(self, acl_group_name, acl_contact_group_name):
+        """This method is used to delete a contact group from a specific ACL group
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_contact_group_name: Name of the contact group
+        :type acl_contact_group_name: str
+
+        :return: Returns True if the oepration was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delcontactgroup",
+                     "object": "aclgroup",
+                     "values": ";".join([acl_group_name, acl_contact_group_name])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         return method_utils.check_if_empty_list(response)
