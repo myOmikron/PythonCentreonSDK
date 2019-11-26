@@ -18,6 +18,7 @@ class Centreon:
     :param url: URL to use for requests
     :type url: str
     """
+
     def __init__(self, username, password, url):
         self.config = Config()
         self.config.vars["URL"] = url
@@ -1283,7 +1284,7 @@ class Centreon:
                      "object": "aclmenu",
                      "values": ";".join([acl_menu_name, "1" if grant_children_menu else "0", ";".join(menu_names)])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
-        return response["result"]
+        return method_utils.check_if_empty_list(response)
 
     def acl_menu_revoke(self, acl_menu_name, grant_children_menu, menu_names):
         """This method is used to revoke the access to an ACL menu
@@ -1302,4 +1303,125 @@ class Centreon:
                      "object": "aclmenu",
                      "values": ";".join([acl_menu_name, "1" if grant_children_menu else "0", ";".join(menu_names)])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_resource_show(self):
+        """This method is used to show the available ACL resources
+
+        :return: Returns a list of ACL resources
+        :rtype: list of dict
+        """
+        data_dict = {"action": "show",
+                     "object": "aclresource"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         return response["result"]
+
+    def acl_resource_add(self, acl_resource_name, acl_resource_alias):
+        """This method is used to add a new ACL resource
+
+        :param acl_resource_name: Name of the ACL resource
+        :type acl_resource_name: str
+        :param acl_resource_alias: Alias of the ACL resource
+        :type acl_resource_alias: str
+
+        :return: Returns True if the operation was successful
+        """
+        data_dict = {"action": "add",
+                     "object": "aclresource",
+                     "values": ";".join([acl_resource_name, acl_resource_alias])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_resource_del(self, acl_resource_name):
+        """This method is used to delete an ACL resource
+
+        :param acl_resource_name: Name of the ACL resource
+        :type acl_resource_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "aclresource",
+                     "values": acl_resource_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_resource_set_param(self, acl_resource_name, param_name, param_value):
+        """This method is used to set a specific parameter for an ACL resource
+
+        :param acl_resource_name: Name of the ACL resource
+        :type acl_resource_name: str
+        :param param_name: Name of the param
+        :type param_name: :ref:`class_acl_resource_param`
+        :param param_value: Value of the param
+        :type param_value: str
+
+        :return: Returns True if the operation was successful
+        """
+        data_dict = {"action": "setparam",
+                     "object": "aclresource",
+                     "values": ";".join([acl_resource_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_resource_get_acl_group(self, acl_resource_name):
+        """This method is used to get the linked ACL groups
+
+        :param acl_resource_name: Name of the ACL resource
+        :type acl_resource_name: str
+
+        :return: Returns the linked ACL groups
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getaclgroup",
+                     "object": "aclresource",
+                     "values": acl_resource_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def acl_resource_grant(self, acl_group_name, acl_grant_action, acl_resource_names, use_wildcard=False):
+        """This method is used to grant resources in an ACL resource rule
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_grant_action: Grant action to perform
+        :type acl_grant_action: :ref:`class_acl_resource_grant_action`
+        :param acl_resource_names: List of the resource names
+        :type acl_resource_names: list of str
+        :param use_wildcard: Optional: Set True, if the wildcard should be used. Not all actions support wildcards. \
+        See :ref:`class_acl_resource_grant_action` for further information. If the operation doesn't support a \
+        wildcard, but it is used anyway, the option is ignored and all resources in acl_resource_names are used. \
+        Default: False
+        :type use_wildcard: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": acl_grant_action.value[0],
+                     "object": "aclresource",
+                     "values": ";".join([acl_group_name, "*" if use_wildcard and acl_grant_action.value[1] else
+                                        "|".join(acl_resource_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def acl_resource_revoke(self, acl_group_name, acl_revoke_action, acl_resource_names, use_wildcard=False):
+        """This method is used to revoke resources in an ACL resource rule
+
+        :param acl_group_name: Name of the ACL group
+        :type acl_group_name: str
+        :param acl_revoke_action: Revoke action to perform
+        :type acl_revoke_action: :ref:`class_acl_resource_revoke_action`
+        :param acl_resource_names: List of the resource names
+        :type acl_resource_names: list of str
+        :param use_wildcard: Optional: Set True, if the wildcard should be used. Default: False
+        :type use_wildcard: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": acl_revoke_action.value,
+                     "object": "aclresource",
+                     "values": ";".join([acl_group_name, "*" if use_wildcard else "|".join(acl_resource_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
