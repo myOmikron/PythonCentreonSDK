@@ -1425,3 +1425,378 @@ class Centreon:
                      "values": ";".join([acl_group_name, "*" if use_wildcard else "|".join(acl_resource_names)])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         return method_utils.check_if_empty_list(response)
+
+    def cent_broker_cfg_show(self):
+        """This method is used to show the available Centreon broker cfg
+
+        :return: Returns the available centreon broker cfg
+        :rtype: list of dict
+        """
+        data_dict = {"action": "show",
+                     "object": "centbrokercfg"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def cent_broker_cfg_add(self, cent_broker_cfg_name, cent_broker_cfg_instance):
+        """This method is used to add a centreon broker cfg
+
+        :param cent_broker_cfg_name: Name of the configuration
+        :type cent_broker_cfg_name: str
+        :param cent_broker_cfg_instance: Instance that is linked to the broker cfg
+        :type cent_broker_cfg_instance: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, cent_broker_cfg_instance])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_broker_cfg_del(self, cent_broker_cfg_name):
+        """This method is used to delete a centreon broker cfg
+
+        :param cent_broker_cfg_name: Name of the centreon broker configuration
+        :type cent_broker_cfg_name: str
+
+        :return: Returns True if the operation is successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "centbrokercfg",
+                     "values": cent_broker_cfg_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_broker_cfg_set_param(self, cent_broker_cfg_name, param_name, param_value):
+        """This method is used to set a specified parameter
+
+        :param cent_broker_cfg_name: Name of the centreon broker cfg
+        :type cent_broker_cfg_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_cent_broker_cfg_param`
+        :param param_value: Value of the parameter
+        :type param_value: str
+
+        :return: Returns True if the operation is successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_broker_cfg_list_input(self, cent_broker_cfg_name):
+        """This method is used to list input types
+
+        :param cent_broker_cfg_name: Name of the centreon broker cfg
+        :type cent_broker_cfg_name: str
+
+        :return: Return the list of the input types
+        :rtype: list of dict
+        """
+        data_dict = {"action": "listinput",
+                     "object": "centbrokercfg",
+                     "values": cent_broker_cfg_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def cent_broker_cfg_list_output(self, cent_broker_cfg_name):
+        """This method is used to list output types
+
+        :param cent_broker_cfg_name: Name of the centreon broker cfg
+        :type cent_broker_cfg_name: str
+
+        :return: Returns the list of the output types
+        :rtype: list of dict
+        """
+        data_dict = {"action": "listoutput",
+                     "object": "centbrokercfg",
+                     "values": cent_broker_cfg_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def cent_broker_cfg_list_logger(self, cent_broker_cfg_name):
+        """This method is used to list logger types
+
+        :param cent_broker_cfg_name: Name of the centreon broker cfg
+        :type cent_broker_cfg_name: str
+
+        :return: Returns the list of the logger types
+        :rtype: list of dict
+        """
+        data_dict = {"action": "listlogger",
+                     "object": "centbrokercfg",
+                     "values": cent_broker_cfg_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def cent_broker_cfg_get_input(self, cent_broker_cfg_name, input_id):
+        """This method is used to get parameters of a specific input
+
+        :param cent_broker_cfg_name: Name of the centreon broker cfg
+        :type cent_broker_cfg_name: str
+        :param input_id: ID of the input
+        :type input_id: str
+
+        :return: Returns the parameters from the specified input
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getinput",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, input_id])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def cent_broker_cfg_get_output(self, cent_broker_cfg_name, output_id):
+        """This method is used to get parameters of a specific output
+
+        :param cent_broker_cfg_name: Name of the centreon broker cfg
+        :type cent_broker_cfg_name: str
+        :param output_id: ID of the output
+        :type output_id: str
+
+        :return: Returns the parameters from the specified output
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getoutput",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, output_id])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def cent_broker_cfg_get_logger(self, cent_broker_cfg_name, logger_id):
+        """This method is used to get parameters of a specific logger
+
+        :param cent_broker_cfg_name: Name of the centreon broker cfg
+        :type cent_broker_cfg_name: str
+        :param logger_id: ID of the logger
+        :type logger_id: str
+
+        :return: Returns the parameters from the specified logger
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getlogger",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, logger_id])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def cent_broker_cfg_add_input(self, cent_broker_cfg_name, input_name, input_nature):
+        """This method is used to add an input to a centreon broker config
+
+        :param cent_broker_cfg_name: Name of the centreon broker config
+        :type cent_broker_cfg_name: str
+        :param input_name: Name of the input
+        :type input_name: str
+        :param input_nature: Nature of the input
+        :type input_nature: :ref:`class_cent_broker_cfg_input_nature`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addinput",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, input_name, input_nature.value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_broker_cfg_add_output(self, cent_broker_cfg_name, output_name, output_nature):
+        """This method is used to add an output to a centreon broker config
+
+        :param cent_broker_cfg_name: Name of the centreon broker config
+        :type cent_broker_cfg_name: str
+        :param output_name: Name of the output
+        :type output_name: str
+        :param output_nature: Nature of the output
+        :type output_nature: :ref:`class_cent_broker_cfg_output_nature`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addoutput",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, output_name, output_nature.value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_broker_cfg_add_logger(self, cent_broker_cfg_name, logger_name, logger_nature):
+        """This method is used to add a logger to a centreon broker config
+
+        :param cent_broker_cfg_name: Name of the centreon broker config
+        :type cent_broker_cfg_name: str
+        :param logger_name: Name of the logger
+        :type logger_name: str
+        :param logger_nature: Nature of the logger
+        :type logger_nature: :ref:`class_cent_broker_cfg_logger_nature`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addlogger",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, logger_name, logger_nature.value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_broker_cfg_del_input(self, cent_broker_cfg_name, input_id):
+        """This method is used to delete an input from a centreon broker config
+
+        :param cent_broker_cfg_name: Name of the centreon broker config
+        :type cent_broker_cfg_name: str
+        :param input_id: ID of the input
+        :type input_id: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delinput",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, input_id])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_broker_cfg_del_output(self, cent_broker_cfg_name, output_id):
+        """This method is used to delete an output from a centreon broker config
+
+        :param cent_broker_cfg_name: Name of the centreon broker config
+        :type cent_broker_cfg_name: str
+        :param output_id: ID of the output
+        :type output_id: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "deloutput",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, output_id])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_broker_cfg_del_logger(self, cent_broker_cfg_name, logger_id):
+        """This method is used to delete a logger from a centreon broker config
+
+        :param cent_broker_cfg_name: Name of teh centreon broker config
+        :type cent_broker_cfg_name: str
+        :param logger_id: ID of the logger
+        :type logger_id: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "dellogger",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, logger_id])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_broker_cfg_set_input(self, cent_broker_cfg_name, input_id, param_name, param_values):
+        """This method is used to set parameters of an input
+
+        :param cent_broker_cfg_name: Name of the centreon broker config
+        :type cent_broker_cfg_name: str
+        :param input_id: ID of the input
+        :type input_id: str
+        :param param_name: Name of the param
+        :type param_name: str
+        :param param_values: Values of the param
+        :type param_values: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setinput",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, input_id, param_name, ",".join(param_values)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_broker_cfg_set_output(self, cent_broker_cfg_name, output_id, param_name, param_values):
+        """This method is used to set parameters of an output
+
+        :param cent_broker_cfg_name: Name of the centreon broker config
+        :type cent_broker_cfg_name: str
+        :param output_id: ID of the input
+        :type output_id: str
+        :param param_name: Name of the param
+        :type param_name: str
+        :param param_values: Values of the param
+        :type param_values: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setoutput",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, output_id, param_name, ",".join(param_values)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_broker_cfg_set_logger(self, cent_broker_cfg_name, logger_id, param_name, param_values):
+        """This method is used to set parameters of a logger
+
+        :param cent_broker_cfg_name: Name of the centreon broker config
+        :type cent_broker_cfg_name: str
+        :param logger_id: ID of the input
+        :type logger_id: str
+        :param param_name: Name of the param
+        :type param_name: str
+        :param param_values: Values of the param
+        :type param_values: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setlogger",
+                     "object": "centbrokercfg",
+                     "values": ";".join([cent_broker_cfg_name, logger_id, param_name, ",".join(param_values)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_broker_cfg_get_type_list(self, io_type):
+        """This method is used to get the available types for an io type
+
+        :param io_type: IO Type
+        :type io_type: :ref:`class_cent_broker_cfg_io_type`
+
+        :return: Returns the available types
+        :rtype: list of dict
+        """
+        data_dict = {"action": "gettypelist",
+                     "object": "centbrokercfg",
+                     "values": io_type.value}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def cent_broker_cfg_get_field_list(self, type_name):
+        """This method is used to get the available field list of a type
+
+        :param type_name: Name of the type
+        :type type_name: str
+
+        :return: Returns the available fields. If there is a '*' behind a key, it means you have to choose from a \
+        given list of values
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getfieldlist",
+                     "object": "centbrokercfg",
+                     "values": type_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def cent_broker_cfg_get_value_list(self, field_name):
+        """This method is used to get the available values for a field
+
+        :param field_name: Name of the field
+        :type field_name: str
+
+        :return: Returns the possible values
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getvaluelist",
+                     "object": "centbrokercfg",
+                     "values": field_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
