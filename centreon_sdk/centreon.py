@@ -1,9 +1,8 @@
 from centreon_sdk.network.network import Network, HTTPVerb
-from centreon_sdk.objects.acl_group import ACLGroupParam
-from centreon_sdk.objects.host import Host
-from centreon_sdk.objects.host_status import HostStatus
-from centreon_sdk.objects.macro import Macro
-from centreon_sdk.objects.service_status import ServiceStatus
+from centreon_sdk.objects.base.host import Host
+from centreon_sdk.objects.base.host_status import HostStatus
+from centreon_sdk.objects.base.macro import Macro
+from centreon_sdk.objects.base.service_status import ServiceStatus
 from centreon_sdk.util import method_utils
 from centreon_sdk.util.config import Config
 from centreon_sdk.util.method_utils import pack_locals
