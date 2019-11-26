@@ -2,7 +2,7 @@ import enum
 
 
 class ACLAction(enum.Enum):
-    """This class is used to represents the available actions you can grant/revoke"""
+    """This class represents the available actions you can grant/revoke"""
     GLOBAL_EVENT_HANDLER = "global_event_handler"
     GLOBAL_FLAP_DETECTION = "global_flap_detection"
     GLOBAL_HOST_CHECKS = "global_host_checks"
