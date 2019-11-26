@@ -53,4 +53,5 @@ class Network:
         json_decoded = method_utils.replace_keys_from_dict("id", "id_unique", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("macro name", "macro_name", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("macro value", "macro_value", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("gui access", "gui_access", json_decoded)
         return json_decoded

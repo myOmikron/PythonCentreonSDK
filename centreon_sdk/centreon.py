@@ -1,4 +1,5 @@
 from centreon_sdk.network.network import Network, HTTPVerb
+from centreon_sdk.objects.base.contact import Contact
 from centreon_sdk.objects.base.host import Host
 from centreon_sdk.objects.base.host_status import HostStatus
 from centreon_sdk.objects.base.macro import Macro
@@ -1897,5 +1898,121 @@ class Centreon:
         data_dict = {"action": "setargumentdescr",
                      "object": "cmd",
                      "values": ";".join([cmd_name, ";".join(arg_descriptions)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_show(self):
+        """This method is used to list all available contacts
+
+        :return: Returns all available contacts
+        :rtype: list of :ref:`class_contact`
+        """
+        data_dict = {"action": "show",
+                     "object": "contact"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = response["result"]
+        for contact in response:
+            contact["id_unique"] = int(contact["id_unique"])
+            contact["gui_access"] = bool(contact["gui_access"])
+            contact["admin"] = bool(contact["admin"])
+            contact["activate"] = bool(contact["activate"])
+        return [Contact(**x) for x in response]
+
+    def contact_add(self, name, alias, email, password, admin, gui_access, language, authentication_type):
+        """This method is used to add a contact. Generating configuration files and restarting the monitoring engine \
+        is required
+
+        :param name: Name of the contact
+        :type name: str
+        :param alias: Alias of the contact
+        :type alias: str
+        :param email: EMail of the contact
+        :type email: str
+        :param password: Password of the contact
+        :type password: str
+        :param admin: Is the contact an admin
+        :type admin: bool
+        :param gui_access: Has the contact access to the gui?
+        :type gui_access: bool
+        :param language: Language of the contact
+        :type language: str
+        :param authentication_type: Authentication type
+        :type authentication_type: :ref:`class_contact_authentication_type`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "contact",
+                     "values": ";".join([name, alias, email, password, "1" if admin else "0",
+                                         "1" if gui_access else "0", language, authentication_type.value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_del(self, contact_name):
+        """This method is used to delete a contact. Generating configuration files and restarting the monitoring \
+        engine is required
+
+        :param contact_name: Name of the contact
+        :type contact_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "contact",
+                     "values": contact_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_set_param(self, alias, param_name, param_value):
+        """This method is used to set a parameter for a contact. Generating configuration files and restarting the \
+        monitoring engine is required
+
+        :param alias: Alias of the contact
+        :type alias: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_contact_param`
+        :param param_value: Value of the parameter
+        :type param_value: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "contact",
+                     "values": ";".join([alias, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_enable(self, contact_alias):
+        """This method is used to enable a host. Generating configuration files and restarting the monitoring engine is \
+        required
+
+        :param contact_alias: Alias of the contact
+        :type contact_alias: str
+
+        :return: Returns True if the operation is successful
+        :rtype: bool
+        """
+        data_dict = {"action": "enable",
+                     "object": "contact",
+                     "values": contact_alias}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_disable(self, contact_alias):
+        """This method is used to disable a host. Generating configuration files and restarting the monitoring engine \
+        is required
+
+        :param contact_alias: Alias of the contact
+        :type contact_alias: str
+
+        :return: Returns True if the operation is successful
+        :rtype: bool
+        """
+        data_dict = {"action": "enable",
+                     "object": "contact",
+                     "values": contact_alias}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         return method_utils.check_if_empty_list(response)
