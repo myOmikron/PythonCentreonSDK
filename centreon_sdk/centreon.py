@@ -1800,3 +1800,102 @@ class Centreon:
                      "values": field_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
         return response["result"]
+
+    def cmd_show(self):
+        """This method is used to list all available commands
+
+        :return: Returns the available commands
+        :rtype: list of dict
+        """
+        data_dict = {"action": "show",
+                     "object": "cmd"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def cmd_add(self, cmd_name, cmd_type, command_line):
+        """This method is used to add a command. Generating configuration files and restarting the monitoring engine \
+        is required
+
+        :param cmd_name: Name of the command
+        :type cmd_name: str
+        :param cmd_type: Type of the command
+        :type cmd_type: :ref:`class_cmd_type`
+        :param command_line: Command to execute in command line
+        :type command_line: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "cmd",
+                     "values": ";".join([cmd_name, cmd_type.value, command_line])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cmd_del(self, cmd_name):
+        """This method is used to delete a command. Generating configuration files and restarting the monitoring \
+        engine is required
+
+        :param cmd_name: Name of the command
+        :type cmd_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "cmd",
+                     "values": cmd_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cmd_set_param(self, cmd_name, param_name, param_value):
+        """This method is used to set or change a specific parameter for a command. Generating configuration files and \
+        restarting the monitoring engine is required
+
+        :param cmd_name: Name of the command
+        :type cmd_name: str
+        :param param_name: Name of the parameter
+        :type param_value: :ref:`class_cmd_param`
+        :param param_value: Value of the parameter
+        :type param_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "cmd",
+                     "values": ";".join([cmd_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cmd_get_argument_description(self, cmd_name):
+        """This method is used to get the argument description for a command
+
+        :param cmd_name: Name of the command
+        :type cmd_name: str
+
+        :return: Returns the argument description
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getargumentdescr",
+                     "object": "cmd",
+                     "values": cmd_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return response["result"]
+
+    def cmd_set_argument_description(self, cmd_name, arg_descriptions):
+        """This method is used to set the argument description for a command
+
+        :param cmd_name: Name of the command
+        :type cmd_name: str
+        :param arg_descriptions: Descriptions of the description
+        :type arg_descriptions: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setargumentdescr",
+                     "object": "cmd",
+                     "values": ";".join([cmd_name, ";".join(arg_descriptions)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
