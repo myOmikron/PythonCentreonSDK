@@ -2243,3 +2243,71 @@ class Centreon:
                      "values": contact_group_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
+
+    def contact_group_get_contact(self, contact_group_name):
+        """This method is used to get the list of contacts that are linked to a contact group
+
+        :param contact_group_name: Name of the contact group
+        :type contact_group_name: str
+
+        :return: Returns the list of linked contacts
+        :rtype: list of dict
+        """
+        data_dict = {"action": "disable",
+                     "object": "cg",
+                     "values": contact_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def contact_group_add_contact(self, contact_group_name, contact_names):
+        """This method is used to add a contact to the linked contacts of a contact group. Generating configuration \
+        files and restarting the engine is required
+
+        :param contact_group_name: Name of the contact group
+        :type contact_group_name: str
+        :param contact_names: List of the names of contacts
+        :type contact_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addcontact",
+                     "object": "cg",
+                     "values": ";".join([contact_group_name, "|".join(contact_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_group_set_contact(self, contact_group_name, contact_names):
+        """This method is used to set the contacts for a contact group. Existing contacts are overwritten. \
+        Generating configuration files and restarting the engine is required
+
+        :param contact_group_name: Name of the contact group
+        :type contact_group_name: str
+        :param contact_names: List of the names of the contacts
+        :type contact_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setcontact",
+                     "object": "cg",
+                     "values": ";".join([contact_group_name, "|".join(contact_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_group_del_contact(self, contact_group_name, contact_name):
+        """This method is used to delete a linked contact of a contact group
+
+        :param contact_group_name: Name of the contact group
+        :type contact_group_name: str
+        :param contact_name: Name of the contact
+        :type contact_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delcontact",
+                     "object": "cg",
+                     "values": ";".join([contact_group_name, contact_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
