@@ -2,9 +2,11 @@ from centreon_sdk.network.network import Network, HTTPVerb
 from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
 from centreon_sdk.objects.base.contact_group import ContactGroup
 from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactTemplateAuthType
+from centreon_sdk.objects.base.dependency import Dependency
 from centreon_sdk.objects.base.host import Host
 from centreon_sdk.objects.base.host_status import HostStatus
 from centreon_sdk.objects.base.macro import Macro
+from centreon_sdk.objects.base.service import Service
 from centreon_sdk.objects.base.service_status import ServiceStatus
 from centreon_sdk.util import method_utils
 from centreon_sdk.util.config import Config
@@ -47,6 +49,20 @@ class Centreon:
         response = self.network.make_request(HTTPVerb.POST, data=data_dict, params=param_dict, use_encode_json=False,
                                              use_header=False)
         return response["authToken"]
+
+    def restart_poller(self, instance_name):
+        """This method is used to restart a poller
+
+        :param instance_name: Instance name of the poller
+        :type instance_name: str
+
+        :return: None
+        """
+        data_dict = {"action": "APPLYCFG",
+                     "values": instance_name}
+        response = self.network.make_request(HTTPVerb.POST, data=data_dict, params=self.config.vars["params"])
+        for item in response["result"]:
+            print(item)
 
     def host_status_get(self, *, viewType=None, fields=None, status=None, hostgroup=None, instance=None, search=None,
                         critically=None, sortType=None, order=None, limit=None, number=None):
@@ -2309,5 +2325,60 @@ class Centreon:
         data_dict = {"action": "delcontact",
                      "object": "cg",
                      "values": ";".join([contact_group_name, contact_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def dependency_show(self):
+        """This method is used to show all available dependencies
+
+        :return: Returns a list of the available dependencies
+        :rtype: :ref:`class_dependency`
+        """
+        data_dict = {"action": "show",
+                     "object": "dep"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        return [Dependency(**x) for x in response]
+
+    def dependency_add(self, name, description, dependency_type, parent_names):
+        data_dict = {"action": "add",
+                     "object": "dep",
+                     "values": ";".join([name, description, dependency_type.value, parent_names])}
+        raise NotImplementedError
+
+    def service_show(self):
+        """This method is used to list all available services
+
+        :return: Returns a list of all available services
+        :rtype: list of :ref:`class_service`
+        """
+        data_dict = {"action": "show",
+                     "object": "service"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for service in response:
+            service["activate"] = bool(service["activate"])
+            service["id_unique"] = int(service["id_unique"])
+            service["host_id"] = int(service["host_id"])
+        return [Service(**x) for x in response]
+
+    def service_set_param(self, host_name, service_description, param_name, param_value):
+        """This method is used to set a parameter for a service
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_service_param`
+        :param param_value: Value of the parameter
+        :type param_value: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "service",
+                     "values": ";".join([host_name, service_description, param_name.value, param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
