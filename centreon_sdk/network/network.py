@@ -54,4 +54,13 @@ class Network:
         json_decoded = method_utils.replace_keys_from_dict("macro name", "macro_name", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("macro value", "macro_value", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("gui access", "gui_access", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("host id", "host_id", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("host name", "host_name", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("check command", "check_command", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("check command arg", "check_command_arg", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("normal check interval", "normal_check_interval", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("retry check interval", "retry_check_interval", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("max check attempts", "max_check_attempts", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("active checks enabled", "active_checks_enabled", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("passive checks enabled", "passive_checks_enabled", json_decoded)
         return json_decoded
