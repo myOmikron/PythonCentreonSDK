@@ -362,20 +362,18 @@ class Centreon:
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
-    def host_apply_template(self, host_name, template_name):
+    def host_apply_template(self, host_name):
         """This method is used to apply a template to a host
 
         :param host_name: Name of the host
         :type host_name: str
-        :param template_name: Name of the template
-        :type template_name: str
 
         :return: Returns True on success
         :rtype: bool
         """
         data_dict = {"action": "applytpl",
                      "object": "host",
-                     "values": ";".join([host_name, template_name])}
+                     "values": host_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
