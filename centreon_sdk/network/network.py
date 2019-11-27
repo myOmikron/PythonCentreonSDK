@@ -1,6 +1,6 @@
 import enum
-import httpx
 import json
+import requests
 
 from centreon_sdk.util import method_utils
 
@@ -16,9 +16,10 @@ class Network:
     :param config: Config to use
     :type config: :ref:object_config:
     """
-    def __init__(self, config):
+    def __init__(self, config, verify=True):
         self.config = config
-        self.client = httpx.Client(verify=False)
+        self.session = requests.Session()
+        self.session.verify = verify
 
     def make_request(self, verb, *, params=None, data=None, use_encode_json=True, use_header=True):
         """This method is used to make request to the REST endpoint
@@ -42,14 +43,14 @@ class Network:
         data = json.dumps(data) if use_encode_json else data
 
         if verb == HTTPVerb.GET:
-            response = self.client.get(self.config.vars["URL"], params=params, headers=header)
+            response = self.session.get(self.config.vars["URL"], params=params, headers=header)
         elif verb == HTTPVerb.POST:
-            response = self.client.post(self.config.vars["URL"], params=params, data=data, headers=header)
+            response = self.session.post(self.config.vars["URL"], params=params, data=data, headers=header)
 
         if not response.status_code == 200:
             print(response.status_code, response.text)
             return
-        json_decoded: dict = json.loads(response.text)
+        json_decoded = json.loads(response.text)
         json_decoded = method_utils.replace_keys_from_dict("id", "id_unique", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("macro name", "macro_name", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("macro value", "macro_value", json_decoded)

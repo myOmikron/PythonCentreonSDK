@@ -22,12 +22,14 @@ class Centreon:
     :type password: str
     :param url: URL to use for requests
     :type url: str
+    :param verify: Optional: Set False if you do not want to verify the SSL certificate
+    :type verify: bool
     """
 
-    def __init__(self, username, password, url):
+    def __init__(self, username, password, url, verify=True):
         self.config = Config()
         self.config.vars["URL"] = url
-        self.network = Network(self.config)
+        self.network = Network(self.config, verify)
         self.config.vars["header"] = {"centreon-auth-token": self.get_auth_token(username, password)}
         self.config.vars["params"] = {"action": "action",
                                                 "object": "centreon_clapi"}
