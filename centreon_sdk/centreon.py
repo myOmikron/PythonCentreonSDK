@@ -2379,6 +2379,7 @@ class Centreon:
         """
         data_dict = {"action": "setparam",
                      "object": "service",
-                     "values": ";".join([host_name, service_description, param_name.value, param_value])}
+                     "values": ";".join([host_name, service_description, param_name.value,
+                                         str(int(param_value)) if isinstance(param_value, bool) else param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
