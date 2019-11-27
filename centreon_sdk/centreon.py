@@ -1,5 +1,6 @@
 from centreon_sdk.network.network import Network, HTTPVerb
 from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
+from centreon_sdk.objects.base.contact_group import ContactGroup
 from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactTemplateAuthType
 from centreon_sdk.objects.base.host import Host
 from centreon_sdk.objects.base.host_status import HostStatus
@@ -2139,6 +2140,106 @@ class Centreon:
         data_dict = {"action": "disable",
                      "obejct": "contacttpl",
                      "values": contact_template_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
+    def contact_group_show(self):
+        """This method is used to list all available contact groups. Generating configuration files and restarting the \
+        engine is required
+
+        :return: Returns a list of all available contact groups
+        :rtype: :ref:`class:contact_group`
+        """
+        data_dict = {"action": "show",
+                     "object": "cg"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for contact_group in response:
+            contact_group["id_unique"] = int(contact_group["id_unique"])
+        return [ContactGroup(**x) for x in response]
+
+    def contact_group_add(self, name, alias):
+        """This method is used to add a contact group. Generating configuration files and restarting the \
+        engine is required
+
+        :param name: Name of the contact group
+        :type name: str
+        :param alias: Alias of the contact group
+        :type alias: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "cg",
+                     "values": ";".join([name, alias])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_group_del(self, name):
+        """This method is used to delete a contact group. Generating configuration files and restarting the \
+        engine is required
+
+        :param name: Name of the contact group
+        :type name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "cg",
+                     "values": name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_group_set_param(self, contact_group_name, param_name, param_value):
+        """This method is used to set a parameter for a contact group. Generating configuration files and restarting \
+        the engine is required
+
+        :param contact_group_name: Name of the contact group
+        :type contact_group_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_contact_group_param`
+        :param param_value: Value of the parameter
+        :type param_value: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "cg",
+                     "values": ";".join([contact_group_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_group_enable(self, contact_group_name):
+        """This method is used to enable a contact group. Generating configuration files and restarting \
+        the engine is required
+
+        :param contact_group_name: Name of the contact group
+        :type contact_group_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "enable",
+                     "object": "cg",
+                     "values": contact_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_group_disable(self, contact_group_name):
+        """This method is used to disable a contact group. Generating configuration files and restarting the engine is \
+        required
+
+        :param contact_group_name: Name of the contact group
+        :type contact_group_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "disable",
+                     "object": "cg",
+                     "values": contact_group_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
