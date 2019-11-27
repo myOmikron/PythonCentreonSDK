@@ -1,5 +1,6 @@
 from centreon_sdk.network.network import Network, HTTPVerb
-from centreon_sdk.objects.base.contact import Contact
+from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
+from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactTemplateAuthType
 from centreon_sdk.objects.base.host import Host
 from centreon_sdk.objects.base.host_status import HostStatus
 from centreon_sdk.objects.base.macro import Macro
@@ -25,7 +26,7 @@ class Centreon:
         self.config.vars["URL"] = url
         self.network = Network(self.config)
         self.config.vars["header"] = {"centreon-auth-token": self.get_auth_token(username, password)}
-        self.config.vars["param_dict_clapi"] = {"action": "action",
+        self.config.vars["params"] = {"action": "action",
                                                 "object": "centreon_clapi"}
 
     def get_auth_token(self, username, password):
@@ -138,7 +139,7 @@ class Centreon:
         """
         data_dict = {"object": "host",
                      "action": "show"}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         response = response["result"]
         return [Host(**x) for x in response]
 
@@ -153,7 +154,7 @@ class Centreon:
         data_dict = {"action": "add",
                      "object": "host",
                      "values": host_add_str}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_del(self, host_name):
@@ -168,7 +169,7 @@ class Centreon:
         data_dict = {"action": "del",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_set_param(self, host_name, param_name, param_value):
@@ -187,7 +188,7 @@ class Centreon:
         data_dict = {"action": "setparam",
                      "object": "host",
                      "values": ";".join([host_name, param_name, param_value])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_get_params(self, host_name, params):
@@ -204,7 +205,7 @@ class Centreon:
         data_dict = {"action": "getparam",
                      "object": "host",
                      "values": host_name + ";" + "|".join(params)}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         if len(params) == 1:
             return {params[0]: response["result"][0]}
         return response["result"][0]
@@ -223,7 +224,7 @@ class Centreon:
         data_dict = {"action": "setinstance",
                      "object": "host",
                      "values": host_name + ";" + instance}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_get_macro(self, host_name):
@@ -238,7 +239,7 @@ class Centreon:
         data_dict = {"action": "getmacro",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         response = response["result"]
         return [Macro(**x) for x in response]
 
@@ -258,7 +259,7 @@ class Centreon:
         data_dict = {"action": "setmacro",
                      "object": "host",
                      "values": ";".join([host_name, macro_name, macro_value])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_del_macro(self, host_name, macro_name):
@@ -275,7 +276,7 @@ class Centreon:
         data_dict = {"action": "delmacro",
                      "object": "host",
                      "values": ";".join([host_name, macro_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_get_template(self, host_name):
@@ -290,7 +291,7 @@ class Centreon:
         data_dict = {"action": "gettemplate",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def host_set_template(self, host_name, template_name):
@@ -307,7 +308,7 @@ class Centreon:
         data_dict = {"action": "settemplate",
                      "object": "host",
                      "values": ";".join([host_name, template_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_add_template(self, host_name, template_name):
@@ -324,7 +325,7 @@ class Centreon:
         data_dict = {"action": "addtemplate",
                      "object": "host",
                      "values": ";".join([host_name, template_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_del_template(self, host_name, template_name):
@@ -341,7 +342,7 @@ class Centreon:
         data_dict = {"action": "deltemplate",
                      "object": "host",
                      "values": ";".join([host_name, template_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_apply_template(self, host_name, template_name):
@@ -358,7 +359,7 @@ class Centreon:
         data_dict = {"action": "applytpl",
                      "object": "host",
                      "values": ";".join([host_name, template_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_get_parent(self, host_name):
@@ -372,7 +373,7 @@ class Centreon:
         data_dict = {"action": "getparent",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def host_set_parent(self, host_name, parent_names):
@@ -389,7 +390,7 @@ class Centreon:
         data_dict = {"action": "setparent",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(parent_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_add_parent(self, host_name, parent_names):
@@ -406,7 +407,7 @@ class Centreon:
         data_dict = {"action": "addparent",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(parent_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_del_parent(self, host_name, parent_names):
@@ -423,7 +424,7 @@ class Centreon:
         data_dict = {"action": "delparent",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(parent_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_get_contact_group(self, host_name):
@@ -438,7 +439,7 @@ class Centreon:
         data_dict = {"action": "getcontactgroup",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def host_add_contact_group(self, host_name, contact_group_names):
@@ -455,7 +456,7 @@ class Centreon:
         data_dict = {"action": "addcontactgroup",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(contact_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_set_contact_group(self, host_name, contact_group_names):
@@ -472,7 +473,7 @@ class Centreon:
         data_dict = {"action": "setcontactgroup",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(contact_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_del_contact_group(self, host_name, contact_group_names):
@@ -489,7 +490,7 @@ class Centreon:
         data_dict = {"action": "delcontactgroup",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(contact_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_get_contact(self, host_name):
@@ -504,7 +505,7 @@ class Centreon:
         data_dict = {"action": "getcontact",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def host_add_contact(self, host_name, contact_names):
@@ -521,7 +522,7 @@ class Centreon:
         data_dict = {"action": "addcontact",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(contact_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_set_contact(self, host_name, contact_names):
@@ -538,7 +539,7 @@ class Centreon:
         data_dict = {"action": "setcontact",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(contact_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_del_contact(self, host_name, contact_names):
@@ -555,7 +556,7 @@ class Centreon:
         data_dict = {"action": "delcontact",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(contact_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_get_host_group(self, host_name):
@@ -570,7 +571,7 @@ class Centreon:
         data_dict = {"action": "gethostgroup",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def host_add_host_group(self, host_name, host_group_names):
@@ -587,7 +588,7 @@ class Centreon:
         data_dict = {"action": "addhostgroup",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(host_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_set_host_group(self, host_name, host_group_names):
@@ -604,7 +605,7 @@ class Centreon:
         data_dict = {"action": "sethostgroup",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(host_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_del_host_group(self, host_name, host_group_names):
@@ -621,7 +622,7 @@ class Centreon:
         data_dict = {"action": "delhostgroup",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(host_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_enable(self, host_name):
@@ -636,7 +637,7 @@ class Centreon:
         data_dict = {"action": "enable",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def host_disable(self, host_name):
@@ -651,7 +652,7 @@ class Centreon:
         data_dict = {"action": "disable",
                      "object": "host",
                      "values": host_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_reload(self):
@@ -662,7 +663,7 @@ class Centreon:
         """
         data_dict = {"action": "reload",
                      "object": "acl"}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_last_reload(self, format_str=None):
@@ -679,7 +680,7 @@ class Centreon:
                      "object": "acl"}
         if format_str:
             data_dict["values"] = format_str
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def acl_action_show(self):
@@ -690,7 +691,7 @@ class Centreon:
         """
         data_dict = {"action": "show",
                      "object": "aclaction"}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def acl_action_add(self, acl_action_name, acl_action_description):
@@ -707,7 +708,7 @@ class Centreon:
         data_dict = {"action": "add",
                      "object": "aclaction",
                      "values": ";".join([acl_action_name, acl_action_description])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_action_del(self, acl_action_name):
@@ -722,7 +723,7 @@ class Centreon:
         data_dict = {"action": "del",
                      "object": "aclaction",
                      "values": acl_action_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_action_set_param(self, acl_action_name, param_name, param_value):
@@ -741,7 +742,7 @@ class Centreon:
         data_dict = {"action": "setparam",
                      "object": "aclaction",
                      "values": ";".join([acl_action_name, param_name, param_value])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_action_get_acl_group(self, acl_action_name):
@@ -756,7 +757,7 @@ class Centreon:
         data_dict = {"action": "getaclgroup",
                      "object": "aclaction",
                      "values": acl_action_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def acl_action_grant(self, acl_action_name, acl_actions=None, enable_all=False):
@@ -775,7 +776,7 @@ class Centreon:
         data_dict = {"action": "grant",
                      "object": "aclaction",
                      "values": ";".join([acl_action_name, "|".join(acl_actions if not enable_all else ["*"])])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_action_revoke(self, acl_action_name, acl_actions=None, disable_all=False):
@@ -794,7 +795,7 @@ class Centreon:
         data_dict = {"action": "revoke",
                      "object": "aclaction",
                      "values": ";".join([acl_action_name, "|".join(acl_actions if not disable_all else ["*"])])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_show(self):
@@ -805,7 +806,7 @@ class Centreon:
         """
         data_dict = {"action": "show",
                      "object": "aclgroup"}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def acl_group_add(self, acl_group_name, acl_group_alias):
@@ -822,7 +823,7 @@ class Centreon:
         data_dict = {"action": "add",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, acl_group_alias])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_del(self, acl_group_name):
@@ -837,7 +838,7 @@ class Centreon:
         data_dict = {"action": "del",
                      "object": "aclgroup",
                      "values": acl_group_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_set_param(self, acl_group_name, param_name, param_value):
@@ -856,7 +857,7 @@ class Centreon:
         data_dict = {"action": "setparam",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, param_name.value, param_value])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_get_menu(self, acl_group_name):
@@ -871,7 +872,7 @@ class Centreon:
         data_dict = {"action": "getmenu",
                      "object": "aclgroup",
                      "values": acl_group_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def acl_group_get_action(self, acl_group_name):
@@ -886,7 +887,7 @@ class Centreon:
         data_dict = {"action": "getaction",
                      "object": "aclgroup",
                      "values": acl_group_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def acl_group_get_resource(self, acl_group_name):
@@ -901,7 +902,7 @@ class Centreon:
         data_dict = {"action": "getresource",
                      "object": "aclgroup",
                      "values": acl_group_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def acl_group_get_contact(self, acl_group_name):
@@ -916,7 +917,7 @@ class Centreon:
         data_dict = {"action": "getcontact",
                      "object": "aclgroup",
                      "values": acl_group_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def acl_group_get_contact_group(self, acl_group_name):
@@ -931,7 +932,7 @@ class Centreon:
         data_dict = {"action": "getcontactgroup",
                      "object": "aclgroup",
                      "values": acl_group_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def acl_group_set_menu(self, acl_group_name, acl_menus):
@@ -948,7 +949,7 @@ class Centreon:
         data_dict = {"action": "setmenu",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, "|".join(acl_menus)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_set_action(self, acl_group_name, acl_actions):
@@ -965,7 +966,7 @@ class Centreon:
         data_dict = {"action": "setacction",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, "|".join(acl_actions)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_set_resource(self, acl_group_name, acl_resources):
@@ -982,7 +983,7 @@ class Centreon:
         data_dict = {"action": "setresource",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, "|".join(acl_resources)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_add_menu(self, acl_group_name, acl_menus):
@@ -999,7 +1000,7 @@ class Centreon:
         data_dict = {"action": "addmenu",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, "|".join(acl_menus)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_add_action(self, acl_group_name, acl_actions):
@@ -1016,7 +1017,7 @@ class Centreon:
         data_dict = {"action": "addaction",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, "|".join(acl_actions)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_add_resource(self, acl_group_name, acl_resources):
@@ -1033,7 +1034,7 @@ class Centreon:
         data_dict = {"action": "addresource",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, "|".join(acl_resources)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_del_menu(self, acl_group_name, acl_menu_name):
@@ -1050,7 +1051,7 @@ class Centreon:
         data_dict = {"action": "delmenu",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, acl_menu_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_del_action(self, acl_group_name, acl_action_name):
@@ -1067,7 +1068,7 @@ class Centreon:
         data_dict = {"action": "delaction",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, acl_action_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_del_resource(self, acl_group_name, acl_resource_name):
@@ -1084,7 +1085,7 @@ class Centreon:
         data_dict = {"action": "delresource",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, acl_resource_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_set_contact(self, acl_group_name, acl_contact_names):
@@ -1101,7 +1102,7 @@ class Centreon:
         data_dict = {"action": "setcontact",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, "|".join(acl_contact_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_set_contact_group(self, acl_group_name, acl_contact_group_names):
@@ -1118,7 +1119,7 @@ class Centreon:
         data_dict = {"action": "setcontactgroup",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, "|".join(acl_contact_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_add_contact(self, acl_group_name, acl_contact_names):
@@ -1135,7 +1136,7 @@ class Centreon:
         data_dict = {"action": "addcontact",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, "|".join(acl_contact_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_add_contact_group(self, acl_group_name, acl_contact_group_names):
@@ -1152,7 +1153,7 @@ class Centreon:
         data_dict = {"action": "addcontactgroup",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, "|".join(acl_contact_group_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_del_contact(self, acl_group_name, acl_contact_name):
@@ -1169,7 +1170,7 @@ class Centreon:
         data_dict = {"action": "delcontact",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, acl_contact_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_group_del_contact_group(self, acl_group_name, acl_contact_group_name):
@@ -1186,7 +1187,7 @@ class Centreon:
         data_dict = {"action": "delcontactgroup",
                      "object": "aclgroup",
                      "values": ";".join([acl_group_name, acl_contact_group_name])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_menu_show(self):
@@ -1197,7 +1198,7 @@ class Centreon:
         """
         data_dict = {"action": "show",
                      "object": "aclmenu"}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def acl_menu_add(self, acl_menu_name, acl_menu_alias):
@@ -1214,7 +1215,7 @@ class Centreon:
         data_dict = {"action": "add",
                      "object": "aclmenu",
                      "values": ";".join([acl_menu_name, acl_menu_alias])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_menu_del(self, acl_menu_name):
@@ -1229,7 +1230,7 @@ class Centreon:
         data_dict = {"action": "del",
                      "object": "aclmenu",
                      "values": acl_menu_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_menu_set_param(self, acl_menu_name, param_name, param_value):
@@ -1248,7 +1249,7 @@ class Centreon:
         data_dict = {"action": "setparam",
                      "object": "aclmenu",
                      "values": ";".join([acl_menu_name, param_name.value, param_value])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_menu_get_acl_group(self, acl_menu_name):
@@ -1263,7 +1264,7 @@ class Centreon:
         data_dict = {"action": "getaclgroup",
                      "object": "aclmenu",
                      "values": acl_menu_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def acl_menu_grant(self, acl_menu_name, grant_children_menu, menu_names, read_only=False):
@@ -1284,7 +1285,7 @@ class Centreon:
         data_dict = {"action": "grantrw" if not read_only else "grantro",
                      "object": "aclmenu",
                      "values": ";".join([acl_menu_name, "1" if grant_children_menu else "0", ";".join(menu_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_menu_revoke(self, acl_menu_name, grant_children_menu, menu_names):
@@ -1303,7 +1304,7 @@ class Centreon:
         data_dict = {"action": "revoke",
                      "object": "aclmenu",
                      "values": ";".join([acl_menu_name, "1" if grant_children_menu else "0", ";".join(menu_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_resource_show(self):
@@ -1314,7 +1315,7 @@ class Centreon:
         """
         data_dict = {"action": "show",
                      "object": "aclresource"}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def acl_resource_add(self, acl_resource_name, acl_resource_alias):
@@ -1330,7 +1331,7 @@ class Centreon:
         data_dict = {"action": "add",
                      "object": "aclresource",
                      "values": ";".join([acl_resource_name, acl_resource_alias])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_resource_del(self, acl_resource_name):
@@ -1345,7 +1346,7 @@ class Centreon:
         data_dict = {"action": "del",
                      "object": "aclresource",
                      "values": acl_resource_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_resource_set_param(self, acl_resource_name, param_name, param_value):
@@ -1363,7 +1364,7 @@ class Centreon:
         data_dict = {"action": "setparam",
                      "object": "aclresource",
                      "values": ";".join([acl_resource_name, param_name.value, param_value])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_resource_get_acl_group(self, acl_resource_name):
@@ -1378,7 +1379,7 @@ class Centreon:
         data_dict = {"action": "getaclgroup",
                      "object": "aclresource",
                      "values": acl_resource_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def acl_resource_grant(self, acl_group_name, acl_grant_action, acl_resource_names, use_wildcard=False):
@@ -1403,7 +1404,7 @@ class Centreon:
                      "object": "aclresource",
                      "values": ";".join([acl_group_name, "*" if use_wildcard and acl_grant_action.value[1] else
                                         "|".join(acl_resource_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def acl_resource_revoke(self, acl_group_name, acl_revoke_action, acl_resource_names, use_wildcard=False):
@@ -1424,7 +1425,7 @@ class Centreon:
         data_dict = {"action": acl_revoke_action.value,
                      "object": "aclresource",
                      "values": ";".join([acl_group_name, "*" if use_wildcard else "|".join(acl_resource_names)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cent_broker_cfg_show(self):
@@ -1435,7 +1436,7 @@ class Centreon:
         """
         data_dict = {"action": "show",
                      "object": "centbrokercfg"}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def cent_broker_cfg_add(self, cent_broker_cfg_name, cent_broker_cfg_instance):
@@ -1452,7 +1453,7 @@ class Centreon:
         data_dict = {"action": "add",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, cent_broker_cfg_instance])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cent_broker_cfg_del(self, cent_broker_cfg_name):
@@ -1467,7 +1468,7 @@ class Centreon:
         data_dict = {"action": "del",
                      "object": "centbrokercfg",
                      "values": cent_broker_cfg_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cent_broker_cfg_set_param(self, cent_broker_cfg_name, param_name, param_value):
@@ -1486,7 +1487,7 @@ class Centreon:
         data_dict = {"action": "setparam",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, param_name.value, param_value])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cent_broker_cfg_list_input(self, cent_broker_cfg_name):
@@ -1501,7 +1502,7 @@ class Centreon:
         data_dict = {"action": "listinput",
                      "object": "centbrokercfg",
                      "values": cent_broker_cfg_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def cent_broker_cfg_list_output(self, cent_broker_cfg_name):
@@ -1516,7 +1517,7 @@ class Centreon:
         data_dict = {"action": "listoutput",
                      "object": "centbrokercfg",
                      "values": cent_broker_cfg_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def cent_broker_cfg_list_logger(self, cent_broker_cfg_name):
@@ -1531,7 +1532,7 @@ class Centreon:
         data_dict = {"action": "listlogger",
                      "object": "centbrokercfg",
                      "values": cent_broker_cfg_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def cent_broker_cfg_get_input(self, cent_broker_cfg_name, input_id):
@@ -1548,7 +1549,7 @@ class Centreon:
         data_dict = {"action": "getinput",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, input_id])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def cent_broker_cfg_get_output(self, cent_broker_cfg_name, output_id):
@@ -1565,7 +1566,7 @@ class Centreon:
         data_dict = {"action": "getoutput",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, output_id])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def cent_broker_cfg_get_logger(self, cent_broker_cfg_name, logger_id):
@@ -1582,7 +1583,7 @@ class Centreon:
         data_dict = {"action": "getlogger",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, logger_id])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def cent_broker_cfg_add_input(self, cent_broker_cfg_name, input_name, input_nature):
@@ -1601,7 +1602,7 @@ class Centreon:
         data_dict = {"action": "addinput",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, input_name, input_nature.value])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cent_broker_cfg_add_output(self, cent_broker_cfg_name, output_name, output_nature):
@@ -1620,7 +1621,7 @@ class Centreon:
         data_dict = {"action": "addoutput",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, output_name, output_nature.value])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cent_broker_cfg_add_logger(self, cent_broker_cfg_name, logger_name, logger_nature):
@@ -1639,7 +1640,7 @@ class Centreon:
         data_dict = {"action": "addlogger",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, logger_name, logger_nature.value])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cent_broker_cfg_del_input(self, cent_broker_cfg_name, input_id):
@@ -1656,7 +1657,7 @@ class Centreon:
         data_dict = {"action": "delinput",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, input_id])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cent_broker_cfg_del_output(self, cent_broker_cfg_name, output_id):
@@ -1673,7 +1674,7 @@ class Centreon:
         data_dict = {"action": "deloutput",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, output_id])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cent_broker_cfg_del_logger(self, cent_broker_cfg_name, logger_id):
@@ -1690,7 +1691,7 @@ class Centreon:
         data_dict = {"action": "dellogger",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, logger_id])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cent_broker_cfg_set_input(self, cent_broker_cfg_name, input_id, param_name, param_values):
@@ -1711,7 +1712,7 @@ class Centreon:
         data_dict = {"action": "setinput",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, input_id, param_name, ",".join(param_values)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cent_broker_cfg_set_output(self, cent_broker_cfg_name, output_id, param_name, param_values):
@@ -1732,7 +1733,7 @@ class Centreon:
         data_dict = {"action": "setoutput",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, output_id, param_name, ",".join(param_values)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cent_broker_cfg_set_logger(self, cent_broker_cfg_name, logger_id, param_name, param_values):
@@ -1753,7 +1754,7 @@ class Centreon:
         data_dict = {"action": "setlogger",
                      "object": "centbrokercfg",
                      "values": ";".join([cent_broker_cfg_name, logger_id, param_name, ",".join(param_values)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cent_broker_cfg_get_type_list(self, io_type):
@@ -1768,7 +1769,7 @@ class Centreon:
         data_dict = {"action": "gettypelist",
                      "object": "centbrokercfg",
                      "values": io_type.value}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def cent_broker_cfg_get_field_list(self, type_name):
@@ -1784,7 +1785,7 @@ class Centreon:
         data_dict = {"action": "getfieldlist",
                      "object": "centbrokercfg",
                      "values": type_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def cent_broker_cfg_get_value_list(self, field_name):
@@ -1799,7 +1800,7 @@ class Centreon:
         data_dict = {"action": "getvaluelist",
                      "object": "centbrokercfg",
                      "values": field_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def cmd_show(self):
@@ -1810,7 +1811,7 @@ class Centreon:
         """
         data_dict = {"action": "show",
                      "object": "cmd"}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def cmd_add(self, cmd_name, cmd_type, command_line):
@@ -1830,7 +1831,7 @@ class Centreon:
         data_dict = {"action": "add",
                      "object": "cmd",
                      "values": ";".join([cmd_name, cmd_type.value, command_line])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cmd_del(self, cmd_name):
@@ -1846,7 +1847,7 @@ class Centreon:
         data_dict = {"action": "del",
                      "object": "cmd",
                      "values": cmd_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cmd_set_param(self, cmd_name, param_name, param_value):
@@ -1866,7 +1867,7 @@ class Centreon:
         data_dict = {"action": "setparam",
                      "object": "cmd",
                      "values": ";".join([cmd_name, param_name.value, param_value])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def cmd_get_argument_description(self, cmd_name):
@@ -1881,7 +1882,7 @@ class Centreon:
         data_dict = {"action": "getargumentdescr",
                      "object": "cmd",
                      "values": cmd_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
     def cmd_set_argument_description(self, cmd_name, arg_descriptions):
@@ -1898,7 +1899,7 @@ class Centreon:
         data_dict = {"action": "setargumentdescr",
                      "object": "cmd",
                      "values": ";".join([cmd_name, ";".join(arg_descriptions)])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def contact_show(self):
@@ -1909,7 +1910,7 @@ class Centreon:
         """
         data_dict = {"action": "show",
                      "object": "contact"}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         response = response["result"]
         for contact in response:
             contact["id_unique"] = int(contact["id_unique"])
@@ -1946,7 +1947,7 @@ class Centreon:
                      "object": "contact",
                      "values": ";".join([name, alias, email, password, "1" if admin else "0",
                                          "1" if gui_access else "0", language, authentication_type.value])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def contact_del(self, contact_name):
@@ -1962,7 +1963,7 @@ class Centreon:
         data_dict = {"action": "del",
                      "object": "contact",
                      "values": contact_name}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def contact_set_param(self, alias, param_name, param_value):
@@ -1974,15 +1975,19 @@ class Centreon:
         :param param_name: Name of the parameter
         :type param_name: :ref:`class_contact_param`
         :param param_value: Value of the parameter
-        :type param_value: str
+        :type param_value: See :ref:`class_contact_param` for information about the data type
 
         :return: Returns True if the operation was successful
         :rtype: bool
         """
         data_dict = {"action": "setparam",
                      "object": "contact",
-                     "values": ";".join([alias, param_name.value, param_value])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+                     "values": ";".join([alias, param_name.value,
+                                        "|".join(param_value) if isinstance(param_value, list)
+                                         else int(param_value) if isinstance(param_value, bool)
+                                         else param_value.value if isinstance(param_value, ContactAuthenticationType)
+                                         else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def contact_enable(self, contact_alias):
@@ -1998,7 +2003,7 @@ class Centreon:
         data_dict = {"action": "enable",
                      "object": "contact",
                      "values": contact_alias}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
     def contact_disable(self, contact_alias):
@@ -2014,5 +2019,126 @@ class Centreon:
         data_dict = {"action": "enable",
                      "object": "contact",
                      "values": contact_alias}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["param_dict_clapi"], data=data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_template_show(self):
+        """This method is used to get all available contact templates
+
+        :return: Returns all available contact templates
+        :rtype: list of :ref:`class_contact_template`
+        """
+        data_dict = {"action": "show",
+                     "object": "contacttpl"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for contact_template in response:
+            contact_template["admin"] = bool(contact_template["admin"])
+            contact_template["id_unique"] = int(contact_template["id_unique"])
+            contact_template["gui_access"] = bool(contact_template["gui_access"])
+            contact_template["activate"] = bool(contact_template["activate"])
+        return [ContactTemplate(**x) for x in response]
+
+    def contact_template_add(self, name, alias, email, password, admin, gui_access, language, authentication_type):
+        """This method is used to add a new contact template. Generating configuration files and restarting the \
+        monitoring engine is required
+
+        :param name: Name of the contact
+        :type name: str
+        :param alias: Alias of the contact
+        :type alias: str
+        :param email: EMail of the contact
+        :type email: str
+        :param password: Password of the contact
+        :type password: str
+        :param admin: Is the contact an admin?
+        :type admin: bool
+        :param gui_access: Has the contact gui access?
+        :type gui_access: bool
+        :param language: Language of the contact
+        :type language: str
+        :param authentication_type: Authentication type used be the contact
+        :type authentication_type: :ref:`class_contact_template_authentication_type`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "contacttpl",
+                     "values": ";".join([name, alias, email, password, int(admin), int(gui_access), language,
+                                         authentication_type.value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_template_del(self, name):
+        """This method is used to delete a contact template. Generating configuration files and restarting the \
+        monitoring engine is required
+
+        :param name: Name of the contact template
+        :type name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "contacttpl",
+                     "values": name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_template_set_param(self, contact_template_alias, param_name, param_value):
+        """This method is used to set a parameter of a contact template. Generating configuration files and restarting \
+        the monitoring engine is required
+
+        :param contact_template_alias: Alias of the contact template
+        :type contact_template_alias: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_contact_template_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_contact_template_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "contacttpl",
+                     "values": ";".join([contact_template_alias, param_name.value,
+                                        "|".join(param_value) if isinstance(param_value, list)
+                                         else int(param_value) if isinstance(param_value, bool)
+                                         else param_value.value if isinstance(param_value, ContactTemplateAuthType)
+                                         else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_template_enable(self, contact_template_name):
+        """This method is used to enable a contact template. Generating configuration files and restarting the \
+        monitoring engine is required
+
+        :param contact_template_name: Name of the contact template
+        :type contact_template_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "enable",
+                     "object": "contacttpl",
+                     "values": contact_template_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def contact_template_disable(self, contact_template_name):
+        """This method is used to disable a contact template. Generating configuration files and restarting the \
+        engine is required
+
+        :param contact_template_name: Name of the contact template
+        :type contact_template_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "disable",
+                     "obejct": "contacttpl",
+                     "values": contact_template_name}
+
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
