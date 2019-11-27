@@ -47,7 +47,7 @@ class Network:
             response = self.client.post(self.config.vars["URL"], params=params, data=data, headers=header)
 
         if not response.status_code == 200:
-            print(response.text)
+            print(response.status_code, response.text)
             return
         json_decoded: dict = json.loads(response.text)
         json_decoded = method_utils.replace_keys_from_dict("id", "id_unique", json_decoded)
