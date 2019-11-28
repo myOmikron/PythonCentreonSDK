@@ -2341,10 +2341,157 @@ class Centreon:
         return [Dependency(**x) for x in response]
 
     def dependency_add(self, name, description, dependency_type, parent_names):
+        """This method is used to add a new dependency. \
+        Generating configuration files and restarting the engine is required
+
+        :param name: Name of the dependency
+        :type name: str
+        :param description: Description of the dependency
+        :type description: str
+        :param dependency_type: Type of the dependency
+        :type dependency_type: :ref:`class_dependency_type`
+        :param parent_names: Name of the parent resources
+        :type parent_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
         data_dict = {"action": "add",
                      "object": "dep",
-                     "values": ";".join([name, description, dependency_type.value, parent_names])}
-        raise NotImplementedError
+                     "values": ";".join([name, description, dependency_type.value, "|".join(parent_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def dependency_del(self, dependency_name):
+        """This method is used to delete a dependency. \
+        Generating configuration files and restarting the engine is required
+
+        :param dependency_name: Name of the dependency
+        :type dependency_name: str
+
+        :return: Returns True if the operation is successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "dep",
+                     "values": dependency_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def dependency_set_param(self, name, description, comment, inherits_parent, execution_failure_criteria,
+                             notification_failure_criteria):
+        """This method is used to set a parameter for a dependency. \
+        Generating configuration files and restarting the engine is required
+
+        :param name: Name of the dependency
+        :type name: str
+        :param description: Description of the dependency
+        :type description: str
+        :param comment: Comment of the dependency
+        :type comment: str
+        :param inherits_parent: Does the dependency inherits from its parent?
+        :type inherits_parent: bool
+        :param execution_failure_criteria: Execution failure criteria
+        :type execution_failure_criteria: :ref:`class_dependency_failure_criteria`
+        :param notification_failure_criteria: Notification failure criteria
+        :type notification_failure_criteria:  :ref:`class_dependency_failure_criteria`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "dep",
+                     "values": ";".join([name, description, comment, str(int(inherits_parent)),
+                                         execution_failure_criteria.value, notification_failure_criteria.value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def dependency_list_dependencies(self, dependency_name):
+        """This method is used to retrieve the dependency definitions of a dependency object
+
+        :param dependency_name: Name of the dependency
+        :type dependency_name: str
+
+        :return: Returns the dependency definitions
+        :rtype: list of dict
+        """
+        data_dict = {"action": "listdep",
+                     "object": "dep",
+                     "values": dependency_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def dependency_add_parent(self, dependency_name, parent_names):
+        """This method is used to add parents to a dependency
+
+        :param dependency_name: Name of the dependency
+        :type dependency_name: str
+        :param parent_names: List of parents. If parent is a service, str has to be in the format \
+        "host_name,service_description"
+        :type parent_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addparent",
+                     "object": "dep",
+                     "values": ";".join([dependency_name, "|".join(parent_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def dependency_add_child(self, dependency_name, child_names):
+        """This method is used to add children to a dependency
+
+        :param dependency_name: Name of the dependency
+        :type dependency_name: str
+        :param child_names: List of children names. If children is a service, str has to be in the format \
+        "host_name,service_description"
+        :type  child_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addchild",
+                     "object": "dep",
+                     "values": ";".join([dependency_name, "|".join(child_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def dependency_del_parent(self, dependency_name, parent_names):
+        """This method is used to delete a parent from a dependency
+
+        :param dependency_name: Name of the dependency
+        :type dependency_name: str
+        :param parent_names: List of parent names to delete. If parent is a service, str has to be in the format \
+        "host_name,service_description"
+        :type parent_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delparent",
+                     "object": "dep",
+                     "values": ";".join([dependency_name, "|".join(parent_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def dependency_del_child(self, dependency_name, child_names):
+        """This method is used to delete a children from a dependency
+
+        :param dependency_name: Name of the dependency
+        :type dependency_name: str
+        :param child_names: List of parent names to delete. If children is a service, str has to be in the format \
+        "host_name,service_description"
+        :type child_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delparent",
+                     "object": "dep",
+                     "values": ";".join([dependency_name, "|".join(child_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def service_show(self):
         """This method is used to list all available services
