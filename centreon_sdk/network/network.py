@@ -64,4 +64,12 @@ class Network:
         json_decoded = method_utils.replace_keys_from_dict("max check attempts", "max_check_attempts", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("active checks enabled", "active_checks_enabled", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("passive checks enabled", "passive_checks_enabled", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("bin", "bin_scheduler", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("ip address", "ip_address", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("engine restart command", "engine_restart_command", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("engine reload command", "engine_reload_command", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("broker reload command", "broker_reload_command", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("stats bin", "stats_bin", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("ssh port", "ssh_port", json_decoded)
+        """TODO: refactor"""
         return json_decoded

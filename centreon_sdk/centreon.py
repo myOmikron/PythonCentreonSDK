@@ -5,6 +5,7 @@ from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactT
 from centreon_sdk.objects.base.dependency import Dependency
 from centreon_sdk.objects.base.host import Host
 from centreon_sdk.objects.base.host_status import HostStatus
+from centreon_sdk.objects.base.instance import Instance
 from centreon_sdk.objects.base.macro import Macro
 from centreon_sdk.objects.base.service import Service
 from centreon_sdk.objects.base.service_status import ServiceStatus
@@ -2962,3 +2963,87 @@ class Centreon:
                      "values": ";".join([host_name, service_description, "|".join(trap_names)])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
+
+    def instance_show(self):
+        """This method is used to list the available instances, also called poller
+
+        :return: Returns a list of instances
+        :rtype: list of :ref:`class_instance`
+        """
+        data_dict = {"action": "show",
+                     "object": "instance"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for instance in response:
+            instance["id_unique"] = int(instance["id_unique"])
+            instance["localhost"] = bool(instance["localhost"])
+            instance["activate"] = bool(instance["activate"])
+            instance["ssh_port"] = int(instance["ssh_port"])
+            instance["status"] = bool(instance["status"])
+        return [Instance(**x) for x in response]
+
+    def instance_add(self, name, address, ssh_port):
+        """This method is used to add an instance.
+
+        :param name: Name of the instance
+        :type name: str
+        :param address: Address of the instance
+        :type address: str
+        :param ssh_port: Port of the SSH Server
+        :type ssh_port: int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "instance",
+                     "values": ";".join([name, address, ssh_port])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def instance_del(self, instance_name):
+        """This method is used to delete an instance.
+
+        :param instance_name: Name of the instance
+        :type instance_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "instance",
+                     "values": instance_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def instance_set_param(self, instance_name, param_name, param_value):
+        """This method is used to set a parameter for an instance.
+
+        :param instance_name: Name of the instance
+        :type instance_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_instance_param`
+        :param param_value: Value of the parameter. See :ref:`class_instance_param` for further information.
+        :type param_value: See :ref:`class_instance_param` for further information.
+        :return:
+        """
+        data_dict = {"action": "setparam",
+                     "object": "instance",
+                     "values": ";".join([instance_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def instance_get_hosts(self, instance_name):
+        """This method is used to list all hosts that are linked to an instance
+
+        :param instance_name: Name of the instance
+        :type instance_name: str
+
+        :return: Returns a list of hosts
+        :rtype: list of dict
+        """
+        data_dict = {"action": "gethosts",
+                     "object": "instance",
+                     "values": instance_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
