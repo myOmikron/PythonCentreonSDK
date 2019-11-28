@@ -45,3 +45,13 @@ class DependencyType(enum.Enum):
     SERVICE_GROUP = "SG"
     SERVICE = "SERVICE"
     META_SERVICE = "META"
+
+
+class DependencyParam(enum.Enum):
+    """This class represents the parameter available for dependencies"""
+    NAME = "name"
+    DESCRIPTION = "description"
+    COMMENT = "comment"
+    INHERITS_PARENT = "inherits_parent"
+    EXECUTION_FAILURE_CRITERIA = "execution_failure_criteria"
+    NOTIFICATION_FAILURE_CRITERIA = "notification_failure_criteria"

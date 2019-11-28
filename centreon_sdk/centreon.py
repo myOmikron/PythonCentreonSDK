@@ -2379,31 +2379,23 @@ class Centreon:
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
-    def dependency_set_param(self, name, description, comment, inherits_parent, execution_failure_criteria,
-                             notification_failure_criteria):
+    def dependency_set_param(self, dependency_name, param_name, param_value):
         """This method is used to set a parameter for a dependency. \
         Generating configuration files and restarting the engine is required
 
-        :param name: Name of the dependency
-        :type name: str
-        :param description: Description of the dependency
-        :type description: str
-        :param comment: Comment of the dependency
-        :type comment: str
-        :param inherits_parent: Does the dependency inherits from its parent?
-        :type inherits_parent: bool
-        :param execution_failure_criteria: Execution failure criteria
-        :type execution_failure_criteria: :ref:`class_dependency_failure_criteria`
-        :param notification_failure_criteria: Notification failure criteria
-        :type notification_failure_criteria:  :ref:`class_dependency_failure_criteria`
+        :param dependency_name: Name of the dependency
+        :type dependency_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_dependency_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_dependency_param` for further information
 
         :return: Returns True if the operation was successful
         :rtype: bool
         """
         data_dict = {"action": "setparam",
                      "object": "dep",
-                     "values": ";".join([name, description, comment, str(int(inherits_parent)),
-                                         execution_failure_criteria.value, notification_failure_criteria.value])}
+                     "values": ";".join([dependency_name, param_name.value, param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
