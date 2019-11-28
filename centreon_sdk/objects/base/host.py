@@ -18,18 +18,24 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-from centreon_sdk.builder.field_builder import FieldBuilder
-from centreon_sdk.builder.host_builder import HostBuilder
-from centreon_sdk.centreon import Centreon
-from centreon_sdk.network.network import HTTPVerb
-from centreon_sdk.objects.base.acl_group import ACLGroupParam
 
+class Host:
+    """This class represents a host object
 
-if __name__ == '__main__':
-    centreon = Centreon("REST", "HpcuwG4T", "https://centreon.omikron.pw/centreon/api/index.php", verify=False)
-    result = centreon.instance_show()
-    if isinstance(result, list):
-        for item in result:
-            print(item.__dict__)
-    else:
-        print(result)
+    :param name: Name of the host
+    :type name: str
+    :param alias: Alias of the host
+    :type alias: str
+    :param address: Address of the host
+    :type address: str
+    :param activate: Is the host activated?
+    :type activate: bool
+    :param id_unique: Id of the host
+    :type id_unique: int
+    """
+    def __init__(self, *, name, alias, address, activate, id_unique):
+        self.name = name
+        self.alias = alias
+        self.address = address
+        self.activate = activate
+        self.id_unique = id_unique
