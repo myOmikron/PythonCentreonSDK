@@ -5,9 +5,9 @@ with open("README.md") as f:
 
 setuptools.setup(
     name="centreon-sdk",
-    version="0.0.1",
-    author="myOmikron",
-    author_email="kontakt@omikron.pw",
+    version="0.0.2",
+    author="Niklas Pfister",
+    author_email="contact@omikron.pw",
     description="A SDK for python to communicate with Centreon",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -15,13 +15,13 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GNU General Public License v2 or later",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.7',
+    python_requires='>=3.6',
     install_requires=[
         "wheel",
-        "httpx",
+        "requests",
         "jsonpickle"
     ]
 )
