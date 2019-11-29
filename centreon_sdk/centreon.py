@@ -23,6 +23,7 @@ from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
 from centreon_sdk.objects.base.contact_group import ContactGroup
 from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactTemplateAuthType
 from centreon_sdk.objects.base.dependency import Dependency
+from centreon_sdk.objects.base.downtime import Downtime, DowntimeType, DowntimePeriod
 from centreon_sdk.objects.base.host import Host
 from centreon_sdk.objects.base.host_status import HostStatus
 from centreon_sdk.objects.base.instance import Instance
@@ -53,7 +54,7 @@ class Centreon:
         self.network = Network(self.config, verify)
         self.config.vars["header"] = {"centreon-auth-token": self.get_auth_token(username, password)}
         self.config.vars["params"] = {"action": "action",
-                                                "object": "centreon_clapi"}
+                                      "object": "centreon_clapi"}
 
     def get_auth_token(self, username, password):
         """This method is used to receive the authentication token
@@ -1441,7 +1442,7 @@ class Centreon:
         data_dict = {"action": acl_grant_action.value[0],
                      "object": "aclresource",
                      "values": ";".join([acl_group_name, "*" if use_wildcard and acl_grant_action.value[1] else
-                                        "|".join(acl_resource_names)])}
+                     "|".join(acl_resource_names)])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
@@ -2021,7 +2022,7 @@ class Centreon:
         data_dict = {"action": "setparam",
                      "object": "contact",
                      "values": ";".join([alias, param_name.value,
-                                        "|".join(param_value) if isinstance(param_value, list)
+                                         "|".join(param_value) if isinstance(param_value, list)
                                          else int(param_value) if isinstance(param_value, bool)
                                          else param_value.value if isinstance(param_value, ContactAuthenticationType)
                                          else param_value])}
@@ -2141,7 +2142,7 @@ class Centreon:
         data_dict = {"action": "setparam",
                      "object": "contacttpl",
                      "values": ";".join([contact_template_alias, param_name.value,
-                                        "|".join(param_value) if isinstance(param_value, list)
+                                         "|".join(param_value) if isinstance(param_value, list)
                                          else int(param_value) if isinstance(param_value, bool)
                                          else param_value.value if isinstance(param_value, ContactTemplateAuthType)
                                          else param_value])}
@@ -3059,3 +3060,188 @@ class Centreon:
                      "values": instance_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
+
+    def downtime_show(self):
+        """This method is used to list all available recurrent downtimes
+
+        :return: Returns a list of downtimes
+        :rtype: :ref:`class_downtime`
+        """
+        data_dict = {"action": "show",
+                     "object": "downtime"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for downtime in response:
+            downtime["activate"] = bool(downtime["activate"])
+            downtime["id_unique"] = int(downtime["id_unique"])
+        return [Downtime(**x) for x in response]
+
+    def downtime_get(self, downtime_name, downtime_type=None):
+        """This method is used to retrieve information about the resources of a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param downtime_type: Optional: Type of the downtime. If not specified, all information will be recveived
+        :type downtime_type: :ref:`class_downtime_type`
+
+        :return: Returns a list of downtimes which match the name
+        :rtype: list of :ref:`class_downtime`
+        """
+        data_dict = {"action": "show",
+                     "object": "downtime",
+                     "values": downtime_name if not downtime_type else ";".join([downtime_name, downtime_type.value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for downtime in response:
+            downtime["id_unique"] = int(downtime["id_unique"])
+            downtime["activate"] = bool(downtime["activate"])
+            if "hosts" in downtime:
+                if isinstance(downtime["hosts"], list):
+                    downtime["hosts"] = list(downtime["hosts"])
+                else:
+                    downtime["hosts"] = [downtime["hosts"]] if len(downtime["hosts"]) > 0 else []
+            if "services" in downtime:
+                if isinstance(downtime["services"], list):
+                    downtime["services"] = list(downtime["services"])
+                else:
+                    downtime["services"] = [downtime["services"]] if len(downtime["services"]) > 0 else []
+            if "service_groups" in downtime:
+                if isinstance(downtime["service_groups"], list):
+                    downtime["service_groups"] = list(downtime["service_groups"])
+                else:
+                    downtime["service_groups"] = [downtime["service_groups"]] if len(downtime["service_groups"]) > 0 else []
+            if "host_groups" in downtime:
+                if isinstance(downtime["host_groups"], list):
+                    downtime["host_groups"] = list(downtime["host_groups"])
+                else:
+                    downtime["host_groups"] = [downtime["host_groups"]] if len(downtime["host_groups"]) > 0 else []
+        return [Downtime(**x) for x in response]
+
+    def downtime_add(self, downtime_name, downtime_description):
+        """This method is used to add a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param downtime_description: Description of the downtime
+        :type downtime_description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "downtime",
+                     "values": ";".join(downtime_name, downtime_description)}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_del(self, downtime_name):
+        """This method is used to delete a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "downtime",
+                     "values": downtime_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_set_param(self, downtime_name, param_name, param_value):
+        """This method is used to set a parameter for a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_downtime_param`
+        :param param_value: Value of the parameter
+        :type param_value: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_list_periods(self, downtime_name):
+        """This method is used to retrieve the periods set on a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+
+        :return: Returns a list of downtime periods
+        :rtype: list of :ref:`class_downtime_period`
+        """
+        data_dict = {"action": "listperiods",
+                     "object": "downtime",
+                     "values": downtime_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for period in response:
+            period["position"] = int(period["position"])
+            period["fixed"] = bool(period["fixed"])
+            period["duration"] = int(period["duration"]) if period["duration"] else None
+            period["day_of_week"] = [int(x) for x in period["day_of_week"].split(',')] if len(period["day_of_week"]) > 0 else []
+            period["day_of_month"] = [int(x) for x in period["day_of_month"].split(',')] if len(period["day_of_month"]) > 0 else []
+        return [DowntimePeriod(**x) for x in response]
+
+    def downtime_add_weekly_period(self, downtime_name, start_time, end_time, fixed, duration, day_of_week):
+        """This method is used to add a weekly period to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param start_time: Start time of the downtime. Format hh:mm:ss
+        :type start_time: str
+        :param end_time: End time of the downtime. Format hh:mm:ss
+        :type end_time: str
+        :param fixed: Is the downtime fixed or flexible? Fixed = True, Flexible = False
+        :type fixed: bool
+        :param duration: Duration of the downtime in seconds
+        :type duration: int
+        :param day_of_week: Days of the week the downtime should be active
+        :type day_of_week: list of int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addweeklyperiod",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, start_time, end_time, str(int(fixed)), duration,
+                                         ",".join(day_of_week)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_add_monthly_period(self, downtime_name, start_time, end_time, fixed, duration, day_of_month):
+        """This method is used to add a monthly period to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param start_time: Start time of the downtime. Format hh:mm:ss
+        :type start_time: str
+        :param end_time: End time of the downtime. Format hh:mm:ss
+        :type end_time: str
+        :param fixed: Is the downtime fixed or flexible? Fixed = True, Flexible = False
+        :type fixed: bool
+        :param duration: Duration of the downtime in seconds
+        :type duration: int
+        :param day_of_month: Days of the month the downtime should be active
+        :type day_of_month: list of int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addmonthlyperiod",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, start_time, end_time, str(int(fixed)), duration,
+                                         ",".join(day_of_month)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_add_specific_period(self, downtime_name, start_time, end_time, fixed, duration, day_of_week,
+                                     month_cycle):
+        raise NotImplementedError

@@ -90,5 +90,12 @@ class Network:
         json_decoded = method_utils.replace_keys_from_dict("broker reload command", "broker_reload_command", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("stats bin", "stats_bin", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("ssh port", "ssh_port", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("host groups", "host_groups", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("service groups", "service_groups", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("start time", "start_time", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("end time", "end_time", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("day of week", "day_of_week", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("day of month", "day_of_month", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("month cycle", "month_cycle", json_decoded)
         """TODO: refactor"""
         return json_decoded
