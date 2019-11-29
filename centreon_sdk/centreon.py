@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
 from centreon_sdk.network.network import Network, HTTPVerb
+from centreon_sdk.objects.base.cent_engine_cfg import CentEngineCFG
 from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
 from centreon_sdk.objects.base.contact_group import ContactGroup
 from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactTemplateAuthType
@@ -3245,3 +3246,104 @@ class Centreon:
     def downtime_add_specific_period(self, downtime_name, start_time, end_time, fixed, duration, day_of_week,
                                      month_cycle):
         raise NotImplementedError
+
+    def cent_engine_cfg_show(self):
+        """This method is used to list all available centreon engine configurations
+
+        :return: Returns a list of centreon engine configurations
+        :rtype: list of :ref:`class_cent_engine_cfg`
+        """
+        data_dict = {"action": "show",
+                     "object": "enginecfg"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for cent_engine_cfg in response:
+            cent_engine_cfg["id_unique"] = int(cent_engine_cfg["id_unique"])
+        return [CentEngineCFG(**x) for x in response]
+
+    def cent_engine_cfg_add(self, cent_engine_cfg_name, instance_name, comment):
+        """This method is used to add a new centreon engine configuration
+
+        :param cent_engine_cfg_name: Name of the centreon engine configuration
+        :type cent_engine_cfg_name: str
+        :param instance_name: Name of the instance, the centreon engine configuration should be lniked with
+        :type instance_name: str
+        :param comment: Comments regarding the centreon engine configuration
+        :type comment: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "enginecfg",
+                     "values": ";".join([cent_engine_cfg_name, instance_name, comment])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_engine_cfg_del(self, cent_engine_cfg_name):
+        """This method is used to delete a centreon engine configuration
+
+        :param cent_engine_cfg_name: Name of the centreon engine configuration
+        :type cent_engine_cfg_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "enginecfg",
+                     "values": cent_engine_cfg_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_engine_cfg_set_param(self, cent_engine_cfg_name, param_name, param_value):
+        """This method is used to set a parameter for an engine configuration
+
+        :param cent_engine_cfg_name: Name of the centreon engine configuration
+        :type cent_engine_cfg_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_cent_engine_cfg_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_cent_engine_cfg_param` for further information
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "enginecfg",
+                     "values": ";".join([cent_engine_cfg_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_engine_cfg_add_broker_module(self, cent_engine_cfg_name, module_names):
+        """This method is used to add a broker module without removing existing modules
+
+        :param cent_engine_cfg_name: Name of the centreon engine configuration
+        :type cent_engine_cfg_name: str
+        :param module_names: List of the names of the modules
+        :type module_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addbrokermodule",
+                     "object": "enginecfg",
+                     "values": ";".join([cent_engine_cfg_name, "|".join(module_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_engine_cfg_del_broker_module(self, cent_engine_cfg_name, module_names):
+        """This method is used to delete a broker module without removing existing modules
+
+        :param cent_engine_cfg_name: Name of the centreon engine configuration
+        :type cent_engine_cfg_name: str
+        :param module_names: List of the names of the modules
+        :type module_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delbrokermodule",
+                     "object": "enginecfg",
+                     "values": ";".join([cent_engine_cfg_name, "|".join(module_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
