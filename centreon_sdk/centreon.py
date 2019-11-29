@@ -3245,7 +3245,239 @@ class Centreon:
 
     def downtime_add_specific_period(self, downtime_name, start_time, end_time, fixed, duration, day_of_week,
                                      month_cycle):
-        raise NotImplementedError
+        """This method is used to add a specific time period to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param start_time: Start time of the downtime. Format hh:mm:ss
+        :type start_time: str
+        :param end_time: End time of the downtime. Format hh:mm:ss
+        :type end_time: str
+        :param fixed: Is the downtime fixed or flexible? Fixed = True, Flexible = False
+        :type fixed: bool
+        :param duration: Duration of the downtime in seconds
+        :type duration: int
+        :param day_of_week: Days of the week the downtime should be active
+        :type day_of_week: list of int
+        :param month_cycle: *first* or *last*
+        :type month_cycle: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addspecificperiod",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, start_time, end_time, str(int(fixed)),
+                                        duration, ",".join(day_of_week), month_cycle])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_add_host(self, downtime_name, host_names):
+        """This method is used to link hosts to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param host_names: List of the hosts
+        :type host_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addhost",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(host_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_add_host_group(self, downtime_name, host_groups):
+        """This method is used to link hostgroups to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param host_groups: List of the hostgroups
+        :type host_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addhostgroup",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(host_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_add_service(self, downtime_name, services):
+        """This method is used to link services to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param services: List of services. Format: ["host_name,service_name", ...]
+        :type services: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addservice",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(services)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_add_service_group(self, downtime_name, service_groups):
+        """This method is used to link service groups to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param service_groups: List of service groups
+        :type service_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addservice",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(service_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_set_host(self, downtime_name, host_names):
+        """This method is used to link hosts to a recurrent downtime. Overwriting existing relationship definitions.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param host_names: List of the hosts
+        :type host_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "sethost",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(host_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_set_host_group(self, downtime_name, host_groups):
+        """This method is used to link hostgroups to a recurrent downtime. \
+        Overwriting existing relationship definitions.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param host_groups: List of the hostgroups
+        :type host_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "sethostgroup",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(host_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_set_service(self, downtime_name, services):
+        """This method is used to link services to a recurrent downtime. \
+        Overwriting existing relationship definitions.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param services: List of services. Format: ["host_name,service_name", ...]
+        :type services: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setservice",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(services)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_set_service_group(self, downtime_name, service_groups):
+        """This method is used to link service groups to a recurrent downtime. \
+        Overwriting existing relationship definitions.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param service_groups: List of service groups
+        :type service_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setservicegroup",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(service_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_del_host(self, downtime_name, host_names):
+        """This method is used to delete linked hosts from a recurrent downtime.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param host_names: List of the hosts
+        :type host_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delhost",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(host_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_del_host_group(self, downtime_name, host_groups):
+        """This method is used to delete linked hostgroups from a recurrent downtime.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param host_groups: List of the hostgroups
+        :type host_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delhostgroup",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(host_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_del_service(self, downtime_name, services):
+        """This method is used to delete linked services from a recurrent downtime.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param services: List of services. Format: ["host_name,service_name", ...]
+        :type services: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delservice",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(services)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_del_service_group(self, downtime_name, service_groups):
+        """This method is used to delete linked service groups from a recurrent downtime.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param service_groups: List of service groups
+        :type service_groups: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delservicegroup",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(service_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
 
     def cent_engine_cfg_show(self):
         """This method is used to list all available centreon engine configurations
