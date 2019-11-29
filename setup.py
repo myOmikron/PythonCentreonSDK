@@ -5,13 +5,13 @@ with open("README.md") as f:
 
 setuptools.setup(
     name="centreon-sdk",
-    version="0.0.2",
+    version="0.0.3",
     author="Niklas Pfister",
     author_email="contact@omikron.pw",
     description="A SDK for python to communicate with Centreon",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/myOmikron/TelegramBotAPI",
+    url="https://github.com/myOmikron/PythonCentreonSDK",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
