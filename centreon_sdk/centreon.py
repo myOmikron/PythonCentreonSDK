@@ -28,6 +28,7 @@ from centreon_sdk.objects.base.dependency import Dependency
 from centreon_sdk.objects.base.downtime import Downtime, DowntimeType, DowntimePeriod
 from centreon_sdk.objects.base.host import Host
 from centreon_sdk.objects.base.host_category import HostCategory
+from centreon_sdk.objects.base.host_group import HostGroup
 from centreon_sdk.objects.base.host_status import HostStatus
 from centreon_sdk.objects.base.instance import Instance
 from centreon_sdk.objects.base.macro import Macro
@@ -3932,5 +3933,143 @@ class Centreon:
         data_dict = {"action": "delmember",
                      "object": "hc",
                      "values": ";".join([host_category_name, "|".join(host_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_show(self):
+        """This method is used to list all available hostgroups
+
+        :return: Returns a list of hostgroups
+        :rtype: list of :ref:`class_host_group`
+        """
+        data_dict = {"action": "show",
+                     "object": "hg"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for hostgroup in response:
+            hostgroup["id_unique"] = int(hostgroup["id_unique"])
+        return [HostGroup(**x) for x in response]
+
+    def host_group_add(self, host_group_name, host_group_alias):
+        """This method is used to add a new hostgroup. \
+        Generating configuration files and restarting the engine is required
+
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param host_group_alias: Alias of the hostgroup
+        :type host_group_alias: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "hg",
+                     "values": ";".join([host_group_name, host_group_alias])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_del(self, host_group_name):
+        """This method is used to delete a hostgroup. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the host group
+        :type host_group_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "hg",
+                     "values": host_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_set_param(self, host_group_name, param_name, param_value):
+        """This method is used to set a parameter for a hostgroup. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_host_group_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_host_group_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "hg",
+                     "values": ";".join([host_group_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_get_member(self, host_group_name):
+        """This method is used to get the members of a hostgroup
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+
+        :return: Returns a list of linked members
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getmember",
+                     "object": "hg",
+                     "values": host_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def host_group_add_member(self, host_group_name, member_names):
+        """This method is used to add members to a hostgroup. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param member_names: List of names of the members
+        :type member_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addmember",
+                     "object": "hg",
+                     "values": ";".join([host_group_name, "|".join(member_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_set_member(self, host_group_name, member_names):
+        """This method is used to set members of a hostgroup. Overwrites existing members. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param member_names: List of names of members
+        :type member_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setmember",
+                     "object": "hg",
+                     "values": ";".join([host_group_name, "|".join(member_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_del_member(self, host_group_name, member_names):
+        """This method is used to delete members of a hostgroup. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param member_names: List of names of members
+        :type member_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delmember",
+                     "object": "hg",
+                     "values": ";".join([host_group_name, "|".join(member_names)])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
