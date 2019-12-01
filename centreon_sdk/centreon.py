@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
 from centreon_sdk.network.network import Network, HTTPVerb
+from centreon_sdk.objects.base import host
 from centreon_sdk.objects.base.cent_engine_cfg import CentEngineCFG
 from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
 from centreon_sdk.objects.base.contact_group import ContactGroup
@@ -26,6 +27,7 @@ from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactT
 from centreon_sdk.objects.base.dependency import Dependency
 from centreon_sdk.objects.base.downtime import Downtime, DowntimeType, DowntimePeriod
 from centreon_sdk.objects.base.host import Host
+from centreon_sdk.objects.base.host_category import HostCategory
 from centreon_sdk.objects.base.host_status import HostStatus
 from centreon_sdk.objects.base.instance import Instance
 from centreon_sdk.objects.base.macro import Macro
@@ -3786,6 +3788,149 @@ class Centreon:
         data_dict = {"action": "cancel",
                      "object": "rtdowntime",
                      "values": "|".join([str(x) for x in downtime_ids])}
-        print(data_dict)
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_show(self):
+        """This method is used to list all available host categories
+
+        :return: Returns a list of categories
+        :rtype: :ref:`class_host_category`
+        """
+        data_dict = {"action": "show",
+                     "object": "hc"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        return [HostCategory(**x) for x in response]
+
+    def host_category_add(self, host_category_name, host_category_alias):
+        """This method is used to add a new host category
+
+        :param host_category_name: Name of the host category
+        :type host_category_name: str
+        :param host_category_alias: Alias of the host category
+        :type host_category_alias: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "hc",
+                     "values": ";".join([host_category_name, host_category_alias])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_del(self, host_category_name):
+        """This method is used to delete a host category
+
+        :param host_category_name: Name of the host category
+        :type host_category_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "hc",
+                     "values": host_category_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_get_member(self, host_category_name):
+        """This method is used to get the member that are listed to a host category
+
+        :param host_category_name: Name of the host category
+        :type host_category_name: str
+
+        :return: Returns a list of members
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getmember",
+                     "object": "hc",
+                     "values": host_category_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def host_category_add_member(self, host_category_name, members):
+        """This method is used to add members to a host category
+
+        :param host_category_name: Name of the host category
+        :type host_category_name: str
+        :param members: List of member names
+        :type members: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addmember",
+                     "object": "hc",
+                     "values": ";".join([host_category_name, "|".join(members)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_set_member(self, host_category_name, members):
+        """This method is used to set the members of a host category. Overwrites existing linked members
+
+        :param host_category_name: Name of the category name
+        :type host_category_name: str
+        :param members: List of member names
+        :type members: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setmember",
+                     "object": "hc",
+                     "values": ";".join([host_category_name, "|".join(members)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_set_severity(self, host_category_name, severity_level, severity_icon):
+        """This method is used to set the severity of a host category
+
+        :param host_category_name: Name of the host category
+        :type host_category_name: str
+        :param severity_level: Level of the severity
+        :type severity_level: int
+        :param severity_icon: Icon of the severity
+        :type severity_icon: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setseverity",
+                     "object": "hc",
+                     "values": ";".join([host_category_name, severity_level, severity_icon])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_unset_severity(self, host_category):
+        """This method is used to unset the severity of a host category
+
+        :param host_category: Name of the host category
+        :type host_category: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "unsetseverity",
+                     "object": "hc",
+                     "values": host_category}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_del_member(self, host_category_name, host_names):
+        """This method is used to delete members of a host category
+
+        :param host_category_name: Name of the host category
+        :type host_category_name: str
+        :param host_names: Name of the hosts
+        :type host_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delmember",
+                     "object": "hc",
+                     "values": ";".join([host_category_name, "|".join(host_names)])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
