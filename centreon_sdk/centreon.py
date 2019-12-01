@@ -29,6 +29,7 @@ from centreon_sdk.objects.base.host import Host
 from centreon_sdk.objects.base.host_status import HostStatus
 from centreon_sdk.objects.base.instance import Instance
 from centreon_sdk.objects.base.macro import Macro
+from centreon_sdk.objects.base.real_time_downtime import RealTimeDowntimeHost, RealTimeDowntimeService
 from centreon_sdk.objects.base.service import Service
 from centreon_sdk.objects.base.service_status import ServiceStatus
 from centreon_sdk.util import method_utils
@@ -3577,5 +3578,214 @@ class Centreon:
         data_dict = {"action": "delbrokermodule",
                      "object": "enginecfg",
                      "values": ";".join([cent_engine_cfg_name, "|".join(module_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_downtime_show(self):
+        """This method is used to show all available downtimes
+
+        :return: Returns a list of all available downtimes
+        :rtype: list of dict
+        """
+        data_dict = {"action": "show",
+                     "object": "rtdowntime"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def real_time_downtime_show_host(self, host_name=None):
+        """This method is used to list all downtimes for host objects or retrieve information about a specific downtime
+
+        :param host_name: Optional: Name of the host
+        :type host_name: str
+
+        :return: Returns a list of downtimes for a host object
+        :rtype: list of :ref:`class_real_time_downtime_host`
+        """
+        data_dict = {"action": "show",
+                     "object": "rtdowntime",
+                     "values": ";".join(["HOST", host_name]) if host_name else "HOST"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for downtime in response:
+            downtime["id_unique"] = int(downtime["id_unique"])
+            downtime["fixed"] = bool(downtime["fixed"])
+            downtime["duration"] = int(downtime["duration"])
+        return [RealTimeDowntimeHost(**x) for x in response] if isinstance(response, list) \
+            else RealTimeDowntimeHost(response)
+
+    def real_time_downtime_show_service(self, service_name=None):
+        """This method is used to list all downtimes for service objects or retrieve \
+        information about a specific service
+
+        :param service_name: Optional: Name of the service. Format "host_name,service_name"
+        :type service_name: str
+
+        :return: Returns a list of downtimes for service objets
+        :rtype: list of :ref:`class_real_time_downtime_service`
+        """
+        data_dict = {"action": "show",
+                     "object": "rtdowntime",
+                     "values": ";".join(["SVC", service_name]) if service_name else "SVC"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for downtime in response:
+            downtime["id_unique"] = int(downtime["id_unique"])
+            downtime["fixed"] = bool(downtime["fixed"])
+            downtime["duration"] = int(downtime["duration"])
+        return [RealTimeDowntimeService(**x) for x in response]
+
+    def real_time_downtime_add_host(self, host_name, start_time, end_time, fixed, duration, description,
+                                    apply_on_linked_services):
+        """This method is used to add a downtime for a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param start_time: Beginning of the downtime. Format YYYY/MM/DD HH:mm
+        :type start_time: str
+        :param end_time: End of the downtime. Format YYYY/MM/DD HH:mm
+        :type end_time: str
+        :param fixed: Is the downtime fixed
+        :type fixed: bool
+        :param duration: Duration of a flexible downtime
+        :type duration: int
+        :param description: Description of the downtime
+        :type description: int
+        :param apply_on_linked_services: Should the downtime also be applied on the linked services
+        :type apply_on_linked_services: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "rtdowntime",
+                     "values": ";".join(["HOST", host_name, start_time, end_time, str(int(fixed)), duration,
+                                         description, str(int(apply_on_linked_services))])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_downtime_add_host_group(self, host_group_name, start_time, end_time, fixed, duration, description,
+                                          apply_on_linked_services):
+        """This method is used to add a downtime for a host group
+
+        :param host_group_name: Name of the host group
+        :type host_group_name: str
+        :param start_time: Beginning of the downtime. Format YYYY/MM/DD HH:mm
+        :type start_time: str
+        :param end_time: End of the downtime. Format YYYY/MM/DD HH:mm
+        :type end_time: str
+        :param fixed: Is the downtime fixed
+        :type fixed: bool
+        :param duration: Duration of a flexible downtime
+        :type duration: int
+        :param description: Description of the downtime
+        :type description: int
+        :param apply_on_linked_services: Should the downtime also be applied on the linked services
+        :type apply_on_linked_services: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "rtdowntime",
+                     "values": ";".join(["HG", host_group_name, start_time, end_time, str(int(fixed)), duration,
+                                         description, str(int(apply_on_linked_services))])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_downtime_add_service(self, service_names, start_time, end_time, fixed, duration, description):
+        """This method is used to add a downtime for a service
+
+        :param service_names: List of service names. Format ["host_name,service_name", ...]
+        :type service_names: list of str
+        :param start_time: Start time
+        :param start_time: Beginning of the downtime. Format YYYY/MM/DD HH:mm
+        :type start_time: str
+        :param end_time: End of the downtime. Format YYYY/MM/DD HH:mm
+        :type end_time: str
+        :param fixed: Is the downtime fixed
+        :type fixed: bool
+        :param duration: Duration of a flexible downtime
+        :type duration: int
+        :param description: Description of the downtime
+        :type description: int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "rtdowntime",
+                     "values": ";".join(["SVC", "|".join(service_names), start_time, end_time, str(int(fixed)), duration,
+                                         description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_downtime_add_service_group(self, service_group_name, start_time, end_time, fixed, duration,
+                                             description):
+        """This method is used to add a downtime for a service group
+
+        :param service_group_name: Service group
+        :type service_group_name: str
+        :param start_time: Start time
+        :param start_time: Beginning of the downtime. Format YYYY/MM/DD HH:mm
+        :type start_time: str
+        :param end_time: End of the downtime. Format YYYY/MM/DD HH:mm
+        :type end_time: str
+        :param fixed: Is the downtime fixed
+        :type fixed: bool
+        :param duration: Duration of a flexible downtime
+        :type duration: int
+        :param description: Description of the downtime
+        :type description: int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "rtdowntime",
+                     "values": ";".join(["SG", "|".join(service_group_name), start_time, end_time, str(int(fixed)),
+                                         duration, description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_downtime_add_instance(self, instance_name, start_time, end_time, fixed, duration, description):
+        """This method is used to add a downtime for a instance
+
+        :param instance_name: Name of the instance
+        :type instance_name: str
+        :param start_time: Start time
+        :param start_time: Beginning of the downtime. Format YYYY/MM/DD HH:mm
+        :type start_time: str
+        :param end_time: End of the downtime. Format YYYY/MM/DD HH:mm
+        :type end_time: str
+        :param fixed: Is the downtime fixed
+        :type fixed: bool
+        :param duration: Duration of a flexible downtime
+        :type duration: int
+        :param description: Description of the downtime
+        :type description: int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "rtdowntime",
+                     "values": ";".join(["INSTANCE", instance_name, start_time, end_time, str(int(fixed)), duration,
+                                         description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_downtime_cancel(self, downtime_ids):
+        """This method is used to cancel a downtime
+
+        :param downtime_ids: List of the ids of the downtimes
+        :type downtime_ids: list of int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "cancel",
+                     "object": "rtdowntime",
+                     "values": "|".join([str(x) for x in downtime_ids])}
+        print(data_dict)
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
