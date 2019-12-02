@@ -36,6 +36,7 @@ from centreon_sdk.objects.base.instance import Instance
 from centreon_sdk.objects.base.ldap import LDAP, LDAPServer
 from centreon_sdk.objects.base.macro import Macro
 from centreon_sdk.objects.base.real_time_downtime import RealTimeDowntimeHost, RealTimeDowntimeService
+from centreon_sdk.objects.base.resource_cfg import ResourceCFG
 from centreon_sdk.objects.base.service import Service
 from centreon_sdk.objects.base.service_status import ServiceStatus
 from centreon_sdk.util import method_utils
@@ -4698,3 +4699,75 @@ class Centreon:
                                          if isinstance(param_value, bool) else param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
+
+    def resource_cfg_show(self):
+        """This method is used to show the available resource variables
+
+        :return: Returns a list of resource variables
+        :rtype: list of :ref:`class_resource_cfg`
+        """
+        data_dict = {"action": "show",
+                     "object": "resourcecfg"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for variable in response:
+            variable["id_unique"] = int(variable["id_unique"])
+            variable["activate"] = bool(variable["activate"])
+            variable["instance"] = list(variable["instance"])
+        return [ResourceCFG(**x) for x in response]
+
+    def resource_cfg_add(self, macro_name, macro_value, instances, comment):
+        """This method is used to add a new resource variable
+
+        :param macro_name: Name of the macro
+        :type macro_name: str
+        :param macro_value: Value of the macro
+        :type macro_value: str
+        :param instances: Instances that are tied to macros
+        :type instances: list of str
+        :param comment: Comment of the resource
+        :type comment: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "resourcecfg",
+                     "values": ";".join([macro_name, macro_value, "|".join(instances), comment])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def resource_cfg_del(self, resource_id):
+        """This method is used to delete a resource variable
+
+        :param resource_id: ID of the resource
+        :type resource_id: int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "resourcecfg",
+                     "values": str(resource_id)}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def resource_cfg_set_param(self, resource_id, param_name, param_value):
+        """This method is used to set a parameter for a resource variable
+
+        :param resource_id: ID of the resource
+        :type resource_id: int
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_resource_cfg_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_resource_cfg_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "resourcecfg",
+                     "values": ";".join([str(resource_id), param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
