@@ -39,6 +39,8 @@ from centreon_sdk.objects.base.real_time_downtime import RealTimeDowntimeHost, R
 from centreon_sdk.objects.base.resource_cfg import ResourceCFG
 from centreon_sdk.objects.base.service import Service
 from centreon_sdk.objects.base.service_status import ServiceStatus
+from centreon_sdk.objects.base.service_template import ServiceTemplate, ServiceTemplateNotificationOption, \
+    ServiceTemplateStalkingOption
 from centreon_sdk.util import method_utils
 from centreon_sdk.util.config import Config
 from centreon_sdk.util.method_utils import pack_locals
@@ -4771,3 +4773,383 @@ class Centreon:
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
+    def service_template_show(self):
+        """This method is used list all available service templates
+
+        :return: Returns a list of service templates
+        :rtype: list of :ref:`class_service_template`
+        """
+        data_dict = {"action": "show",
+                     "object": "stpl"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for service_template in response:
+            service_template["id_unique"] = int(service_template["id_unique"])
+            service_template["active_checks_enabled"] = ThreeWayOption.NO if service_template["active_checks_enabled"] == "0" \
+                else ThreeWayOption.YES if service_template["passive_checks_enabled"] == "1" else ThreeWayOption.DEFAULT
+            service_template["passive_checks_enabled"] = ThreeWayOption.NO if service_template["passive_checks_enabled"] == "0" \
+                else ThreeWayOption.YES if service_template["passive_checks_enabled"] == "1" else ThreeWayOption.DEFAULT
+        return [ServiceTemplate(**x) for x in response]
+
+    def service_template_add(self, template_description, template_alias, service_template=""):
+        """This method is used to add a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param template_alias: Alias of the template
+        :type template_alias: str
+        :param service_template: Optional: Service template the new template should inherit
+        :type service_template: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "stpl",
+                     "values": ";".join([template_description, template_alias, service_template])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_del(self, template_description):
+        """This method is used to delete a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "stpl",
+                     "values": template_description}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_set_param(self, template_description, param_name, param_value):
+        """This method is used to set a parameter for a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_service_template_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_service_template_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "stpl",
+                     "values": ";".join([template_description, param_name.value, str(int(param_value))
+                     if isinstance(param_value, bool) else param_value.value
+                     if isinstance(param_value, ServiceTemplateNotificationOption)
+                        or isinstance(param_value, ServiceTemplateStalkingOption) else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_add_host_template(self, service_template_description, host_templates):
+        """This method is used to link host templates to a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_template_description: Description of the service template
+        :type service_template_description: str
+        :param host_templates: List of host templates
+        :type host_templates: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addhosttemplate",
+                     "object": "stpl",
+                     "values": ";".join([service_template_description, "|".join(host_templates)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_set_host_template(self, service_template_description, host_templates):
+        """This method is used to link host templates to a service template. Overwrites previous definitions. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_template_description: Description of the service template
+        :type service_template_description: str
+        :param host_templates: List of host templates
+        :type host_templates: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "sethosttemplate",
+                     "object": "stpl",
+                     "values": ";".join([service_template_description, "|".join(host_templates)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_del_host_template(self, service_template_description, host_templates):
+        """This method is used to delete host templates from a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_template_description: Description of the service template
+        :type service_template_description: str
+        :param host_templates: List of host templates
+        :type host_templates: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delhosttemplate",
+                     "object": "stpl",
+                     "values": ";".join([service_template_description, "|".join(host_templates)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_get_macro(self, template_description):
+        """This method is used to get a list of custom macros of a service template
+
+        :param template_description: Description of the template
+        :type template_description: str
+
+        :return: Returns a list of macros
+        :rtype: list of :ref:`class_macro`
+        """
+        data_dict = {"action": "getmacro",
+                     "object": "stpl",
+                     "values": template_description}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        return [Macro(**x) for x in response]
+
+    def service_template_set_macro(self, template_description, macro_name, macro_value, macro_description=None,
+                                   is_password=None):
+        """This method is used to set a macro for a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param macro_name: Name of the macro
+        :type macro_name: str
+        :param macro_value: Value of the macro
+        :type macro_value: str
+        :param macro_description: Optional: Description of the macro
+        :type macro_description: str
+        :param is_password: Optional: Is the value a password?
+        :type is_password: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setmacro",
+                     "object": "stpl",
+                     "values": ";".join([template_description, macro_name, macro_value,
+                                         macro_description if macro_description else "",
+                                         str(int(is_password)) if is_password else ""])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_del_macro(self, template_description, macro_name):
+        """This method is used to delete a macro from a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the template
+        :type template_description: str
+        :param macro_name: Name of the macro
+        :type macro_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delmacro",
+                     "object": "stpl",
+                     "values": ";".join([template_description, macro_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_get_contact(self, template_description):
+        """This method is used to get the contacts that are linked to the service template
+
+        :param template_description: Description of the template
+        :type template_description: str
+
+        :return: Returns a list of contacts
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getcontact",
+                     "object": "stpl",
+                     "values": template_description}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def service_template_add_contact(self, template_description, contact_names):
+        """This method is used to add contacts to a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the template
+        :type template_description: str
+        :param contact_names: List of contact names
+        :type contact_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addcontact",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(contact_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_set_contact(self, template_description, contact_names):
+        """This method is used to set the contacts for a service templates. Overwrites previous definitions. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param contact_names: List of contact names
+        :type contact_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setcontact",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(contact_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_del_contact(self, template_description, contact_names):
+        """This method is used to delete contacts from a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param contact_names: List of contact names
+        :type contact_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delcontact",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(contact_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_get_contact_group(self, template_description):
+        """This method is used to get the contact groups that are linked to a service template
+
+        :param template_description: Description of the service template
+        :type template_description: str
+
+        :return: Returns a list of contact groups
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getcontactgroup",
+                     "object": "stpl",
+                     "values": template_description}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def service_template_add_contact_group(self, template_description, contact_group_names):
+        """This method is used to add contact groups to a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param contact_group_names: List of contact group names
+        :type contact_group_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addcontactgroup",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(contact_group_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_set_contact_group(self, template_description, contact_group_names):
+        """This method is used to set the contact group of a service template. Overwrites previous definitions. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param contact_group_names: List of contact group names
+        :type contact_group_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setcontactgroup",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(contact_group_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_get_trap(self, template_description):
+        """This method is used to get the trap list of  a service template
+
+        :param template_description: Description of the service template
+        :type template_description: str
+
+        :return: Returns a list of traps
+        :rtype: list of dict
+        """
+        data_dict = {"action": "gettrap",
+                     "object": "stpl",
+                     "values": template_description}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def service_template_set_trap(self, template_description, trap_names):
+        """This method is used to set the traps of a service template. Overwrites previous definitions. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param trap_names: List of trap names
+        :type trap_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "settrap",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(trap_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_add_trap(self, template_description, trap_names):
+        """This method is used to add traps to a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param trap_names: List of trap names
+        :type trap_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addtrap",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(trap_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_del_trap(self, template_description, trap_names):
+        """This method is used to delete traps from a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param trap_names: List of trap names
+        :type trap_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "deltrap",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(trap_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
