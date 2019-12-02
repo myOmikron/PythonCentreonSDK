@@ -34,7 +34,7 @@ class ResourceCFG:
     :param instance: List of the instances the variable is linked to
     :type instance: list of str
     :param id_unique: ID of the variable
-    :type id_uniqeu: int
+    :type id_unique: int
     """
     def __init__(self, name, value, comment, activate, instance, id_unique):
         self.id_unique = id_unique
@@ -43,3 +43,12 @@ class ResourceCFG:
         self.comment = comment
         self.activate = activate
         self.instance = instance
+
+
+class ResourceCFGParam(enum.Enum):
+    """This class represents the parameters, available for resource cfgs"""
+    NAME = "name"
+    VALUE = "value"
+    ACTIVATE = "activate"
+    COMMENT = "comment"
+    INSTANCE = "instance"
