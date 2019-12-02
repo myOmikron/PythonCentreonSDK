@@ -38,6 +38,7 @@ from centreon_sdk.objects.base.macro import Macro
 from centreon_sdk.objects.base.real_time_downtime import RealTimeDowntimeHost, RealTimeDowntimeService
 from centreon_sdk.objects.base.resource_cfg import ResourceCFG
 from centreon_sdk.objects.base.service import Service
+from centreon_sdk.objects.base.service_category import ServiceCategory
 from centreon_sdk.objects.base.service_group import ServiceGroup
 from centreon_sdk.objects.base.service_status import ServiceStatus
 from centreon_sdk.objects.base.service_template import ServiceTemplate, ServiceTemplateNotificationOption, \
@@ -5359,5 +5360,236 @@ class Centreon:
         data_dict = {"action": "delservice",
                      "object": "sg",
                      "values": ";".join([service_group_name, "|".join(services)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_show(self):
+        """This method is used to show all available service categories
+
+        :return: Returns a list of service categories
+        :rtype: list of :ref:`service_category`
+        """
+        data_dict = {"action": "show",
+                     "object": "sc"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for service_category in response:
+            service_category["id_unique"] = int(service_category["id_unique"])
+        return [ServiceCategory(**x) for x in response]
+
+    def service_category_add(self, service_category_name, service_category_description):
+        """This method is used to add a new service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_category_description: Description of the service category
+        :type service_category_description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, service_category_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_del(self, service_category_name):
+        """This method is used to delete a service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "sc",
+                     "values": service_category_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_set_param(self, service_category_name, param_name, param_value):
+        """This method is used to set the parameter for a service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_service_category_param̀
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_service_category`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"aciton": "setparam",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_get_service(self, service_category_name):
+        """This method is used to get the linked services of a service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "getservice",
+                     "object": "sc",
+                     "values": service_category_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def service_category_get_service_template(self, service_category_name):
+        """This method is used to get the linked service templates of a service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "getservicetemplate",
+                     "object": "sc",
+                     "values": service_category_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def service_category_add_service(self, service_category_name, service_names):
+        """This method is used to add services to a service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_names: List of service names. Format ["host_name,service_name", ...]
+        :type service_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addservice",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, "|".join(service_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_set_service(self, service_category_name, service_names):
+        """This method is used to set services for a service category. Overwrites previous definitions.
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_names: List of service names. Format ["host_name,service_name", ...]
+        :type service_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setservice",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, "|".join(service_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_add_service_template(self, service_category_name, service_template_names):
+        """This method is used to add service templates to a service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_template_names: List of service templates
+        :type service_template_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addservicetemplate",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, "|".join(service_template_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_set_service_template(self, service_category_name, service_template_names):
+        """This method is used to set service templates for a service category. Overwrites previous definitions.
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_template_names: List of service templates
+        :type service_template_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setservicetemplate",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, "|".join(service_template_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_del_service_template(self, service_category_name, service_template_names):
+        """This method is used to delete service templates from a service category.
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_template_names: List of service templates
+        :type service_template_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delservicetemplate",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, "|".join(service_template_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_del_service(self, service_category_name, service_names):
+        """This method is used to set service templates for a service category. Overwrites previous definitions.
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_names: List of services. Format ["host_name,service_name", ...]
+        :type service_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delservice",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, "|".join(service_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_set_severity(self, service_category_name, severity_level, severity_icon):
+        """This method is used to turn a service category into a severity
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param severity_level: Level of the severity
+        :type severity_level: int
+        :param severity_icon: Icon of the severity
+        :type severity_icon: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setseverity",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, severity_level, severity_icon])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_unset_severity(self, service_category_name):
+        """This method is used to turn a severity in a regular service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "unetseverity",
+                     "object": "sc",
+                     "values": service_category_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
