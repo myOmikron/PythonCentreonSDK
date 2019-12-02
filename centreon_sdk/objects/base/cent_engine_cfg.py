@@ -48,7 +48,6 @@ class CentEngineCFGParam(enum.Enum):
     STATUS_FILE = "status_file"
     TEMP_FILE = "temp_file"
     LOCK_FILE = "lock_file"
-   # TIMEZONE = "timezone"
     OBJECT_CONFIGURATION_FILE = "cfg_file"
     ENABLE_NOTIFICATIONS = "enable_notifications"
     EXECUTE_SERVICE_CHECKS = "execute_service_checks"
