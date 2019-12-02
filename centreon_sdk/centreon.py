@@ -26,9 +26,11 @@ from centreon_sdk.objects.base.contact_group import ContactGroup
 from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactTemplateAuthType
 from centreon_sdk.objects.base.dependency import Dependency
 from centreon_sdk.objects.base.downtime import Downtime, DowntimeType, DowntimePeriod
+from centreon_sdk.objects.base.general import ThreeWayOption
 from centreon_sdk.objects.base.host import Host
 from centreon_sdk.objects.base.host_category import HostCategory
 from centreon_sdk.objects.base.host_group import HostGroup
+from centreon_sdk.objects.base.host_group_service import HostGroupService
 from centreon_sdk.objects.base.host_status import HostStatus
 from centreon_sdk.objects.base.instance import Instance
 from centreon_sdk.objects.base.macro import Macro
@@ -4071,5 +4073,480 @@ class Centreon:
         data_dict = {"action": "delmember",
                      "object": "hg",
                      "values": ";".join([host_group_name, "|".join(member_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_show(self):
+        """This method is used to list all available hostgroup services
+
+        :return: Returns a list of hostgroup services
+        :rtype: list of :ref:`class_host_group_service`
+        """
+        data_dict = {"action": "show",
+                     "object": "hgservice"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for host_group_service in response:
+            host_group_service["host_group_id"] = int(host_group_service["host_group_id"])
+            host_group_service["id_unique"] = int(host_group_service["id_unique"])
+            host_group_service["active_checks_enabled"] = ThreeWayOption.NO \
+                if host_group_service["active_checks_enabled"] == "0" else ThreeWayOption.YES \
+                if host_group_service["active_checks_enabled"] == "1" else ThreeWayOption.DEFAULT
+            host_group_service["passive_checks_enabled"] = ThreeWayOption.NO \
+                if host_group_service["passive_checks_enabled"] == "0" else ThreeWayOption.YES \
+                if host_group_service["passive_checks_enabled"] == "1" else ThreeWayOption.DEFAULT
+        return [HostGroupService(**x) for x in response]
+
+    def host_group_service_add(self, host_group_name, service_description, service_template):
+        """This method is used to add a new hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param service_template: Template of the service
+        :type service_template: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, service_template])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_del(self, host_group_name, service_description):
+        """This method is used to delete a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_set_param(self, host_group_name, service_description, param_name, param_value):
+        """This method is used to set a parameter for a hostgroup service. Generating configuration files and \
+        restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_host_group_service_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_host_group_service_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, param_name.value,
+                                         str(int(param_value)) if isinstance(param_value, bool) else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_add_host_group(self, host_group_name, service_description, host_group_names_new):
+        """This method is used to tia a hostgroup service to an extra hostgroup. The previous definitions will be \
+         appended. Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param host_group_names_new: List of the hostgroup names, the service should be linked to
+        :type host_group_names_new: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addhost",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(host_group_names_new)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_set_host(self, host_group_name, service_description, host_group_names_new):
+        """This method is used to tie a service to an extra hostgroup. The previous definitions will be overwritten. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param host_group_names_new: List of new hostgroup names
+        :type host_group_names_new: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "sethost",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(host_group_names_new)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_del_host(self, host_group_name, service_description, host_group_names_to_delete):
+        """This method is used to delete a relation between a hostgroup and a service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Service description
+        :type service_description: str
+        :param host_group_names_to_delete: List of hostgroups, which should be unlinked
+        :type host_group_names_to_delete: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delhost",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(host_group_names_to_delete)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_get_macro(self, host_group_name, service_description):
+        """This method is used to view the custom macro list of a hostgroup service
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+
+        :return: Returns a list of macros
+        :rtype: list of :ref:`class_macro`
+        """
+        data_dict = {"action": "getmacro",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        return [Macro(**x) for x in response]
+
+    def host_group_service_set_macro(self, host_group_name, service_description, macro_name, macro_value,
+                                     macro_is_password, macro_description):
+        """This method is used to set a macro for a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param macro_name: Name of the macro
+        :type macro_name: str
+        :param macro_value: Value of the macro
+        :type macro_value: str
+        :param macro_is_password: Is the macro a password?
+        :type macro_is_password: bool
+        :param macro_description: Description of the macro
+        :type macro_description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setmacro",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, macro_name, macro_value,
+                                         str(int(macro_is_password)), macro_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_del_macro(self, host_group_name, service_description, macro_name):
+        """This method is used to delete a macro. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param macro_name: Name of the macro
+        :type macro_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delmacro",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, macro_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_set_severity(self, host_group_name, service_description, severity_name):
+        """This method is used to associate a severity level to a hostgroup service
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param severity_name: Name of the severity level
+        :type severity_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setseverity",
+                     "object": "service",
+                     "values": ";".join([host_group_name, service_description, severity_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_unset_severity(self, host_group_name, service_description):
+        """This method is used to remove the severity from a hostgroup service
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description if the service
+        :type service_description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "unsetseverity",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_get_contact(self, host_group_name, service_description):
+        """This method is used to list the available contacts of a service
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+
+        :return: Returns the available contacts
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getcontact",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def host_group_service_add_contact(self, host_group_name, service_description, contacts):
+        """This method is used to add a new contacts to the notification contact list. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param contacts: Contacts which should be added
+        :type contacts: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addcontact",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(contacts)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_set_contact(self, host_group_name, service_description, contacts):
+        """This method is used to set the contacts for the notification contact list. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param contacts: List of contacts
+        :type: contacts: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setcontact",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(contacts)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_del_contact(self, host_group_name, service_description, contacts):
+        """This method is used to remove contacts from the notification contact list. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param contacts: List of the contacts to delete
+        :type contacts: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delcontact",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(contacts)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_get_contact_group(self, host_group_name, service_description):
+        """This method is used to list the contact groups of a service
+
+        :param host_group_name: Name of the host
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+
+        :return: Returns the list of contact groups
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getcontactgroup",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def host_group_service_add_contact_group(self, host_group_name, service_description, contact_groups):
+        """This method is used to add contact groups to a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param contact_groups: List of the contact groups
+        :type contact_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addcontactgroup",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(contact_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_set_contact_group(self, host_group_name, service_description, contact_groups):
+        """This method is used to set contact groups to a hostgroup service. Existing ones will be overwritten. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param contact_groups: List of the contact groups
+        :type contact_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setcontactgroup",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(contact_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_del_contact_group(self, host_group_name, service_description, contact_groups):
+        """This method is used to delete contact groups of a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param contact_groups: List of the contact groups
+        :type contact_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delcontactgroup",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(contact_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_get_trap(self, host_group_name, service_description):
+        """This method is used to list the traps of a hostgroup service.
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+
+        :return: Returns the traps
+        :rtype: list of dict
+        """
+        data_dict = {"action": "gettrap",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def host_group_service_add_trap(self, host_group_name, service_description, trap_names):
+        """This method is used to add traps to a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param trap_names: List of the trap names
+        :type trap_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addtrap",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(trap_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_set_trap(self, host_group_name, service_description, trap_names):
+        """This method is used to set traps for a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param trap_names: List of the trap names
+        :type trap_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "settrap",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(trap_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_del_trap(self, host_group_name, service_description, trap_names):
+        """This method is used to delete traps from a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param trap_names: List of the trap names
+        :type trap_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "deltrap",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(trap_names)])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
