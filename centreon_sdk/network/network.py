@@ -97,5 +97,8 @@ class Network:
         json_decoded = method_utils.replace_keys_from_dict("day of week", "day_of_week", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("day of month", "day_of_month", json_decoded)
         json_decoded = method_utils.replace_keys_from_dict("month cycle", "month_cycle", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("hg id", "host_group_id", json_decoded)
+        json_decoded = method_utils.replace_keys_from_dict("hg name", "host_group_name", json_decoded)
+
         """TODO: refactor"""
         return json_decoded

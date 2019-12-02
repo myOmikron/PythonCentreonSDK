@@ -33,6 +33,7 @@ from centreon_sdk.objects.base.host_group import HostGroup
 from centreon_sdk.objects.base.host_group_service import HostGroupService
 from centreon_sdk.objects.base.host_status import HostStatus
 from centreon_sdk.objects.base.instance import Instance
+from centreon_sdk.objects.base.ldap import LDAP, LDAPServer
 from centreon_sdk.objects.base.macro import Macro
 from centreon_sdk.objects.base.real_time_downtime import RealTimeDowntimeHost, RealTimeDowntimeService
 from centreon_sdk.objects.base.service import Service
@@ -4548,5 +4549,152 @@ class Centreon:
         data_dict = {"action": "deltrap",
                      "object": "hgservice",
                      "values": ";".join([host_group_name, service_description, "|".join(trap_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def ldap_show(self):
+        """This method is used to list all available LDAP configurations
+
+        :return: Returns the available LDAP configuration
+        :rtype: list of :ref:`class_ldap`
+        """
+        data_dict = {"action": "show",
+                     "object": "ldap"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for ldap in response:
+            ldap["id_unnique"] = int(ldap["id_unique"])
+            ldap["status"] = bool(ldap["status"])
+        return [LDAP(**x) for x in response]
+
+    def ldap_add(self, ldap_name, description):
+        """This method is used to add a new LDAP configuration
+
+        :param ldap_name: Name of the configuration
+        :type ldap_name: str
+        :param description: Description of the configuration
+        :type description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "ldap",
+                     "values": ";".join([ldap_name, description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def ldap_del(self, ldap_name):
+        """This method is used to delete a LDAP configuration
+
+        :param ldap_name: Name of the configuration
+        :type ldap_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "ldap",
+                     "values": ldap_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def ldap_set_param(self, ldap_name, param_name, param_value):
+        """This method is used to set a parameter of a LDAP configuration
+
+        :param ldap_name: Name of the configuration
+        :type ldap_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_ldap_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_ldap_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "ldap",
+                     "values": ";".join([ldap_name, param_name.value, str(int(param_value))
+                     if isinstance(param_value, bool) else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def ldap_show_server(self, ldap_name):
+        """This method is used to show the server list of the ldap configuration
+
+        :param ldap_name: Name of the ldap configuration
+        :type ldap_name: str
+
+        :return: Returns a list of ldap servers
+        :rtype: list of :ref:`class_ldap_server`
+        """
+        data_dict = {"action": "showserver",
+                     "object": "ldap",
+                     "values": ldap_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for ldap_server in response:
+            ldap_server["tls"] = bool(ldap_server["tls"])
+            ldap_server["ssl"] = bool(ldap_server["ssl"])
+            ldap_server["port"] = int(ldap_server["port"])
+            ldap_server["id_unique"] = int(ldap_server["id_unique"])
+            ldap_server["order"] = int(ldap_server["order"])
+        return [LDAPServer(**x) for x in response]
+
+    def ldap_add_server(self, ldap_name, server_address, server_port, use_ssl, use_tls):
+        """This method is used to add a server to a LDAP configuration
+
+        :param ldap_name: Name of the configuration
+        :type ldap_name: str
+        :param server_address: Address of the server
+        :type server_address: str
+        :param server_port: Port of the server
+        :type server_port: int
+        :param use_ssl: Use SSL?
+        :type use_ssl: bool
+        :param use_tls: Use TLS?
+        :type use_tls: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "ldap",
+                     "values": ";".join([ldap_name, server_address, server_port, str(int(use_ssl)), str(int(use_tls))])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def ldap_del_server(self, server_id):
+        """This method is used to delete a server from a ldap configuration
+
+        :param server_id: ID of the server
+        :type: server_id: int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "ldap",
+                     "values": str(server_id)}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def ldap_set_param_server(self, server_id, param_name, param_value):
+        """This method is used to set the parameter for a server
+
+        :param server_id: ID of the server
+        :type server_id: int
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_ldap_server_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_ldap_server_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparamserver",
+                     "object": "ldap",
+                     "values": ";".join([str(server_id), param_name.value, str(int(param_value))
+                                         if isinstance(param_value, bool) else param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
