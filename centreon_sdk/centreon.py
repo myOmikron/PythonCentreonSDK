@@ -19,13 +19,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
 from centreon_sdk.network.network import Network, HTTPVerb
-from centreon_sdk.objects.base import host
 from centreon_sdk.objects.base.cent_engine_cfg import CentEngineCFG
 from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
 from centreon_sdk.objects.base.contact_group import ContactGroup
 from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactTemplateAuthType
 from centreon_sdk.objects.base.dependency import Dependency
-from centreon_sdk.objects.base.downtime import Downtime, DowntimeType, DowntimePeriod
+from centreon_sdk.objects.base.downtime import Downtime, DowntimePeriod
 from centreon_sdk.objects.base.general import ThreeWayOption
 from centreon_sdk.objects.base.host import Host
 from centreon_sdk.objects.base.host_category import HostCategory
@@ -35,6 +34,7 @@ from centreon_sdk.objects.base.host_status import HostStatus
 from centreon_sdk.objects.base.instance import Instance
 from centreon_sdk.objects.base.ldap import LDAP, LDAPServer
 from centreon_sdk.objects.base.macro import Macro
+from centreon_sdk.objects.base.poller import Poller
 from centreon_sdk.objects.base.real_time_downtime import RealTimeDowntimeHost, RealTimeDowntimeService
 from centreon_sdk.objects.base.resource_cfg import ResourceCFG
 from centreon_sdk.objects.base.service import Service
@@ -90,20 +90,6 @@ class Centreon:
         response = self.network.make_request(HTTPVerb.POST, data=data_dict, params=param_dict, use_encode_json=False,
                                              use_header=False)
         return response["authToken"]
-
-    def restart_poller(self, instance_name):
-        """This method is used to restart a poller
-
-        :param instance_name: Instance name of the poller
-        :type instance_name: str
-
-        :return: None
-        """
-        data_dict = {"action": "APPLYCFG",
-                     "values": instance_name}
-        response = self.network.make_request(HTTPVerb.POST, data=data_dict, params=self.config.vars["params"])
-        for item in response["result"]:
-            print(item)
 
     def host_status_get(self, *, viewType=None, fields=None, status=None, hostgroup=None, instance=None, search=None,
                         critically=None, sortType=None, order=None, limit=None, number=None):
@@ -5966,6 +5952,110 @@ class Centreon:
         data_dict = {"action": "generatetraps",
                      "object": "vendor",
                      "values": ";".join([vendor_name, mib_path])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_list(self):
+        """This method is used to list all available pollers
+
+        :return: Returns a list of pollers
+        :rtype: list of :ref:`class_poller`
+        """
+        data_dict = {"action": "pollerlist"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for poller in response:
+            poller["poller_id"] = int(poller["poller_id"])
+        return [Poller(**x) for x in response]
+
+    def poller_generate_config_files(self, poller):
+        """This method is used to generate the configuration files for a specific poller
+
+        :param poller: ID or name of the poller
+        :type poller: Union[int,str]
+        """
+        data_dict = {"action": "pollergenerate",
+                     "values": str(poller) if isinstance(poller, int) else poller}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_test_config_files(self, poller):
+        """This method is used to test the configuration files of a poller
+
+        :param poller: ID or name of the poller
+        :type poller: Union[str,int]
+        """
+        data_dict = {"action": "pollertest",
+                     "values": str(poller) if isinstance(poller, int) else poller}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_move_monitoring_engine_cfg_files(self, poller):
+        """This method is used to move the configuration files for a poller to the final directory
+
+        :param poller: ID or name of the poller
+        :type poller: Union[str,int]
+        """
+        data_dict = {"action": "cfgmove",
+                     "values": str(poller) if isinstance(poller, int) else poller}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_restart_monitoring_engine(self, poller):
+        """This method is used to restart the monitoring engine of a poller
+
+        :param poller: ID or name of the poller
+        :type poller: Union[str,int]
+        """
+        data_dict = {"action": "pollerrestart",
+                     "values": str(poller) if isinstance(poller, int) else poller}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_reload_monitoring_engine(self, poller):
+        """This method is used to reload the monitoring engine of a poller
+
+        :param poller: ID or name of the monitoring engine of a poller
+        :type poller: Union[str,int]
+        """
+        data_dict = {"action": "pollerreload",
+                     "values": str(poller) if isinstance(poller, int) else poller}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_execute_post_generation_commands(self, poller):
+        """This method is used to execute post generation commands of a poller
+
+        :param poller: ID or name of the poller
+        :type poller: Union[str,int]
+        """
+        data_dict = {"action": "pollerexeccmd",
+                     "values": str(poller) if isinstance(poller, int) else poller}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_apply_config(self, poller):
+        """This method is used as a all in one command to apply a config to a poller
+
+        :param poller: ID or name of the poller
+        :type poller: Union[str,int]
+        """
+        data_dict = {"action": "applycfg",
+                     "values": str(poller) if isinstance(poller, int) else poller}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         response = response["result"]
         for line in response:
