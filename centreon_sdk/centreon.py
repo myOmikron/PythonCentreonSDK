@@ -44,6 +44,7 @@ from centreon_sdk.objects.base.service_status import ServiceStatus
 from centreon_sdk.objects.base.service_template import ServiceTemplate, ServiceTemplateNotificationOption, \
     ServiceTemplateStalkingOption
 from centreon_sdk.objects.base.settings import Settings
+from centreon_sdk.objects.base.time_period import TimePeriod, TimePeriodException
 from centreon_sdk.util import method_utils
 from centreon_sdk.util.config import Config
 from centreon_sdk.util.method_utils import pack_locals
@@ -5626,5 +5627,123 @@ class Centreon:
                      "values": ";".join([param_name.value, str(int(param_value)) if isinstance(param_value, bool)
                                          else str(param_value) if isinstance(param_value, int)
                                          else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def time_period_show(self):
+        """This method is used to list all available time periods
+
+        :return: Retuns a list of time periods
+        :rtype: list of :ref:`class_time_period`
+        """
+        data_dict = {"action": "show",
+                     "object": "tp"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for time_period in response:
+            time_period["id_unique"] = int(time_period["id_unique"])
+        return [TimePeriod(**x) for x in response]
+
+    def time_period_add(self, time_period_name, time_period_alias):
+        """This method is used to add a new time period
+
+        :param time_period_name: Name of the time period
+        :type time_period_name: str
+        :param time_period_alias: Alias of the time period
+        :type time_period_alias: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "tp",
+                     "values": ";".join([time_period_name, time_period_alias])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def time_period_del(self, time_period_name):
+        """This method is used to delete a time period
+
+        :param time_period_name: Name of the time period
+        :type time_period_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "tp",
+                     "values": time_period_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def time_period_set_param(self, time_period_name, param_name, param_value):
+        """This method is used to set a parameter for a time period
+
+        :param time_period_name: Name of the time period
+        :type time_period_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_time_period_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_time_period_param`
+
+        :return: Retuns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "tp",
+                     "values": ";".join([time_period_name, param_name.value, str(int(param_value))
+                                        if isinstance(time_period_name, bool) else time_period_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def time_period_get_exception(self, time_period_name):
+        """This method is used to retrieve the exception for a timeperiod
+
+        :param time_period_name: Name of the timeperiod
+        :type time_period_name: str
+
+        :return: Returns a list of exceptions
+        :rtype: list of :ref:`class_time_period_exception`
+        """
+        data_dict = {"action": "getexception",
+                     "object": "tp",
+                     "values": time_period_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        return [TimePeriodException(**x) for x in response]
+
+    def time_period_set_exception(self, time_period_name, days, timerange):
+        """This method is used to set a exception for a timeperiod
+
+        :param time_period_name: Name of the timeperiod
+        :type time_period_name: str
+        :param days: Days to exclude
+        :type days: str
+        :param timerange: Timerange to exclude
+        :type timerange: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setexception",
+                     "object": "tp",
+                     "values": ";".join([time_period_name, days, timerange])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def time_period_del_exception(self, time_period_name, exception):
+        """This method is used to delete a exception from a timeperiod
+
+        :param time_period_name: Name of the timeperiod
+        :type time_period_name: str
+        :param exception: Exception to remove
+        :type exception: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delexception",
+                     "object": "tp",
+                     "values": ";".join([time_period_name, exception])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
