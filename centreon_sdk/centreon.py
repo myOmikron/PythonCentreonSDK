@@ -46,6 +46,7 @@ from centreon_sdk.objects.base.service_template import ServiceTemplate, ServiceT
 from centreon_sdk.objects.base.settings import Settings
 from centreon_sdk.objects.base.time_period import TimePeriod, TimePeriodException
 from centreon_sdk.objects.base.trap import Trap, TrapMatching
+from centreon_sdk.objects.base.vendor import Vendor
 from centreon_sdk.util import method_utils
 from centreon_sdk.util.config import Config
 from centreon_sdk.util.method_utils import pack_locals
@@ -5888,3 +5889,84 @@ class Centreon:
                      "values": ";".join([str(matching_id), param_name.value, param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
+
+    def vendor_show(self):
+        """This method is used to retrieve all available vendors
+
+        :return: Returns a list of vendors
+        :rtype: list of :ref:`class_vendor`
+        """
+        data_dict = {"action": "show",
+                     "object": "vendor"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for vendor in response:
+            vendor["id_unique"] = int(vendor["id_unique"])
+        return [Vendor(**x) for x in response]
+
+    def vendor_add(self, vendor_name, vendor_alias):
+        """This method is used to add a new vendor
+
+        :param vendor_name: Name of the vendor
+        :type vendor_name: str
+        :param vendor_alias: Alias of the vendor
+        :type vendor_alias: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "vendor",
+                     "values": ";".join([vendor_name, vendor_alias])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def vendor_del(self, vendor_name):
+        """This method is used to delete a vendor
+
+        :param vendor_name: Name of the vendor
+        :type vendor_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "vendor",
+                     "values": vendor_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def vendor_set_param(self, vendor_name, param_name, param_value):
+        """This method is used to set a parameter for a vendor
+
+        :param vendor_name: Name of the vendor
+        :type vendor_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_vendor_param`
+        :param param_value: Value of the parameter
+        :type param_value: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "vendor",
+                     "values": ";".join([vendor_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def vendor_generate_traps(self, vendor_name, mib_path):
+        """This method is used to generate the traps from a given MIB file
+
+        :param vendor_name: Name of the vendor
+        :type vendor_name: str
+        :param mib_path: Path to the MIB file
+        :type mib_path: str
+        """
+        data_dict = {"action": "generatetraps",
+                     "object": "vendor",
+                     "values": ";".join([vendor_name, mib_path])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
