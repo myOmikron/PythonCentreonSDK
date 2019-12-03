@@ -101,3 +101,4 @@ class Network:
         json_decoded = json.loads(response.text)
         json_decoded = method_utils.replace_keys_from_dict(self.replace_keys_dict, json_decoded)
         return json_decoded
+
