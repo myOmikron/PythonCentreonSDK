@@ -45,6 +45,7 @@ from centreon_sdk.objects.base.service_template import ServiceTemplate, ServiceT
     ServiceTemplateStalkingOption
 from centreon_sdk.objects.base.settings import Settings
 from centreon_sdk.objects.base.time_period import TimePeriod, TimePeriodException
+from centreon_sdk.objects.base.trap import Trap, TrapMatching
 from centreon_sdk.util import method_utils
 from centreon_sdk.util.config import Config
 from centreon_sdk.util.method_utils import pack_locals
@@ -5745,5 +5746,145 @@ class Centreon:
         data_dict = {"action": "delexception",
                      "object": "tp",
                      "values": ";".join([time_period_name, exception])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def trap_show(self):
+        """This method is used to list all available traps
+
+        :return: Returns a list of traps
+        :rtype: list of :ref:`class_trap`
+        """
+        data_dict = {"action": "show",
+                     "object": "trap"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for trap in response:
+            trap["id_unique"] = int(trap["id_unique"])
+        return [Trap(**x) for x in response]
+
+    def trap_add(self, trap_name, trap_oid):
+        """This method is used to add a new trap
+
+        :param trap_name: Name of the trap
+        :type trap_name: str
+        :param trap_oid: OID of the trap
+        :type trap_oid: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "trap",
+                     "values": ";".join([trap_name, trap_oid])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def trap_del(self, trap_name):
+        """This method is used to delete a trap
+
+        :param trap_name: Name of the trap
+        :type trap_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "trap",
+                     "values": trap_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def trap_set_param(self, trap_name, param_name, param_value):
+        """This method is used to set the parameter for a trap
+
+        :param trap_name: Name of the trap
+        :type trap_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_trap_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_trap_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "trap",
+                     "values": ";".join([trap_name, param_name.value, str(int(param_value))
+                                         if isinstance(param_value, bool) else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def trap_get_matching(self, trap_name):
+        """This method is used to retrieve the available matching rules
+
+        :param trap_name: Name of the trap
+        :type trap_name: str
+
+        :return: Returns a list of matching rules
+        :rtype: list of :ref:`class_trap_matching`
+        """
+        data_dict = {"action": "getmatching",
+                     "object": "trap",
+                     "values": trap_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for matching in response:
+            matching["id_unique"] = int(matching["id_unique"])
+            matching["order"] = int(matching["order"])
+        return [TrapMatching(**x) for x in response]
+
+    def trap_add_matching(self, trap_name, string, regexp, status):
+        """This method is used to add a new matching rule to a trap
+
+        :param trap_name: Name of the trap
+        :type trap_name: str
+        :param string: String to match
+        :type string: str
+        :param regexp: Matching regular expression
+        :type regexp: str
+        :param status: Status to submit
+        :type status: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addmatching",
+                     "object": "trap",
+                     "values": ";".join([trap_name, string, regexp, status])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def trap_del_matching(self, trap_id):
+        """This method is used to delete a matching rule from a trap
+
+        :param trap_id: ID of the trap
+        :type trap_id: int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delmatching",
+                     "object": "trap",
+                     "values": str(trap_id)}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def trap_update_matching(self, matching_id, param_name, param_value):
+        """This method is used to update a matching rule of a trap
+
+        :param matching_id: ID of a matching
+        :type matching_id: int
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_trap_matching_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_trap_matching_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "updatematching",
+                     "object": "trap",
+                     "values": ";".join([str(matching_id), param_name.value, param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
