@@ -43,6 +43,7 @@ from centreon_sdk.objects.base.service_group import ServiceGroup
 from centreon_sdk.objects.base.service_status import ServiceStatus
 from centreon_sdk.objects.base.service_template import ServiceTemplate, ServiceTemplateNotificationOption, \
     ServiceTemplateStalkingOption
+from centreon_sdk.objects.base.settings import Settings
 from centreon_sdk.util import method_utils
 from centreon_sdk.util.config import Config
 from centreon_sdk.util.method_utils import pack_locals
@@ -5591,5 +5592,39 @@ class Centreon:
         data_dict = {"action": "unetseverity",
                      "object": "sc",
                      "values": service_category_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def settings_show(self):
+        """This method is used to retrieve the current settings
+
+        :return: Returns the settings
+        :rtype: :ref:`class_settings`
+        """
+        data_dict = {"action": "show",
+                     "object": "settings"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        ret_dict = {}
+        for key_value_pair in response:
+            ret_dict[key_value_pair["parameter"]] = key_value_pair["value"]
+        return Settings(**ret_dict)
+
+    def settings_set_param(self, param_name, param_value):
+        """This method is used to set a parameter for the settings
+
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_settings_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_settings_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "settings",
+                     "values": ";".join([param_name.value, str(int(param_value)) if isinstance(param_value, bool)
+                                         else str(param_value) if isinstance(param_value, int)
+                                         else param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
