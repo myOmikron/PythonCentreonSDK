@@ -64,8 +64,10 @@ def check_if_empty_list(response) -> bool:
     return False
 
 
-def replace_keys_from_dict(old_key, new_key, dict_to_use):
-    return _replace_keys_from_dict(old_key, new_key, dict_to_use)
+def replace_keys_from_dict(key_dict, dict_to_use):
+    for item in key_dict:
+        dict_to_use = _replace_keys_from_dict(item, key_dict[item], dict_to_use)
+    return dict_to_use
 
 
 def _replace_keys_from_dict(old_key, new_key, layer):

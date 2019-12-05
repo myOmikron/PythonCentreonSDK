@@ -19,16 +19,34 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
 from centreon_sdk.network.network import Network, HTTPVerb
+from centreon_sdk.objects.base.cent_engine_cfg import CentEngineCFG
 from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
 from centreon_sdk.objects.base.contact_group import ContactGroup
 from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactTemplateAuthType
 from centreon_sdk.objects.base.dependency import Dependency
-from centreon_sdk.objects.base.host import Host
+from centreon_sdk.objects.base.downtime import Downtime, DowntimePeriod
+from centreon_sdk.objects.base.general import ThreeWayOption
+from centreon_sdk.objects.base.host import Host, HostParam
+from centreon_sdk.objects.base.host_category import HostCategory
+from centreon_sdk.objects.base.host_group import HostGroup
+from centreon_sdk.objects.base.host_group_service import HostGroupService
 from centreon_sdk.objects.base.host_status import HostStatus
 from centreon_sdk.objects.base.instance import Instance
+from centreon_sdk.objects.base.ldap import LDAP, LDAPServer
 from centreon_sdk.objects.base.macro import Macro
+from centreon_sdk.objects.base.poller import Poller
+from centreon_sdk.objects.base.real_time_downtime import RealTimeDowntimeHost, RealTimeDowntimeService
+from centreon_sdk.objects.base.resource_cfg import ResourceCFG
 from centreon_sdk.objects.base.service import Service
+from centreon_sdk.objects.base.service_category import ServiceCategory
+from centreon_sdk.objects.base.service_group import ServiceGroup
 from centreon_sdk.objects.base.service_status import ServiceStatus
+from centreon_sdk.objects.base.service_template import ServiceTemplate, ServiceTemplateNotificationOption, \
+    ServiceTemplateStalkingOption
+from centreon_sdk.objects.base.settings import Settings, SettingsParam
+from centreon_sdk.objects.base.time_period import TimePeriod, TimePeriodException
+from centreon_sdk.objects.base.trap import Trap, TrapMatching
+from centreon_sdk.objects.base.vendor import Vendor
 from centreon_sdk.util import method_utils
 from centreon_sdk.util.config import Config
 from centreon_sdk.util.method_utils import pack_locals
@@ -53,7 +71,7 @@ class Centreon:
         self.network = Network(self.config, verify)
         self.config.vars["header"] = {"centreon-auth-token": self.get_auth_token(username, password)}
         self.config.vars["params"] = {"action": "action",
-                                                "object": "centreon_clapi"}
+                                      "object": "centreon_clapi"}
 
     def get_auth_token(self, username, password):
         """This method is used to receive the authentication token
@@ -72,20 +90,6 @@ class Centreon:
         response = self.network.make_request(HTTPVerb.POST, data=data_dict, params=param_dict, use_encode_json=False,
                                              use_header=False)
         return response["authToken"]
-
-    def restart_poller(self, instance_name):
-        """This method is used to restart a poller
-
-        :param instance_name: Instance name of the poller
-        :type instance_name: str
-
-        :return: None
-        """
-        data_dict = {"action": "APPLYCFG",
-                     "values": instance_name}
-        response = self.network.make_request(HTTPVerb.POST, data=data_dict, params=self.config.vars["params"])
-        for item in response["result"]:
-            print(item)
 
     def host_status_get(self, *, viewType=None, fields=None, status=None, hostgroup=None, instance=None, search=None,
                         critically=None, sortType=None, order=None, limit=None, number=None):
@@ -171,7 +175,7 @@ class Centreon:
         response = self.network.make_request(HTTPVerb.GET, params=param_dict)
         return [ServiceStatus(**x) for x in response]
 
-    def host_list(self):
+    def host_show(self):
         """This method is used to list all available hosts
 
         :return: Returns hosts available in centreon
@@ -183,17 +187,28 @@ class Centreon:
         response = response["result"]
         return [Host(**x) for x in response]
 
-    def host_add(self, host_add_str):
-        """This method is used to add a new host to centreon
+    def host_add(self, host_name, host_alias, host_address, host_templates, instance, host_groups):
+        """This method is used to add a new host
 
-        :param host_add_str: Host add string. Use :ref:`class_host_builder` to generate it
-        :type host_add_str: str
+        :param host_name: Name of the host
+        :type host_name: str
+        :param host_alias: Alias of the host
+        :type host_alias: str
+        :param host_address: Address of the host
+        :type host_address: str
+        :param host_templates: List of host templates
+        :type host_templates: list of str
+        :param instance: Instance the host should checked from
+        :type instance: str
+        :param host_groups: List of host groups
+        :type host_groups: list of str
 
         :return: Returns True if operation was successful
         """
         data_dict = {"action": "add",
                      "object": "host",
-                     "values": host_add_str}
+                     "values": ";".join([host_name, host_alias, host_address, "|".join(host_templates), instance,
+                                         "|".join(host_groups)])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
@@ -218,7 +233,7 @@ class Centreon:
         :param host_name: Name of the host
         :type host_name: str
         :param param_name: Name of the param
-        :type param_name: str
+        :type param_name: :ref:`class_host_param`
         :param param_value: Value of the param
         :type param_value: str
 
@@ -227,7 +242,8 @@ class Centreon:
         """
         data_dict = {"action": "setparam",
                      "object": "host",
-                     "values": ";".join([host_name, param_name, param_value])}
+                     "values": ";".join([host_name, param_name.value, str(int(param_value))
+                     if isinstance(param_value, bool) else param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
@@ -237,18 +253,23 @@ class Centreon:
         :param host_name: Name of the host
         :type host_name: str
         :param params: List of the parameters you want to receive
-        :type params: list of str
+        :type params: list of :ref:`class_host_param`
 
         :return: Returns a dict with the wanted results
         :rtype: dict
         """
         data_dict = {"action": "getparam",
                      "object": "host",
-                     "values": host_name + ";" + "|".join(params)}
+                     "values": ";".join([host_name, "|".join([x.value for x in params])])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        if len(params) == 1:
-            return {params[0]: response["result"][0]}
-        return response["result"][0]
+        response = response["result"]
+        return_dict = {}
+        for host in response:
+            for host_param in host:
+                for hp in HostParam:
+                    if hp.value == host_param:
+                        return_dict[hp] = host[host_param]
+        return return_dict
 
     def host_set_instance(self, host_name, instance):
         """This method is used to set the instance poller for a host
@@ -406,7 +427,8 @@ class Centreon:
         :param host_name: Name of the host
         :type host_name: str
 
-        :return: Returns 
+        :return: Returns list of parents
+        :rtype: list of dict
         """
         data_dict = {"action": "getparent",
                      "object": "host",
@@ -1441,7 +1463,7 @@ class Centreon:
         data_dict = {"action": acl_grant_action.value[0],
                      "object": "aclresource",
                      "values": ";".join([acl_group_name, "*" if use_wildcard and acl_grant_action.value[1] else
-                                        "|".join(acl_resource_names)])}
+                     "|".join(acl_resource_names)])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
@@ -2021,7 +2043,7 @@ class Centreon:
         data_dict = {"action": "setparam",
                      "object": "contact",
                      "values": ";".join([alias, param_name.value,
-                                        "|".join(param_value) if isinstance(param_value, list)
+                                         "|".join(param_value) if isinstance(param_value, list)
                                          else int(param_value) if isinstance(param_value, bool)
                                          else param_value.value if isinstance(param_value, ContactAuthenticationType)
                                          else param_value])}
@@ -2141,7 +2163,7 @@ class Centreon:
         data_dict = {"action": "setparam",
                      "object": "contacttpl",
                      "values": ";".join([contact_template_alias, param_name.value,
-                                        "|".join(param_value) if isinstance(param_value, list)
+                                         "|".join(param_value) if isinstance(param_value, list)
                                          else int(param_value) if isinstance(param_value, bool)
                                          else param_value.value if isinstance(param_value, ContactTemplateAuthType)
                                          else param_value])}
@@ -3059,3 +3081,3016 @@ class Centreon:
                      "values": instance_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
+
+    def downtime_show(self):
+        """This method is used to list all available recurrent downtimes
+
+        :return: Returns a list of downtimes
+        :rtype: :ref:`class_downtime`
+        """
+        data_dict = {"action": "show",
+                     "object": "downtime"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for downtime in response:
+            downtime["activate"] = bool(downtime["activate"])
+            downtime["id_unique"] = int(downtime["id_unique"])
+        return [Downtime(**x) for x in response]
+
+    def downtime_get(self, downtime_name, downtime_type=None):
+        """This method is used to retrieve information about the resources of a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param downtime_type: Optional: Type of the downtime. If not specified, all information will be recveived
+        :type downtime_type: :ref:`class_downtime_type`
+
+        :return: Returns a list of downtimes which match the name
+        :rtype: list of :ref:`class_downtime`
+        """
+        data_dict = {"action": "show",
+                     "object": "downtime",
+                     "values": downtime_name if not downtime_type else ";".join([downtime_name, downtime_type.value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for downtime in response:
+            downtime["id_unique"] = int(downtime["id_unique"])
+            downtime["activate"] = bool(downtime["activate"])
+            if "hosts" in downtime:
+                if isinstance(downtime["hosts"], list):
+                    downtime["hosts"] = list(downtime["hosts"])
+                else:
+                    downtime["hosts"] = [downtime["hosts"]] if len(downtime["hosts"]) > 0 else []
+            if "services" in downtime:
+                if isinstance(downtime["services"], list):
+                    downtime["services"] = list(downtime["services"])
+                else:
+                    downtime["services"] = [downtime["services"]] if len(downtime["services"]) > 0 else []
+            if "service_groups" in downtime:
+                if isinstance(downtime["service_groups"], list):
+                    downtime["service_groups"] = list(downtime["service_groups"])
+                else:
+                    downtime["service_groups"] = [downtime["service_groups"]] if len(downtime["service_groups"]) > 0 else []
+            if "host_groups" in downtime:
+                if isinstance(downtime["host_groups"], list):
+                    downtime["host_groups"] = list(downtime["host_groups"])
+                else:
+                    downtime["host_groups"] = [downtime["host_groups"]] if len(downtime["host_groups"]) > 0 else []
+        return [Downtime(**x) for x in response]
+
+    def downtime_add(self, downtime_name, downtime_description):
+        """This method is used to add a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param downtime_description: Description of the downtime
+        :type downtime_description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "downtime",
+                     "values": ";".join(downtime_name, downtime_description)}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_del(self, downtime_name):
+        """This method is used to delete a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "downtime",
+                     "values": downtime_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_set_param(self, downtime_name, param_name, param_value):
+        """This method is used to set a parameter for a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_downtime_param`
+        :param param_value: Value of the parameter
+        :type param_value: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_list_periods(self, downtime_name):
+        """This method is used to retrieve the periods set on a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+
+        :return: Returns a list of downtime periods
+        :rtype: list of :ref:`class_downtime_period`
+        """
+        data_dict = {"action": "listperiods",
+                     "object": "downtime",
+                     "values": downtime_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for period in response:
+            period["position"] = int(period["position"])
+            period["fixed"] = bool(period["fixed"])
+            period["duration"] = int(period["duration"]) if period["duration"] else None
+            period["day_of_week"] = [int(x) for x in period["day_of_week"].split(',')] if len(period["day_of_week"]) > 0 else []
+            period["day_of_month"] = [int(x) for x in period["day_of_month"].split(',')] if len(period["day_of_month"]) > 0 else []
+        return [DowntimePeriod(**x) for x in response]
+
+    def downtime_add_weekly_period(self, downtime_name, start_time, end_time, fixed, duration, day_of_week):
+        """This method is used to add a weekly period to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param start_time: Start time of the downtime. Format hh:mm:ss
+        :type start_time: str
+        :param end_time: End time of the downtime. Format hh:mm:ss
+        :type end_time: str
+        :param fixed: Is the downtime fixed or flexible? Fixed = True, Flexible = False
+        :type fixed: bool
+        :param duration: Duration of the downtime in seconds
+        :type duration: int
+        :param day_of_week: Days of the week the downtime should be active
+        :type day_of_week: list of int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addweeklyperiod",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, start_time, end_time, str(int(fixed)), duration,
+                                         ",".join(day_of_week)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_add_monthly_period(self, downtime_name, start_time, end_time, fixed, duration, day_of_month):
+        """This method is used to add a monthly period to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param start_time: Start time of the downtime. Format hh:mm:ss
+        :type start_time: str
+        :param end_time: End time of the downtime. Format hh:mm:ss
+        :type end_time: str
+        :param fixed: Is the downtime fixed or flexible? Fixed = True, Flexible = False
+        :type fixed: bool
+        :param duration: Duration of the downtime in seconds
+        :type duration: int
+        :param day_of_month: Days of the month the downtime should be active
+        :type day_of_month: list of int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addmonthlyperiod",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, start_time, end_time, str(int(fixed)), duration,
+                                         ",".join(day_of_month)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_add_specific_period(self, downtime_name, start_time, end_time, fixed, duration, day_of_week,
+                                     month_cycle):
+        """This method is used to add a specific time period to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param start_time: Start time of the downtime. Format hh:mm:ss
+        :type start_time: str
+        :param end_time: End time of the downtime. Format hh:mm:ss
+        :type end_time: str
+        :param fixed: Is the downtime fixed or flexible? Fixed = True, Flexible = False
+        :type fixed: bool
+        :param duration: Duration of the downtime in seconds
+        :type duration: int
+        :param day_of_week: Days of the week the downtime should be active
+        :type day_of_week: list of int
+        :param month_cycle: *first* or *last*
+        :type month_cycle: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addspecificperiod",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, start_time, end_time, str(int(fixed)),
+                                        duration, ",".join(day_of_week), month_cycle])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_add_host(self, downtime_name, host_names):
+        """This method is used to link hosts to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param host_names: List of the hosts
+        :type host_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addhost",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(host_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_add_host_group(self, downtime_name, host_groups):
+        """This method is used to link hostgroups to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param host_groups: List of the hostgroups
+        :type host_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addhostgroup",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(host_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_add_service(self, downtime_name, services):
+        """This method is used to link services to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param services: List of services. Format: ["host_name,service_name", ...]
+        :type services: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addservice",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(services)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_add_service_group(self, downtime_name, service_groups):
+        """This method is used to link service groups to a recurrent downtime
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param service_groups: List of service groups
+        :type service_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addservice",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(service_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_set_host(self, downtime_name, host_names):
+        """This method is used to link hosts to a recurrent downtime. Overwriting existing relationship definitions.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param host_names: List of the hosts
+        :type host_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "sethost",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(host_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_set_host_group(self, downtime_name, host_groups):
+        """This method is used to link hostgroups to a recurrent downtime. \
+        Overwriting existing relationship definitions.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param host_groups: List of the hostgroups
+        :type host_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "sethostgroup",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(host_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_set_service(self, downtime_name, services):
+        """This method is used to link services to a recurrent downtime. \
+        Overwriting existing relationship definitions.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param services: List of services. Format: ["host_name,service_name", ...]
+        :type services: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setservice",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(services)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_set_service_group(self, downtime_name, service_groups):
+        """This method is used to link service groups to a recurrent downtime. \
+        Overwriting existing relationship definitions.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param service_groups: List of service groups
+        :type service_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setservicegroup",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(service_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_del_host(self, downtime_name, host_names):
+        """This method is used to delete linked hosts from a recurrent downtime.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param host_names: List of the hosts
+        :type host_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delhost",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(host_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_del_host_group(self, downtime_name, host_groups):
+        """This method is used to delete linked hostgroups from a recurrent downtime.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param host_groups: List of the hostgroups
+        :type host_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delhostgroup",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(host_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_del_service(self, downtime_name, services):
+        """This method is used to delete linked services from a recurrent downtime.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param services: List of services. Format: ["host_name,service_name", ...]
+        :type services: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delservice",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(services)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def downtime_del_service_group(self, downtime_name, service_groups):
+        """This method is used to delete linked service groups from a recurrent downtime.
+
+        :param downtime_name: Name of the downtime
+        :type downtime_name: str
+        :param service_groups: List of service groups
+        :type service_groups: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delservicegroup",
+                     "object": "downtime",
+                     "values": ";".join([downtime_name, "|".join(service_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_engine_cfg_show(self):
+        """This method is used to list all available centreon engine configurations
+
+        :return: Returns a list of centreon engine configurations
+        :rtype: list of :ref:`class_cent_engine_cfg`
+        """
+        data_dict = {"action": "show",
+                     "object": "enginecfg"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for cent_engine_cfg in response:
+            cent_engine_cfg["id_unique"] = int(cent_engine_cfg["id_unique"])
+        return [CentEngineCFG(**x) for x in response]
+
+    def cent_engine_cfg_add(self, cent_engine_cfg_name, instance_name, comment):
+        """This method is used to add a new centreon engine configuration
+
+        :param cent_engine_cfg_name: Name of the centreon engine configuration
+        :type cent_engine_cfg_name: str
+        :param instance_name: Name of the instance, the centreon engine configuration should be lniked with
+        :type instance_name: str
+        :param comment: Comments regarding the centreon engine configuration
+        :type comment: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "enginecfg",
+                     "values": ";".join([cent_engine_cfg_name, instance_name, comment])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_engine_cfg_del(self, cent_engine_cfg_name):
+        """This method is used to delete a centreon engine configuration
+
+        :param cent_engine_cfg_name: Name of the centreon engine configuration
+        :type cent_engine_cfg_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "enginecfg",
+                     "values": cent_engine_cfg_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_engine_cfg_set_param(self, cent_engine_cfg_name, param_name, param_value):
+        """This method is used to set a parameter for an engine configuration
+
+        :param cent_engine_cfg_name: Name of the centreon engine configuration
+        :type cent_engine_cfg_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_cent_engine_cfg_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_cent_engine_cfg_param` for further information
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "enginecfg",
+                     "values": ";".join([cent_engine_cfg_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_engine_cfg_add_broker_module(self, cent_engine_cfg_name, module_names):
+        """This method is used to add a broker module without removing existing modules
+
+        :param cent_engine_cfg_name: Name of the centreon engine configuration
+        :type cent_engine_cfg_name: str
+        :param module_names: List of the names of the modules
+        :type module_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addbrokermodule",
+                     "object": "enginecfg",
+                     "values": ";".join([cent_engine_cfg_name, "|".join(module_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def cent_engine_cfg_del_broker_module(self, cent_engine_cfg_name, module_names):
+        """This method is used to delete a broker module without removing existing modules
+
+        :param cent_engine_cfg_name: Name of the centreon engine configuration
+        :type cent_engine_cfg_name: str
+        :param module_names: List of the names of the modules
+        :type module_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delbrokermodule",
+                     "object": "enginecfg",
+                     "values": ";".join([cent_engine_cfg_name, "|".join(module_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_downtime_show(self):
+        """This method is used to show all available downtimes
+
+        :return: Returns a list of all available downtimes
+        :rtype: list of dict
+        """
+        data_dict = {"action": "show",
+                     "object": "rtdowntime"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def real_time_downtime_show_host(self, host_name=None):
+        """This method is used to list all downtimes for host objects or retrieve information about a specific downtime
+
+        :param host_name: Optional: Name of the host
+        :type host_name: str
+
+        :return: Returns a list of downtimes for a host object
+        :rtype: list of :ref:`class_real_time_downtime_host`
+        """
+        data_dict = {"action": "show",
+                     "object": "rtdowntime",
+                     "values": ";".join(["HOST", host_name]) if host_name else "HOST"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for downtime in response:
+            downtime["id_unique"] = int(downtime["id_unique"])
+            downtime["fixed"] = bool(downtime["fixed"])
+            downtime["duration"] = int(downtime["duration"])
+        return [RealTimeDowntimeHost(**x) for x in response] if isinstance(response, list) \
+            else RealTimeDowntimeHost(response)
+
+    def real_time_downtime_show_service(self, service_name=None):
+        """This method is used to list all downtimes for service objects or retrieve \
+        information about a specific service
+
+        :param service_name: Optional: Name of the service. Format "host_name,service_name"
+        :type service_name: str
+
+        :return: Returns a list of downtimes for service objets
+        :rtype: list of :ref:`class_real_time_downtime_service`
+        """
+        data_dict = {"action": "show",
+                     "object": "rtdowntime",
+                     "values": ";".join(["SVC", service_name]) if service_name else "SVC"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for downtime in response:
+            downtime["id_unique"] = int(downtime["id_unique"])
+            downtime["fixed"] = bool(downtime["fixed"])
+            downtime["duration"] = int(downtime["duration"])
+        return [RealTimeDowntimeService(**x) for x in response]
+
+    def real_time_downtime_add_host(self, host_name, start_time, end_time, fixed, duration, description,
+                                    apply_on_linked_services):
+        """This method is used to add a downtime for a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param start_time: Beginning of the downtime. Format YYYY/MM/DD HH:mm
+        :type start_time: str
+        :param end_time: End of the downtime. Format YYYY/MM/DD HH:mm
+        :type end_time: str
+        :param fixed: Is the downtime fixed
+        :type fixed: bool
+        :param duration: Duration of a flexible downtime
+        :type duration: int
+        :param description: Description of the downtime
+        :type description: int
+        :param apply_on_linked_services: Should the downtime also be applied on the linked services
+        :type apply_on_linked_services: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "rtdowntime",
+                     "values": ";".join(["HOST", host_name, start_time, end_time, str(int(fixed)), duration,
+                                         description, str(int(apply_on_linked_services))])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_downtime_add_host_group(self, host_group_name, start_time, end_time, fixed, duration, description,
+                                          apply_on_linked_services):
+        """This method is used to add a downtime for a host group
+
+        :param host_group_name: Name of the host group
+        :type host_group_name: str
+        :param start_time: Beginning of the downtime. Format YYYY/MM/DD HH:mm
+        :type start_time: str
+        :param end_time: End of the downtime. Format YYYY/MM/DD HH:mm
+        :type end_time: str
+        :param fixed: Is the downtime fixed
+        :type fixed: bool
+        :param duration: Duration of a flexible downtime
+        :type duration: int
+        :param description: Description of the downtime
+        :type description: int
+        :param apply_on_linked_services: Should the downtime also be applied on the linked services
+        :type apply_on_linked_services: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "rtdowntime",
+                     "values": ";".join(["HG", host_group_name, start_time, end_time, str(int(fixed)), duration,
+                                         description, str(int(apply_on_linked_services))])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_downtime_add_service(self, service_names, start_time, end_time, fixed, duration, description):
+        """This method is used to add a downtime for a service
+
+        :param service_names: List of service names. Format ["host_name,service_name", ...]
+        :type service_names: list of str
+        :param start_time: Start time
+        :param start_time: Beginning of the downtime. Format YYYY/MM/DD HH:mm
+        :type start_time: str
+        :param end_time: End of the downtime. Format YYYY/MM/DD HH:mm
+        :type end_time: str
+        :param fixed: Is the downtime fixed
+        :type fixed: bool
+        :param duration: Duration of a flexible downtime
+        :type duration: int
+        :param description: Description of the downtime
+        :type description: int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "rtdowntime",
+                     "values": ";".join(["SVC", "|".join(service_names), start_time, end_time, str(int(fixed)), duration,
+                                         description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_downtime_add_service_group(self, service_group_name, start_time, end_time, fixed, duration,
+                                             description):
+        """This method is used to add a downtime for a service group
+
+        :param service_group_name: Service group
+        :type service_group_name: str
+        :param start_time: Start time
+        :param start_time: Beginning of the downtime. Format YYYY/MM/DD HH:mm
+        :type start_time: str
+        :param end_time: End of the downtime. Format YYYY/MM/DD HH:mm
+        :type end_time: str
+        :param fixed: Is the downtime fixed
+        :type fixed: bool
+        :param duration: Duration of a flexible downtime
+        :type duration: int
+        :param description: Description of the downtime
+        :type description: int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "rtdowntime",
+                     "values": ";".join(["SG", "|".join(service_group_name), start_time, end_time, str(int(fixed)),
+                                         duration, description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_downtime_add_instance(self, instance_name, start_time, end_time, fixed, duration, description):
+        """This method is used to add a downtime for a instance
+
+        :param instance_name: Name of the instance
+        :type instance_name: str
+        :param start_time: Start time
+        :param start_time: Beginning of the downtime. Format YYYY/MM/DD HH:mm
+        :type start_time: str
+        :param end_time: End of the downtime. Format YYYY/MM/DD HH:mm
+        :type end_time: str
+        :param fixed: Is the downtime fixed
+        :type fixed: bool
+        :param duration: Duration of a flexible downtime
+        :type duration: int
+        :param description: Description of the downtime
+        :type description: int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "rtdowntime",
+                     "values": ";".join(["INSTANCE", instance_name, start_time, end_time, str(int(fixed)), duration,
+                                         description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_downtime_cancel(self, downtime_ids):
+        """This method is used to cancel a downtime
+
+        :param downtime_ids: List of the ids of the downtimes
+        :type downtime_ids: list of int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "cancel",
+                     "object": "rtdowntime",
+                     "values": "|".join([str(x) for x in downtime_ids])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_show(self):
+        """This method is used to list all available host categories
+
+        :return: Returns a list of categories
+        :rtype: :ref:`class_host_category`
+        """
+        data_dict = {"action": "show",
+                     "object": "hc"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        return [HostCategory(**x) for x in response]
+
+    def host_category_add(self, host_category_name, host_category_alias):
+        """This method is used to add a new host category
+
+        :param host_category_name: Name of the host category
+        :type host_category_name: str
+        :param host_category_alias: Alias of the host category
+        :type host_category_alias: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "hc",
+                     "values": ";".join([host_category_name, host_category_alias])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_del(self, host_category_name):
+        """This method is used to delete a host category
+
+        :param host_category_name: Name of the host category
+        :type host_category_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "hc",
+                     "values": host_category_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_get_member(self, host_category_name):
+        """This method is used to get the member that are listed to a host category
+
+        :param host_category_name: Name of the host category
+        :type host_category_name: str
+
+        :return: Returns a list of members
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getmember",
+                     "object": "hc",
+                     "values": host_category_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def host_category_add_member(self, host_category_name, members):
+        """This method is used to add members to a host category
+
+        :param host_category_name: Name of the host category
+        :type host_category_name: str
+        :param members: List of member names
+        :type members: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addmember",
+                     "object": "hc",
+                     "values": ";".join([host_category_name, "|".join(members)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_set_member(self, host_category_name, members):
+        """This method is used to set the members of a host category. Overwrites existing linked members
+
+        :param host_category_name: Name of the category name
+        :type host_category_name: str
+        :param members: List of member names
+        :type members: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setmember",
+                     "object": "hc",
+                     "values": ";".join([host_category_name, "|".join(members)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_set_severity(self, host_category_name, severity_level, severity_icon):
+        """This method is used to set the severity of a host category
+
+        :param host_category_name: Name of the host category
+        :type host_category_name: str
+        :param severity_level: Level of the severity
+        :type severity_level: int
+        :param severity_icon: Icon of the severity
+        :type severity_icon: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setseverity",
+                     "object": "hc",
+                     "values": ";".join([host_category_name, severity_level, severity_icon])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_unset_severity(self, host_category):
+        """This method is used to unset the severity of a host category
+
+        :param host_category: Name of the host category
+        :type host_category: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "unsetseverity",
+                     "object": "hc",
+                     "values": host_category}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_category_del_member(self, host_category_name, host_names):
+        """This method is used to delete members of a host category
+
+        :param host_category_name: Name of the host category
+        :type host_category_name: str
+        :param host_names: Name of the hosts
+        :type host_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delmember",
+                     "object": "hc",
+                     "values": ";".join([host_category_name, "|".join(host_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_show(self):
+        """This method is used to list all available hostgroups
+
+        :return: Returns a list of hostgroups
+        :rtype: list of :ref:`class_host_group`
+        """
+        data_dict = {"action": "show",
+                     "object": "hg"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for hostgroup in response:
+            hostgroup["id_unique"] = int(hostgroup["id_unique"])
+        return [HostGroup(**x) for x in response]
+
+    def host_group_add(self, host_group_name, host_group_alias):
+        """This method is used to add a new hostgroup. \
+        Generating configuration files and restarting the engine is required
+
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param host_group_alias: Alias of the hostgroup
+        :type host_group_alias: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "hg",
+                     "values": ";".join([host_group_name, host_group_alias])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_del(self, host_group_name):
+        """This method is used to delete a hostgroup. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the host group
+        :type host_group_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "hg",
+                     "values": host_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_set_param(self, host_group_name, param_name, param_value):
+        """This method is used to set a parameter for a hostgroup. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_host_group_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_host_group_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "hg",
+                     "values": ";".join([host_group_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_get_member(self, host_group_name):
+        """This method is used to get the members of a hostgroup
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+
+        :return: Returns a list of linked members
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getmember",
+                     "object": "hg",
+                     "values": host_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def host_group_add_member(self, host_group_name, member_names):
+        """This method is used to add members to a hostgroup. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param member_names: List of names of the members
+        :type member_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addmember",
+                     "object": "hg",
+                     "values": ";".join([host_group_name, "|".join(member_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_set_member(self, host_group_name, member_names):
+        """This method is used to set members of a hostgroup. Overwrites existing members. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param member_names: List of names of members
+        :type member_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setmember",
+                     "object": "hg",
+                     "values": ";".join([host_group_name, "|".join(member_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_del_member(self, host_group_name, member_names):
+        """This method is used to delete members of a hostgroup. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param member_names: List of names of members
+        :type member_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delmember",
+                     "object": "hg",
+                     "values": ";".join([host_group_name, "|".join(member_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_show(self):
+        """This method is used to list all available hostgroup services
+
+        :return: Returns a list of hostgroup services
+        :rtype: list of :ref:`class_host_group_service`
+        """
+        data_dict = {"action": "show",
+                     "object": "hgservice"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for host_group_service in response:
+            host_group_service["host_group_id"] = int(host_group_service["host_group_id"])
+            host_group_service["id_unique"] = int(host_group_service["id_unique"])
+            host_group_service["active_checks_enabled"] = ThreeWayOption.NO \
+                if host_group_service["active_checks_enabled"] == "0" else ThreeWayOption.YES \
+                if host_group_service["active_checks_enabled"] == "1" else ThreeWayOption.DEFAULT
+            host_group_service["passive_checks_enabled"] = ThreeWayOption.NO \
+                if host_group_service["passive_checks_enabled"] == "0" else ThreeWayOption.YES \
+                if host_group_service["passive_checks_enabled"] == "1" else ThreeWayOption.DEFAULT
+        return [HostGroupService(**x) for x in response]
+
+    def host_group_service_add(self, host_group_name, service_description, service_template):
+        """This method is used to add a new hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param service_template: Template of the service
+        :type service_template: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, service_template])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_del(self, host_group_name, service_description):
+        """This method is used to delete a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_set_param(self, host_group_name, service_description, param_name, param_value):
+        """This method is used to set a parameter for a hostgroup service. Generating configuration files and \
+        restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_host_group_service_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_host_group_service_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, param_name.value,
+                                         str(int(param_value)) if isinstance(param_value, bool) else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_add_host_group(self, host_group_name, service_description, host_group_names_new):
+        """This method is used to tia a hostgroup service to an extra hostgroup. The previous definitions will be \
+         appended. Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param host_group_names_new: List of the hostgroup names, the service should be linked to
+        :type host_group_names_new: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addhost",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(host_group_names_new)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_set_host(self, host_group_name, service_description, host_group_names_new):
+        """This method is used to tie a service to an extra hostgroup. The previous definitions will be overwritten. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param host_group_names_new: List of new hostgroup names
+        :type host_group_names_new: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "sethost",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(host_group_names_new)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_del_host(self, host_group_name, service_description, host_group_names_to_delete):
+        """This method is used to delete a relation between a hostgroup and a service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Service description
+        :type service_description: str
+        :param host_group_names_to_delete: List of hostgroups, which should be unlinked
+        :type host_group_names_to_delete: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delhost",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(host_group_names_to_delete)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_get_macro(self, host_group_name, service_description):
+        """This method is used to view the custom macro list of a hostgroup service
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+
+        :return: Returns a list of macros
+        :rtype: list of :ref:`class_macro`
+        """
+        data_dict = {"action": "getmacro",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        return [Macro(**x) for x in response]
+
+    def host_group_service_set_macro(self, host_group_name, service_description, macro_name, macro_value,
+                                     macro_is_password, macro_description):
+        """This method is used to set a macro for a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param macro_name: Name of the macro
+        :type macro_name: str
+        :param macro_value: Value of the macro
+        :type macro_value: str
+        :param macro_is_password: Is the macro a password?
+        :type macro_is_password: bool
+        :param macro_description: Description of the macro
+        :type macro_description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setmacro",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, macro_name, macro_value,
+                                         str(int(macro_is_password)), macro_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_del_macro(self, host_group_name, service_description, macro_name):
+        """This method is used to delete a macro. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param macro_name: Name of the macro
+        :type macro_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delmacro",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, macro_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_set_severity(self, host_group_name, service_description, severity_name):
+        """This method is used to associate a severity level to a hostgroup service
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param severity_name: Name of the severity level
+        :type severity_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setseverity",
+                     "object": "service",
+                     "values": ";".join([host_group_name, service_description, severity_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_unset_severity(self, host_group_name, service_description):
+        """This method is used to remove the severity from a hostgroup service
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description if the service
+        :type service_description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "unsetseverity",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_get_contact(self, host_group_name, service_description):
+        """This method is used to list the available contacts of a service
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+
+        :return: Returns the available contacts
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getcontact",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def host_group_service_add_contact(self, host_group_name, service_description, contacts):
+        """This method is used to add a new contacts to the notification contact list. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param contacts: Contacts which should be added
+        :type contacts: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addcontact",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(contacts)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_set_contact(self, host_group_name, service_description, contacts):
+        """This method is used to set the contacts for the notification contact list. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param contacts: List of contacts
+        :type: contacts: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setcontact",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(contacts)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_del_contact(self, host_group_name, service_description, contacts):
+        """This method is used to remove contacts from the notification contact list. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param contacts: List of the contacts to delete
+        :type contacts: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delcontact",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(contacts)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_get_contact_group(self, host_group_name, service_description):
+        """This method is used to list the contact groups of a service
+
+        :param host_group_name: Name of the host
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+
+        :return: Returns the list of contact groups
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getcontactgroup",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def host_group_service_add_contact_group(self, host_group_name, service_description, contact_groups):
+        """This method is used to add contact groups to a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param contact_groups: List of the contact groups
+        :type contact_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addcontactgroup",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(contact_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_set_contact_group(self, host_group_name, service_description, contact_groups):
+        """This method is used to set contact groups to a hostgroup service. Existing ones will be overwritten. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param contact_groups: List of the contact groups
+        :type contact_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setcontactgroup",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(contact_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_del_contact_group(self, host_group_name, service_description, contact_groups):
+        """This method is used to delete contact groups of a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param contact_groups: List of the contact groups
+        :type contact_groups: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delcontactgroup",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(contact_groups)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_get_trap(self, host_group_name, service_description):
+        """This method is used to list the traps of a hostgroup service.
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+
+        :return: Returns the traps
+        :rtype: list of dict
+        """
+        data_dict = {"action": "gettrap",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def host_group_service_add_trap(self, host_group_name, service_description, trap_names):
+        """This method is used to add traps to a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param trap_names: List of the trap names
+        :type trap_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addtrap",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(trap_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_set_trap(self, host_group_name, service_description, trap_names):
+        """This method is used to set traps for a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param trap_names: List of the trap names
+        :type trap_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "settrap",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(trap_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def host_group_service_del_trap(self, host_group_name, service_description, trap_names):
+        """This method is used to delete traps from a hostgroup service. \
+        Generating configuration files and restarting the engine is required
+
+        :param host_group_name: Name of the hostgroup
+        :type host_group_name: str
+        :param service_description: Description of the service
+        :type service_description: str
+        :param trap_names: List of the trap names
+        :type trap_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "deltrap",
+                     "object": "hgservice",
+                     "values": ";".join([host_group_name, service_description, "|".join(trap_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def ldap_show(self):
+        """This method is used to list all available LDAP configurations
+
+        :return: Returns the available LDAP configuration
+        :rtype: list of :ref:`class_ldap`
+        """
+        data_dict = {"action": "show",
+                     "object": "ldap"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for ldap in response:
+            ldap["id_unnique"] = int(ldap["id_unique"])
+            ldap["status"] = bool(ldap["status"])
+        return [LDAP(**x) for x in response]
+
+    def ldap_add(self, ldap_name, description):
+        """This method is used to add a new LDAP configuration
+
+        :param ldap_name: Name of the configuration
+        :type ldap_name: str
+        :param description: Description of the configuration
+        :type description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "ldap",
+                     "values": ";".join([ldap_name, description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def ldap_del(self, ldap_name):
+        """This method is used to delete a LDAP configuration
+
+        :param ldap_name: Name of the configuration
+        :type ldap_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "ldap",
+                     "values": ldap_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def ldap_set_param(self, ldap_name, param_name, param_value):
+        """This method is used to set a parameter of a LDAP configuration
+
+        :param ldap_name: Name of the configuration
+        :type ldap_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_ldap_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_ldap_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "ldap",
+                     "values": ";".join([ldap_name, param_name.value, str(int(param_value))
+                     if isinstance(param_value, bool) else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def ldap_show_server(self, ldap_name):
+        """This method is used to show the server list of the ldap configuration
+
+        :param ldap_name: Name of the ldap configuration
+        :type ldap_name: str
+
+        :return: Returns a list of ldap servers
+        :rtype: list of :ref:`class_ldap_server`
+        """
+        data_dict = {"action": "showserver",
+                     "object": "ldap",
+                     "values": ldap_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for ldap_server in response:
+            ldap_server["tls"] = bool(ldap_server["tls"])
+            ldap_server["ssl"] = bool(ldap_server["ssl"])
+            ldap_server["port"] = int(ldap_server["port"])
+            ldap_server["id_unique"] = int(ldap_server["id_unique"])
+            ldap_server["order"] = int(ldap_server["order"])
+        return [LDAPServer(**x) for x in response]
+
+    def ldap_add_server(self, ldap_name, server_address, server_port, use_ssl, use_tls):
+        """This method is used to add a server to a LDAP configuration
+
+        :param ldap_name: Name of the configuration
+        :type ldap_name: str
+        :param server_address: Address of the server
+        :type server_address: str
+        :param server_port: Port of the server
+        :type server_port: int
+        :param use_ssl: Use SSL?
+        :type use_ssl: bool
+        :param use_tls: Use TLS?
+        :type use_tls: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "ldap",
+                     "values": ";".join([ldap_name, server_address, server_port, str(int(use_ssl)), str(int(use_tls))])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def ldap_del_server(self, server_id):
+        """This method is used to delete a server from a ldap configuration
+
+        :param server_id: ID of the server
+        :type: server_id: int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "ldap",
+                     "values": str(server_id)}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def ldap_set_param_server(self, server_id, param_name, param_value):
+        """This method is used to set the parameter for a server
+
+        :param server_id: ID of the server
+        :type server_id: int
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_ldap_server_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_ldap_server_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparamserver",
+                     "object": "ldap",
+                     "values": ";".join([str(server_id), param_name.value, str(int(param_value))
+                                         if isinstance(param_value, bool) else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def resource_cfg_show(self):
+        """This method is used to show the available resource variables
+
+        :return: Returns a list of resource variables
+        :rtype: list of :ref:`class_resource_cfg`
+        """
+        data_dict = {"action": "show",
+                     "object": "resourcecfg"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for variable in response:
+            variable["id_unique"] = int(variable["id_unique"])
+            variable["activate"] = bool(variable["activate"])
+            variable["instance"] = list(variable["instance"])
+        return [ResourceCFG(**x) for x in response]
+
+    def resource_cfg_add(self, macro_name, macro_value, instances, comment):
+        """This method is used to add a new resource variable
+
+        :param macro_name: Name of the macro
+        :type macro_name: str
+        :param macro_value: Value of the macro
+        :type macro_value: str
+        :param instances: Instances that are tied to macros
+        :type instances: list of str
+        :param comment: Comment of the resource
+        :type comment: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "resourcecfg",
+                     "values": ";".join([macro_name, macro_value, "|".join(instances), comment])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def resource_cfg_del(self, resource_id):
+        """This method is used to delete a resource variable
+
+        :param resource_id: ID of the resource
+        :type resource_id: int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "resourcecfg",
+                     "values": str(resource_id)}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def resource_cfg_set_param(self, resource_id, param_name, param_value):
+        """This method is used to set a parameter for a resource variable
+
+        :param resource_id: ID of the resource
+        :type resource_id: int
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_resource_cfg_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_resource_cfg_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "resourcecfg",
+                     "values": ";".join([str(resource_id), param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_show(self):
+        """This method is used list all available service templates
+
+        :return: Returns a list of service templates
+        :rtype: list of :ref:`class_service_template`
+        """
+        data_dict = {"action": "show",
+                     "object": "stpl"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for service_template in response:
+            service_template["id_unique"] = int(service_template["id_unique"])
+            service_template["active_checks_enabled"] = ThreeWayOption.NO if service_template["active_checks_enabled"] == "0" \
+                else ThreeWayOption.YES if service_template["passive_checks_enabled"] == "1" else ThreeWayOption.DEFAULT
+            service_template["passive_checks_enabled"] = ThreeWayOption.NO if service_template["passive_checks_enabled"] == "0" \
+                else ThreeWayOption.YES if service_template["passive_checks_enabled"] == "1" else ThreeWayOption.DEFAULT
+        return [ServiceTemplate(**x) for x in response]
+
+    def service_template_add(self, template_description, template_alias, service_template=""):
+        """This method is used to add a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param template_alias: Alias of the template
+        :type template_alias: str
+        :param service_template: Optional: Service template the new template should inherit
+        :type service_template: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "stpl",
+                     "values": ";".join([template_description, template_alias, service_template])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_del(self, template_description):
+        """This method is used to delete a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "stpl",
+                     "values": template_description}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_set_param(self, template_description, param_name, param_value):
+        """This method is used to set a parameter for a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_service_template_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_service_template_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "stpl",
+                     "values": ";".join([template_description, param_name.value, str(int(param_value))
+                     if isinstance(param_value, bool) else param_value.value
+                     if isinstance(param_value, ServiceTemplateNotificationOption)
+                        or isinstance(param_value, ServiceTemplateStalkingOption) else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_add_host_template(self, service_template_description, host_templates):
+        """This method is used to link host templates to a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_template_description: Description of the service template
+        :type service_template_description: str
+        :param host_templates: List of host templates
+        :type host_templates: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addhosttemplate",
+                     "object": "stpl",
+                     "values": ";".join([service_template_description, "|".join(host_templates)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_set_host_template(self, service_template_description, host_templates):
+        """This method is used to link host templates to a service template. Overwrites previous definitions. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_template_description: Description of the service template
+        :type service_template_description: str
+        :param host_templates: List of host templates
+        :type host_templates: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "sethosttemplate",
+                     "object": "stpl",
+                     "values": ";".join([service_template_description, "|".join(host_templates)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_del_host_template(self, service_template_description, host_templates):
+        """This method is used to delete host templates from a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_template_description: Description of the service template
+        :type service_template_description: str
+        :param host_templates: List of host templates
+        :type host_templates: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delhosttemplate",
+                     "object": "stpl",
+                     "values": ";".join([service_template_description, "|".join(host_templates)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_get_macro(self, template_description):
+        """This method is used to get a list of custom macros of a service template
+
+        :param template_description: Description of the template
+        :type template_description: str
+
+        :return: Returns a list of macros
+        :rtype: list of :ref:`class_macro`
+        """
+        data_dict = {"action": "getmacro",
+                     "object": "stpl",
+                     "values": template_description}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        return [Macro(**x) for x in response]
+
+    def service_template_set_macro(self, template_description, macro_name, macro_value, macro_description=None,
+                                   is_password=None):
+        """This method is used to set a macro for a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param macro_name: Name of the macro
+        :type macro_name: str
+        :param macro_value: Value of the macro
+        :type macro_value: str
+        :param macro_description: Optional: Description of the macro
+        :type macro_description: str
+        :param is_password: Optional: Is the value a password?
+        :type is_password: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setmacro",
+                     "object": "stpl",
+                     "values": ";".join([template_description, macro_name, macro_value,
+                                         macro_description if macro_description else "",
+                                         str(int(is_password)) if is_password else ""])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_del_macro(self, template_description, macro_name):
+        """This method is used to delete a macro from a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the template
+        :type template_description: str
+        :param macro_name: Name of the macro
+        :type macro_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delmacro",
+                     "object": "stpl",
+                     "values": ";".join([template_description, macro_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_get_contact(self, template_description):
+        """This method is used to get the contacts that are linked to the service template
+
+        :param template_description: Description of the template
+        :type template_description: str
+
+        :return: Returns a list of contacts
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getcontact",
+                     "object": "stpl",
+                     "values": template_description}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def service_template_add_contact(self, template_description, contact_names):
+        """This method is used to add contacts to a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the template
+        :type template_description: str
+        :param contact_names: List of contact names
+        :type contact_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addcontact",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(contact_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_set_contact(self, template_description, contact_names):
+        """This method is used to set the contacts for a service templates. Overwrites previous definitions. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param contact_names: List of contact names
+        :type contact_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setcontact",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(contact_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_del_contact(self, template_description, contact_names):
+        """This method is used to delete contacts from a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param contact_names: List of contact names
+        :type contact_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delcontact",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(contact_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_get_contact_group(self, template_description):
+        """This method is used to get the contact groups that are linked to a service template
+
+        :param template_description: Description of the service template
+        :type template_description: str
+
+        :return: Returns a list of contact groups
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getcontactgroup",
+                     "object": "stpl",
+                     "values": template_description}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def service_template_add_contact_group(self, template_description, contact_group_names):
+        """This method is used to add contact groups to a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param contact_group_names: List of contact group names
+        :type contact_group_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addcontactgroup",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(contact_group_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_set_contact_group(self, template_description, contact_group_names):
+        """This method is used to set the contact group of a service template. Overwrites previous definitions. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param contact_group_names: List of contact group names
+        :type contact_group_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setcontactgroup",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(contact_group_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_get_trap(self, template_description):
+        """This method is used to get the trap list of  a service template
+
+        :param template_description: Description of the service template
+        :type template_description: str
+
+        :return: Returns a list of traps
+        :rtype: list of dict
+        """
+        data_dict = {"action": "gettrap",
+                     "object": "stpl",
+                     "values": template_description}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def service_template_set_trap(self, template_description, trap_names):
+        """This method is used to set the traps of a service template. Overwrites previous definitions. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param trap_names: List of trap names
+        :type trap_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "settrap",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(trap_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_add_trap(self, template_description, trap_names):
+        """This method is used to add traps to a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param trap_names: List of trap names
+        :type trap_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addtrap",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(trap_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_template_del_trap(self, template_description, trap_names):
+        """This method is used to delete traps from a service template. \
+        Generating configuration files and restarting the engine is required
+
+        :param template_description: Description of the service template
+        :type template_description: str
+        :param trap_names: List of trap names
+        :type trap_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "deltrap",
+                     "object": "stpl",
+                     "values": ";".join([template_description, "|".join(trap_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_group_show(self):
+        """This method is used to show all available service groups
+
+        :return: Returns a list of service groups
+        :rtype: list of :ref:`class_service_group`
+        """
+        data_dict = {"action": "show",
+                     "object": "sg"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for service_group in response:
+            service_group["id_unique"] = int(service_group["id_unique"])
+        return [ServiceGroup(**x) for x in response]
+
+    def service_group_add(self, service_group_name, service_group_alias):
+        """This method is used to add a new service group. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_group_name: Name of the service group
+        .type service_group_name: str
+        :param service_group_alias: Alias of the service group
+        :type service_group_alias: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "sg",
+                     "values": ";".join([service_group_name, service_group_alias])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_group_del(self, service_group_name):
+        """This method is used to delete a service group. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_group_name: Name of the service group
+        :type service_group_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "sg",
+                     "values": service_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_group_set_param(self, service_group_name, param_name, param_value):
+        """This method is used to set the parameter for a service group. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_group_name: Name of the service group
+        :type service_group_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_service_group_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_service_group_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "sg",
+                     "values": ";".join([service_group_name, param_name.value, str(int(param_value))
+                                         if isinstance(param_value, bool) else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_group_get_service(self, service_group_name):
+        """This method is used to list all available services that are linked to a service group
+
+        :param service_group_name: Name of the service group
+        :type service_group_name: str
+
+        :return: Returns a list of services
+        :rtype: list of dict
+        """
+        data_dict = {"action": "getservice",
+                     "object": "sg",
+                     "values": service_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def service_group_get_host_group_service(self, service_group_name):
+        """This method is used to list all available hostgroup services that are linked to a service group
+
+        :param service_group_name: Name of the service group
+        :type service_group_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "gethostgroupservice",
+                     "object": "sg",
+                     "values": service_group_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def service_group_add_service(self, service_group_name, services):
+        """This method is used to add services to a service group. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_group_name: Name of the service group
+        :type service_group_name: str
+        :param services: List of services. Format ["host_name,service_name", ...]
+        :type services: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addservice",
+                     "object": "sg",
+                     "values": ";".join([service_group_name, "|".join(services)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_group_set_service(self, service_group_name, services):
+        """This method is used to set services for a service group. Overwrites existing definitions. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_group_name: Name of the service group
+        :type service_group_name: str
+        :param services: List of services. Format ["host_name,service_name", ...]
+        :type services: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setservice",
+                     "object": "sg",
+                     "values": ";".join([service_group_name, "|".join(services)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_group_add_host_group_service(self, service_group_name, host_group_services):
+        """This method is used to add hostgroup services to a service group. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_group_name: Name of the service group
+        :type service_group_name: str
+        :param host_group_services: List of hostgroup services. Format ["host_group_name,service_name", ...]
+        :type host_group_services: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addhostgroupservice",
+                     "object": "sg",
+                     "values": ";".join([service_group_name, "|".join(host_group_services)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_group_set_host_group_service(self, service_group_name, host_group_services):
+        """This method is used to set hostgroup services for a service group. Overwrites existing definitions. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_group_name: Name of the service group
+        :type service_group_name: str
+        :param host_group_services: List of hostgroup services. Format ["host_name,service_name", ...]
+        :type host_group_services: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "sethostgroupservice",
+                     "object": "sg",
+                     "values": ";".join([service_group_name, "|".join(host_group_services)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_group_del_host_group_service(self, service_group_name, host_group_services):
+        """This method is used to delete hostgroup services from a service group. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_group_name: Name of the service group
+        :type service_group_name: str
+        :param host_group_services: List of hostgroup services. Format ["host_group_name,service_name", ...]
+        :type host_group_services: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delhostgroupservice",
+                     "object": "sg",
+                     "values": ";".join([service_group_name, "|".join(host_group_services)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_group_del_service(self, service_group_name, services):
+        """This method is used to delete services from a service group. \
+        Generating configuration files and restarting the engine is required
+
+        :param service_group_name: Name of the service group
+        :type service_group_name: str
+        :param services: List of services. Format ["host_name,service_name", ...]
+        :type services: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delservice",
+                     "object": "sg",
+                     "values": ";".join([service_group_name, "|".join(services)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_show(self):
+        """This method is used to show all available service categories
+
+        :return: Returns a list of service categories
+        :rtype: list of :ref:`service_category`
+        """
+        data_dict = {"action": "show",
+                     "object": "sc"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for service_category in response:
+            service_category["id_unique"] = int(service_category["id_unique"])
+        return [ServiceCategory(**x) for x in response]
+
+    def service_category_add(self, service_category_name, service_category_description):
+        """This method is used to add a new service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_category_description: Description of the service category
+        :type service_category_description: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, service_category_description])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_del(self, service_category_name):
+        """This method is used to delete a service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "sc",
+                     "values": service_category_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_set_param(self, service_category_name, param_name, param_value):
+        """This method is used to set the parameter for a service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_service_category_param̀
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_service_category`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"aciton": "setparam",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_get_service(self, service_category_name):
+        """This method is used to get the linked services of a service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "getservice",
+                     "object": "sc",
+                     "values": service_category_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def service_category_get_service_template(self, service_category_name):
+        """This method is used to get the linked service templates of a service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "getservicetemplate",
+                     "object": "sc",
+                     "values": service_category_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return response["result"]
+
+    def service_category_add_service(self, service_category_name, service_names):
+        """This method is used to add services to a service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_names: List of service names. Format ["host_name,service_name", ...]
+        :type service_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addservice",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, "|".join(service_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_set_service(self, service_category_name, service_names):
+        """This method is used to set services for a service category. Overwrites previous definitions.
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_names: List of service names. Format ["host_name,service_name", ...]
+        :type service_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setservice",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, "|".join(service_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_add_service_template(self, service_category_name, service_template_names):
+        """This method is used to add service templates to a service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_template_names: List of service templates
+        :type service_template_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addservicetemplate",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, "|".join(service_template_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_set_service_template(self, service_category_name, service_template_names):
+        """This method is used to set service templates for a service category. Overwrites previous definitions.
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_template_names: List of service templates
+        :type service_template_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setservicetemplate",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, "|".join(service_template_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_del_service_template(self, service_category_name, service_template_names):
+        """This method is used to delete service templates from a service category.
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_template_names: List of service templates
+        :type service_template_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delservicetemplate",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, "|".join(service_template_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_del_service(self, service_category_name, service_names):
+        """This method is used to set service templates for a service category. Overwrites previous definitions.
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param service_names: List of services. Format ["host_name,service_name", ...]
+        :type service_names: list of str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delservice",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, "|".join(service_names)])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_set_severity(self, service_category_name, severity_level, severity_icon):
+        """This method is used to turn a service category into a severity
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+        :param severity_level: Level of the severity
+        :type severity_level: int
+        :param severity_icon: Icon of the severity
+        :type severity_icon: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setseverity",
+                     "object": "sc",
+                     "values": ";".join([service_category_name, severity_level, severity_icon])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def service_category_unset_severity(self, service_category_name):
+        """This method is used to turn a severity in a regular service category
+
+        :param service_category_name: Name of the service category
+        :type service_category_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "unetseverity",
+                     "object": "sc",
+                     "values": service_category_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def settings_show(self):
+        """This method is used to retrieve the current settings
+
+        :return: Returns the settings
+        :rtype: :ref:`class_settings`
+        """
+        data_dict = {"action": "show",
+                     "object": "settings"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        ret_dict = {}
+        for key_value_pair in response:
+            ret_dict[key_value_pair["parameter"]] = key_value_pair["value"]
+        return Settings(**ret_dict)
+
+    def settings_set_param(self, param_name: SettingsParam, param_value):
+        """This method is used to set a parameter for the settings
+
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_settings_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_settings_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "settings",
+                     "values": ";".join([param_name.value, str(int(param_value)) if isinstance(param_value, bool)
+                                         else str(param_value) if isinstance(param_value, int)
+                                         else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def time_period_show(self):
+        """This method is used to list all available time periods
+
+        :return: Retuns a list of time periods
+        :rtype: list of :ref:`class_time_period`
+        """
+        data_dict = {"action": "show",
+                     "object": "tp"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for time_period in response:
+            time_period["id_unique"] = int(time_period["id_unique"])
+        return [TimePeriod(**x) for x in response]
+
+    def time_period_add(self, time_period_name, time_period_alias):
+        """This method is used to add a new time period
+
+        :param time_period_name: Name of the time period
+        :type time_period_name: str
+        :param time_period_alias: Alias of the time period
+        :type time_period_alias: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "tp",
+                     "values": ";".join([time_period_name, time_period_alias])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def time_period_del(self, time_period_name):
+        """This method is used to delete a time period
+
+        :param time_period_name: Name of the time period
+        :type time_period_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "tp",
+                     "values": time_period_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def time_period_set_param(self, time_period_name, param_name, param_value):
+        """This method is used to set a parameter for a time period
+
+        :param time_period_name: Name of the time period
+        :type time_period_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_time_period_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_time_period_param`
+
+        :return: Retuns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "tp",
+                     "values": ";".join([time_period_name, param_name.value, str(int(param_value))
+                                        if isinstance(time_period_name, bool) else time_period_name])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def time_period_get_exception(self, time_period_name):
+        """This method is used to retrieve the exception for a timeperiod
+
+        :param time_period_name: Name of the timeperiod
+        :type time_period_name: str
+
+        :return: Returns a list of exceptions
+        :rtype: list of :ref:`class_time_period_exception`
+        """
+        data_dict = {"action": "getexception",
+                     "object": "tp",
+                     "values": time_period_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        return [TimePeriodException(**x) for x in response]
+
+    def time_period_set_exception(self, time_period_name, days, timerange):
+        """This method is used to set a exception for a timeperiod
+
+        :param time_period_name: Name of the timeperiod
+        :type time_period_name: str
+        :param days: Days to exclude
+        :type days: str
+        :param timerange: Timerange to exclude
+        :type timerange: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setexception",
+                     "object": "tp",
+                     "values": ";".join([time_period_name, days, timerange])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def time_period_del_exception(self, time_period_name, exception):
+        """This method is used to delete a exception from a timeperiod
+
+        :param time_period_name: Name of the timeperiod
+        :type time_period_name: str
+        :param exception: Exception to remove
+        :type exception: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delexception",
+                     "object": "tp",
+                     "values": ";".join([time_period_name, exception])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def trap_show(self):
+        """This method is used to list all available traps
+
+        :return: Returns a list of traps
+        :rtype: list of :ref:`class_trap`
+        """
+        data_dict = {"action": "show",
+                     "object": "trap"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for trap in response:
+            trap["id_unique"] = int(trap["id_unique"])
+        return [Trap(**x) for x in response]
+
+    def trap_add(self, trap_name, trap_oid):
+        """This method is used to add a new trap
+
+        :param trap_name: Name of the trap
+        :type trap_name: str
+        :param trap_oid: OID of the trap
+        :type trap_oid: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "trap",
+                     "values": ";".join([trap_name, trap_oid])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def trap_del(self, trap_name):
+        """This method is used to delete a trap
+
+        :param trap_name: Name of the trap
+        :type trap_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "trap",
+                     "values": trap_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def trap_set_param(self, trap_name, param_name, param_value):
+        """This method is used to set the parameter for a trap
+
+        :param trap_name: Name of the trap
+        :type trap_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_trap_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_trap_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "trap",
+                     "values": ";".join([trap_name, param_name.value, str(int(param_value))
+                                         if isinstance(param_value, bool) else param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def trap_get_matching(self, trap_name):
+        """This method is used to retrieve the available matching rules
+
+        :param trap_name: Name of the trap
+        :type trap_name: str
+
+        :return: Returns a list of matching rules
+        :rtype: list of :ref:`class_trap_matching`
+        """
+        data_dict = {"action": "getmatching",
+                     "object": "trap",
+                     "values": trap_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for matching in response:
+            matching["id_unique"] = int(matching["id_unique"])
+            matching["order"] = int(matching["order"])
+        return [TrapMatching(**x) for x in response]
+
+    def trap_add_matching(self, trap_name, string, regexp, status):
+        """This method is used to add a new matching rule to a trap
+
+        :param trap_name: Name of the trap
+        :type trap_name: str
+        :param string: String to match
+        :type string: str
+        :param regexp: Matching regular expression
+        :type regexp: str
+        :param status: Status to submit
+        :type status: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "addmatching",
+                     "object": "trap",
+                     "values": ";".join([trap_name, string, regexp, status])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def trap_del_matching(self, trap_id):
+        """This method is used to delete a matching rule from a trap
+
+        :param trap_id: ID of the trap
+        :type trap_id: int
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "delmatching",
+                     "object": "trap",
+                     "values": str(trap_id)}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def trap_update_matching(self, matching_id, param_name, param_value):
+        """This method is used to update a matching rule of a trap
+
+        :param matching_id: ID of a matching
+        :type matching_id: int
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_trap_matching_param`
+        :param param_value: Value of the parameter
+        :type param_value: See :ref:`class_trap_matching_param`
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "updatematching",
+                     "object": "trap",
+                     "values": ";".join([str(matching_id), param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def vendor_show(self):
+        """This method is used to retrieve all available vendors
+
+        :return: Returns a list of vendors
+        :rtype: list of :ref:`class_vendor`
+        """
+        data_dict = {"action": "show",
+                     "object": "vendor"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for vendor in response:
+            vendor["id_unique"] = int(vendor["id_unique"])
+        return [Vendor(**x) for x in response]
+
+    def vendor_add(self, vendor_name, vendor_alias):
+        """This method is used to add a new vendor
+
+        :param vendor_name: Name of the vendor
+        :type vendor_name: str
+        :param vendor_alias: Alias of the vendor
+        :type vendor_alias: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "vendor",
+                     "values": ";".join([vendor_name, vendor_alias])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def vendor_del(self, vendor_name):
+        """This method is used to delete a vendor
+
+        :param vendor_name: Name of the vendor
+        :type vendor_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "del",
+                     "object": "vendor",
+                     "values": vendor_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def vendor_set_param(self, vendor_name, param_name, param_value):
+        """This method is used to set a parameter for a vendor
+
+        :param vendor_name: Name of the vendor
+        :type vendor_name: str
+        :param param_name: Name of the parameter
+        :type param_name: :ref:`class_vendor_param`
+        :param param_value: Value of the parameter
+        :type param_value: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "setparam",
+                     "object": "vendor",
+                     "values": ";".join([vendor_name, param_name.value, param_value])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def vendor_generate_traps(self, vendor_name, mib_path):
+        """This method is used to generate the traps from a given MIB file
+
+        :param vendor_name: Name of the vendor
+        :type vendor_name: str
+        :param mib_path: Path to the MIB file
+        :type mib_path: str
+        """
+        data_dict = {"action": "generatetraps",
+                     "object": "vendor",
+                     "values": ";".join([vendor_name, mib_path])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_list(self):
+        """This method is used to list all available pollers
+
+        :return: Returns a list of pollers
+        :rtype: list of :ref:`class_poller`
+        """
+        data_dict = {"action": "pollerlist"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for poller in response:
+            poller["poller_id"] = int(poller["poller_id"])
+        return [Poller(**x) for x in response]
+
+    def poller_generate_config_files(self, poller):
+        """This method is used to generate the configuration files for a specific poller
+
+        :param poller: ID or name of the poller
+        :type poller: Union[int,str]
+        """
+        data_dict = {"action": "pollergenerate",
+                     "values": str(poller) if isinstance(poller, int) else poller}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_test_config_files(self, poller):
+        """This method is used to test the configuration files of a poller
+
+        :param poller: ID or name of the poller
+        :type poller: Union[str,int]
+        """
+        data_dict = {"action": "pollertest",
+                     "values": str(poller) if isinstance(poller, int) else poller}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_move_monitoring_engine_cfg_files(self, poller):
+        """This method is used to move the configuration files for a poller to the final directory
+
+        :param poller: ID or name of the poller
+        :type poller: Union[str,int]
+        """
+        data_dict = {"action": "cfgmove",
+                     "values": str(poller) if isinstance(poller, int) else poller}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_restart_monitoring_engine(self, poller):
+        """This method is used to restart the monitoring engine of a poller
+
+        :param poller: ID or name of the poller
+        :type poller: Union[str,int]
+        """
+        data_dict = {"action": "pollerrestart",
+                     "values": str(poller) if isinstance(poller, int) else poller}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_reload_monitoring_engine(self, poller):
+        """This method is used to reload the monitoring engine of a poller
+
+        :param poller: ID or name of the monitoring engine of a poller
+        :type poller: Union[str,int]
+        """
+        data_dict = {"action": "pollerreload",
+                     "values": str(poller) if isinstance(poller, int) else poller}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_execute_post_generation_commands(self, poller):
+        """This method is used to execute post generation commands of a poller
+
+        :param poller: ID or name of the poller
+        :type poller: Union[str,int]
+        """
+        data_dict = {"action": "pollerexeccmd",
+                     "values": str(poller) if isinstance(poller, int) else poller}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def poller_apply_config(self, poller):
+        """This method is used as a all in one command to apply a config to a poller
+
+        :param poller: ID or name of the poller
+        :type poller: Union[str,int]
+        """
+        data_dict = {"action": "applycfg",
+                     "values": str(poller) if isinstance(poller, int) else poller}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for line in response:
+            print(line)
+
+    def foo(self, awdwdaw, dawd,awawd, aw, a,dd,awdawd, wdad):
+        """
+
+        :param awdwdaw:
+        :type
+        :param dawd:
+        :param awawd:
+        :param aw:
+        :param a:
+        :param dd:
+        :param awdawd:
+        :param wdad:
+        :return:
+        """
+

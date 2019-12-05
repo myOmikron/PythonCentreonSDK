@@ -39,6 +39,35 @@ class Network:
         self.config = config
         self.session = requests.Session()
         self.session.verify = verify
+        self.replace_keys_dict = {"hg name": "host_group_name",
+                                  "hg id": "host_group_id",
+                                  "month cycle": "month_cycle",
+                                  "day of month": "day_of_month",
+                                  "day of week": "day_of_week",
+                                  "end time": "end_time",
+                                  "start time": "start_time",
+                                  "service groups": "service_groups",
+                                  "host groups": "host_groups",
+                                  "ssh port": "ssh_port",
+                                  "stats bin": "stats_bin",
+                                  "broker reload command": "broker_reload_command",
+                                  "engine reload command": "engine_reload_command",
+                                  "engine restart command": "engine_restart_command",
+                                  "ip address": "ip_address",
+                                  "bin": "bin_scheduler",
+                                  "passive checks enabled": "passive_checks_enabled",
+                                  "active checks enabled": "active_checks_enabled",
+                                  "max check attempts": "max_check_attempts",
+                                  "retry check interval": "retry_check_interval",
+                                  "normal check interval": "normal_check_interval",
+                                  "check command arg": "check_command_arg",
+                                  "check command": "check_command",
+                                  "host name": "host_name",
+                                  "host id": "host_id",
+                                  "gui access": "gui_access",
+                                  "macro value": "macro_value",
+                                  "macro name": "macro_name",
+                                  "id": "id_unique"}
 
     def make_request(self, verb, *, params=None, data=None, use_encode_json=True, use_header=True):
         """This method is used to make request to the REST endpoint
@@ -70,25 +99,6 @@ class Network:
             print(response.status_code, response.text)
             return
         json_decoded = json.loads(response.text)
-        json_decoded = method_utils.replace_keys_from_dict("id", "id_unique", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("macro name", "macro_name", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("macro value", "macro_value", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("gui access", "gui_access", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("host id", "host_id", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("host name", "host_name", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("check command", "check_command", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("check command arg", "check_command_arg", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("normal check interval", "normal_check_interval", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("retry check interval", "retry_check_interval", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("max check attempts", "max_check_attempts", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("active checks enabled", "active_checks_enabled", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("passive checks enabled", "passive_checks_enabled", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("bin", "bin_scheduler", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("ip address", "ip_address", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("engine restart command", "engine_restart_command", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("engine reload command", "engine_reload_command", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("broker reload command", "broker_reload_command", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("stats bin", "stats_bin", json_decoded)
-        json_decoded = method_utils.replace_keys_from_dict("ssh port", "ssh_port", json_decoded)
-        """TODO: refactor"""
+        json_decoded = method_utils.replace_keys_from_dict(self.replace_keys_dict, json_decoded)
         return json_decoded
+
