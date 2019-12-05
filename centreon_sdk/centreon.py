@@ -26,7 +26,7 @@ from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactT
 from centreon_sdk.objects.base.dependency import Dependency
 from centreon_sdk.objects.base.downtime import Downtime, DowntimePeriod
 from centreon_sdk.objects.base.general import ThreeWayOption
-from centreon_sdk.objects.base.host import Host
+from centreon_sdk.objects.base.host import Host, HostParam
 from centreon_sdk.objects.base.host_category import HostCategory
 from centreon_sdk.objects.base.host_group import HostGroup
 from centreon_sdk.objects.base.host_group_service import HostGroupService
@@ -43,7 +43,7 @@ from centreon_sdk.objects.base.service_group import ServiceGroup
 from centreon_sdk.objects.base.service_status import ServiceStatus
 from centreon_sdk.objects.base.service_template import ServiceTemplate, ServiceTemplateNotificationOption, \
     ServiceTemplateStalkingOption
-from centreon_sdk.objects.base.settings import Settings
+from centreon_sdk.objects.base.settings import Settings, SettingsParam
 from centreon_sdk.objects.base.time_period import TimePeriod, TimePeriodException
 from centreon_sdk.objects.base.trap import Trap, TrapMatching
 from centreon_sdk.objects.base.vendor import Vendor
@@ -175,7 +175,7 @@ class Centreon:
         response = self.network.make_request(HTTPVerb.GET, params=param_dict)
         return [ServiceStatus(**x) for x in response]
 
-    def host_list(self):
+    def host_show(self):
         """This method is used to list all available hosts
 
         :return: Returns hosts available in centreon
@@ -187,17 +187,28 @@ class Centreon:
         response = response["result"]
         return [Host(**x) for x in response]
 
-    def host_add(self, host_add_str):
-        """This method is used to add a new host to centreon
+    def host_add(self, host_name, host_alias, host_address, host_templates, instance, host_groups):
+        """This method is used to add a new host
 
-        :param host_add_str: Host add string. Use :ref:`class_host_builder` to generate it
-        :type host_add_str: str
+        :param host_name: Name of the host
+        :type host_name: str
+        :param host_alias: Alias of the host
+        :type host_alias: str
+        :param host_address: Address of the host
+        :type host_address: str
+        :param host_templates: List of host templates
+        :type host_templates: list of str
+        :param instance: Instance the host should checked from
+        :type instance: str
+        :param host_groups: List of host groups
+        :type host_groups: list of str
 
         :return: Returns True if operation was successful
         """
         data_dict = {"action": "add",
                      "object": "host",
-                     "values": host_add_str}
+                     "values": ";".join([host_name, host_alias, host_address, "|".join(host_templates), instance,
+                                         "|".join(host_groups)])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
@@ -222,7 +233,7 @@ class Centreon:
         :param host_name: Name of the host
         :type host_name: str
         :param param_name: Name of the param
-        :type param_name: str
+        :type param_name: :ref:`class_host_param`
         :param param_value: Value of the param
         :type param_value: str
 
@@ -231,7 +242,8 @@ class Centreon:
         """
         data_dict = {"action": "setparam",
                      "object": "host",
-                     "values": ";".join([host_name, param_name, param_value])}
+                     "values": ";".join([host_name, param_name.value, str(int(param_value))
+                     if isinstance(param_value, bool) else param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
@@ -241,18 +253,23 @@ class Centreon:
         :param host_name: Name of the host
         :type host_name: str
         :param params: List of the parameters you want to receive
-        :type params: list of str
+        :type params: list of :ref:`class_host_param`
 
         :return: Returns a dict with the wanted results
         :rtype: dict
         """
         data_dict = {"action": "getparam",
                      "object": "host",
-                     "values": host_name + ";" + "|".join(params)}
+                     "values": ";".join([host_name, "|".join([x.value for x in params])])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        if len(params) == 1:
-            return {params[0]: response["result"][0]}
-        return response["result"][0]
+        response = response["result"]
+        return_dict = {}
+        for host in response:
+            for host_param in host:
+                for hp in HostParam:
+                    if hp.value == host_param:
+                        return_dict[hp] = host[host_param]
+        return return_dict
 
     def host_set_instance(self, host_name, instance):
         """This method is used to set the instance poller for a host
@@ -410,7 +427,8 @@ class Centreon:
         :param host_name: Name of the host
         :type host_name: str
 
-        :return: Returns 
+        :return: Returns list of parents
+        :rtype: list of dict
         """
         data_dict = {"action": "getparent",
                      "object": "host",
@@ -5599,7 +5617,7 @@ class Centreon:
             ret_dict[key_value_pair["parameter"]] = key_value_pair["value"]
         return Settings(**ret_dict)
 
-    def settings_set_param(self, param_name, param_value):
+    def settings_set_param(self, param_name: SettingsParam, param_value):
         """This method is used to set a parameter for the settings
 
         :param param_name: Name of the parameter
@@ -6060,3 +6078,19 @@ class Centreon:
         response = response["result"]
         for line in response:
             print(line)
+
+    def foo(self, awdwdaw, dawd,awawd, aw, a,dd,awdawd, wdad):
+        """
+
+        :param awdwdaw:
+        :type
+        :param dawd:
+        :param awawd:
+        :param aw:
+        :param a:
+        :param dd:
+        :param awdawd:
+        :param wdad:
+        :return:
+        """
+
