@@ -6078,19 +6078,3 @@ class Centreon:
         response = response["result"]
         for line in response:
             print(line)
-
-    def foo(self, awdwdaw, dawd,awawd, aw, a,dd,awdawd, wdad):
-        """
-
-        :param awdwdaw:
-        :type
-        :param dawd:
-        :param awawd:
-        :param aw:
-        :param a:
-        :param dd:
-        :param awdawd:
-        :param wdad:
-        :return:
-        """
-
