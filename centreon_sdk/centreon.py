@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from centreon_sdk.network.network import Network, HTTPVerb
 from centreon_sdk.objects.base.acl_action import ACLAction
+from centreon_sdk.objects.base.acl_menu import ACLMenu
 from centreon_sdk.objects.base.cent_engine_cfg import CentEngineCFG
 from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
 from centreon_sdk.objects.base.contact_group import ContactGroup
@@ -876,7 +877,7 @@ class Centreon:
         for acl_group in response:
             acl_group["id_unique"] = int(acl_group["id_unique"])
             acl_group["activate"] = bool(acl_group["activate"])
-        return []
+        return [ACLMenu(**x) for x in acl_group]
 
     def acl_group_add(self, acl_group_name, acl_group_alias):
         """This method is used to add an ACL group
@@ -911,7 +912,7 @@ class Centreon:
         return method_utils.check_if_empty_list(response)
 
     def acl_group_set_param(self, acl_group_name, param_name, param_value):
-        """This method is used to change a specific paremeter of an ACL group
+        """This method is used to change a specific parameter of an ACL group
 
         :param acl_group_name: Name of the ACL group to modify
         :type acl_group_name: str
