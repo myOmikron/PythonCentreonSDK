@@ -136,7 +136,9 @@ class HostParam(enum.Enum):
 class HostNotificationOption(enum.Enum):
     """This class represents a notification option for a host.
 
-    Note: Option NONE can't be used with other options"""
+    :Note:
+        Option NONE can't be used with other options
+    """
     DOWN = "d"
     UNREACHABLE = "u"
     RECOVERY = "r"
