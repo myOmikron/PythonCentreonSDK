@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
 from centreon_sdk.network.network import Network, HTTPVerb
+from centreon_sdk.objects.base.acl_action import ACLAction
 from centreon_sdk.objects.base.cent_engine_cfg import CentEngineCFG
 from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
 from centreon_sdk.objects.base.contact_group import ContactGroup
@@ -747,12 +748,16 @@ class Centreon:
         """This method is used to show the available ACL actions
 
         :return: Returns a list of ACL actions
-        :rtype: list of dict
+        :rtype: list of :ref:`class_acl_action`
         """
         data_dict = {"action": "show",
                      "object": "aclaction"}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        response = response["result"]
+        for acl_action in response:
+            acl_action["id_unique"] = int(acl_action["id_unique"])
+            acl_action["activate"] = bool(acl_action["activate"])
+        return [ACLAction(**x) for x in response]
 
     def acl_action_add(self, acl_action_name, acl_action_description):
         """This method is used to add an ACL action
@@ -792,7 +797,7 @@ class Centreon:
         :param acl_action_name: Name of the ACL action
         :type acl_action_name: str
         :param param_name: Name of the param
-        :type param_name: str
+        :type param_name: :ref:`class_acl_action_param`
         :param param_value: Value of the param
         :type param_value: str
 
@@ -801,7 +806,7 @@ class Centreon:
         """
         data_dict = {"action": "setparam",
                      "object": "aclaction",
-                     "values": ";".join([acl_action_name, param_name, param_value])}
+                     "values": ";".join([acl_action_name, param_name.value, param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
@@ -862,12 +867,16 @@ class Centreon:
         """This method is used to retrieve information about ACL groups
 
         :return: Returns a list of ACL groups
-        :rtype: list of dict
+        :rtype: list of :ref:`class_acl_group`
         """
         data_dict = {"action": "show",
                      "object": "aclgroup"}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        response = response["result"]
+        for acl_group in response:
+            acl_group["id_unique"] = int(acl_group["id_unique"])
+            acl_group["activate"] = bool(acl_group["activate"])
+        return []
 
     def acl_group_add(self, acl_group_name, acl_group_alias):
         """This method is used to add an ACL group
