@@ -20,3 +20,13 @@ ServiceParam
 .. autoclass:: centreon_sdk.objects.base.service.ServiceParam
     :members:
     :undoc-members:
+
+
+.. _class_service_notification_option:
+
+ServiceNotificationOption
++++++++++++++++++++++++++
+
+.. autoclass:: centreon_sdk.objects.base.service.ServiceNotificationOption
+    :members:
+    :undoc-members:

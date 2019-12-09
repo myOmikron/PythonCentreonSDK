@@ -34,7 +34,7 @@ class Service:
     :param check_command: Check command
     :type check_command: str
     :param check_command_arg: Check command argument
-    :type check_command_arg
+    :type check_command_arg: list of str
     :param normal_check_interval: Normal check interval
     :type normal_check_interval: int
     :param retry_check_interval: Retry check interval
@@ -68,38 +68,89 @@ class Service:
 class ServiceParam(enum.Enum):
     """This class represents the parameters of a service"""
     ACTIVATE = "activate"
+    """Enable or disable a service (bool)"""
     DESCRIPTION = "description"
+    """Description of the service (str)"""
     TEMPLATE = "template"
+    """Name of the service template (str)"""
     IS_VOLATILE = "is_volatile"
+    """Set True when service is volatile (bool)"""
     CHECK_PERIOD = "check_period"
+    """Name of the check period (str)"""
     CHECK_COMMAND = "check_command"
+    """Name of the check command (str)"""
     CHECK_COMMAND_ARGUMENTS = "check_command_arguments"
+    """Check command arguments (list of str)"""
     MAX_CHECK_ATTEMPTS = "max_check_attempts"
+    """Maximum number of attempt before a HARD state is declared (int)"""
     NORMAL_CHECK_INTERVAL = "normal_check_interval"
+    """Time between the checks should be executed, in minutes (int)"""
     RETRY_CHECK_INTERVAL = "retry_check_interval"
+    """Time after the next check should be executed, if the one before failed, in minutes (int)"""
     ACTIVATE_CHECKS_ENABLED = "activate_checks_enabled"
+    """Set True when active checks are enabled (bool)"""
     PASSIVE_CHECKS_ENABLED = "passive_checks_enabled"
+    """Set True if passive checks are enabled (bool)"""
     NOTIFICATIONS_ENABLED = "notifications_enabled"
+    """Set True if notification should be enabled (bool)"""
     CONTACT_ADDITIVE_INHERITANCE = "contact_additive_inheritance"
-    CG_ADDITIVE_INHERITANCE = "cg_additive_inheritance"
+    """Set True if you want contact additive inheritance (bool)"""
+    CONTACT_GROUP_ADDITIVE_INHERITANCE = "cg_additive_inheritance"
+    """Set True if you want contact group additive inheritance (bool)"""
     NOTIFICATION_INTERVAL = "notification_interval"
+    """Interval between the notifications should be sent, in minutes (int)"""
     NOTIFICATION_PERIOD = "notification_period"
+    """Name of the notification period (str)"""
     NOTIFICATION_OPTIONS = "notification_options"
+    """Status linked to the notifications (str)"""
     FIRST_NOTIFICATION_DELAY = "first_notification_delay"
+    """Delay after which the first notification should be sent, in minutes (int)"""
     RECOVERY_NOTIFICATION_DELAY = "recovery_notification_delay"
+    """Delay after which the first recovery notification should be sent, in minutes (int)"""
     OBSESS_OVER_SERVICE = "obsess_over_service"
+    """Set True when obsess over service should be enabled (bool)"""
     CHECK_FRESHNESS = "check_freshness"
+    """Set True if check freshness should be enabled (bool)"""
     FRESHNESS_THRESHOLD = "freshness_threshold"
+    """Freshness threshold, in seconds (int)"""
     EVENT_HANDLER_ENABLED = "event_handler_enabled"
+    """Set True if the event handler should be enabled (bool)"""
     FLAP_DETECTION_ENABLED = "flap_detection_enabled"
+    """Set True if flap detection should be enabled (bool)"""
     RETAIN_STATUS_INFORMATION = "retain_status_information"
+    """Set True when status information should be retained (bool)"""
     RETAIN_NONSTATUS_INFORMATION = "retain_nonstatus_information"
+    """Set True when nonstatus information should bne retained (bool)"""
     EVENT_HANDLER = "event_handler"
+    """Name of the event handler command (str)"""
     EVENT_HANDLER_ARGUMENTS = "event_handler_arguments"
+    """List of the event handler arguments (list of str)"""
     NOTES = "notes"
-    NOTES_URL = "notes_url"
+    """Notes regarding the service (str)"""
+    URL = "notes_url"
+    """URL which is linked to the service (str)"""
     ACTION_URL = "action_url"
+    """Action URL which is linked to the service (str)"""
     ICON_IMAGE = "icon_image"
+    """Name of the icon which should be used (str)"""
     ICON_IMAGE_ALT = "icon_image_alt"
+    """Alternative image (str)"""
     COMMENT = "comment"
+    """Comment of the service (str)"""
     SERVICE_NOTIFICATION_OPTIONS = "service_notification_options"
+    """Set the notification type (:ref:`class_service_notification_option`)"""
+
+
+class ServiceNotificationOption(enum.Enum):
+    """This class represents a service notification option
+
+    :Note:
+        Type None can only be selected separately
+    """
+    WARNING = "w",
+    UNKNOWN = "u",
+    CRITICAL = "c",
+    RECOVERY = "r",
+    FLAPPING = "f",
+    DOWNTIME_SCHEDULED = "s",
+    NONE = "n"
