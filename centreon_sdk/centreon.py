@@ -22,6 +22,7 @@ from centreon_sdk.network.network import Network, HTTPVerb
 from centreon_sdk.objects.base.acl_action import ACLAction
 from centreon_sdk.objects.base.acl_menu import ACLMenu
 from centreon_sdk.objects.base.acl_resource import ACLResource
+from centreon_sdk.objects.base.cent_broker_cfg import CentBrokerCFG
 from centreon_sdk.objects.base.cent_engine_cfg import CentEngineCFG
 from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
 from centreon_sdk.objects.base.contact_group import ContactGroup
@@ -1507,12 +1508,15 @@ class Centreon:
         """This method is used to show the available Centreon broker cfg
 
         :return: Returns the available centreon broker cfg
-        :rtype: list of dict
+        :rtype: list of :ref:`class_cent_broker_cfg`
         """
         data_dict = {"action": "show",
                      "object": "centbrokercfg"}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        response = response["result"]
+        for cent_broker_cfg in response:
+            cent_broker_cfg["id_unique"] = int(cent_broker_cfg["id_unique"])
+        return [CentBrokerCFG(**x) for x in response]
 
     def cent_broker_cfg_add(self, cent_broker_cfg_name, cent_broker_cfg_instance):
         """This method is used to add a centreon broker cfg
@@ -6093,3 +6097,5 @@ class Centreon:
         response = response["result"]
         for line in response:
             print(line)
+
+    # TODO: Add RealTimeAcknowledgement
