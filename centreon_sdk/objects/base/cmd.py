@@ -20,7 +20,27 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import enum
 
 
+class CMD:
+    """This class represents a command
+
+    :param id_unique: ID of the command
+    :type id_unique: int
+    :param name: Name of the command
+    :type name: str
+    :param cmd_type: Type of the command
+    :type cmd_type: :ref:`class_cmd_type`
+    :param line: Command line arguments for the command
+    :type line: str
+    """
+    def __init__(self, id_unique, name, cmd_type, line):
+        self.id_unique = id_unique
+        self.name = name
+        self.cmd_type = cmd_type
+        self.line = line
+
+
 class CMDType(enum.Enum):
+    """This class represents the type of a command"""
     CHECK = "check"
     NOTIFY = "notify"
     MISC = "misc"
@@ -28,6 +48,7 @@ class CMDType(enum.Enum):
 
 
 class CMDParam(enum.Enum):
+    """This class represents a parameter for a command"""
     NAME = "name"
     LINE = "line"
     TYPE = "type"

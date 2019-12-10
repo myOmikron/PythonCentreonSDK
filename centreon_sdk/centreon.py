@@ -24,6 +24,7 @@ from centreon_sdk.objects.base.acl_menu import ACLMenu
 from centreon_sdk.objects.base.acl_resource import ACLResource
 from centreon_sdk.objects.base.cent_broker_cfg import CentBrokerCFG
 from centreon_sdk.objects.base.cent_engine_cfg import CentEngineCFG
+from centreon_sdk.objects.base.cmd import CMDType, CMD
 from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
 from centreon_sdk.objects.base.contact_group import ContactGroup
 from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactTemplateAuthType
@@ -1886,12 +1887,18 @@ class Centreon:
         """This method is used to list all available commands
 
         :return: Returns the available commands
-        :rtype: list of dict
+        :rtype: list of :ref:`class_cmd`
         """
         data_dict = {"action": "show",
                      "object": "cmd"}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        response = response["result"]
+        for cmd in response:
+            cmd["id_unique"] = int(cmd["id_unique"])
+            cmd["cmd_type"] = CMDType.CHECK if cmd["cmd_type"] == CMDType.CHECK.value else CMDType.DISCOVERY \
+                if cmd["cmd_type"] == CMDType.DISCOVERY.value else CMDType.MISC \
+                if cmd["cmd_type"] == CMDType.MISC.value else CMDType.NOTIFY
+        return [CMD(**x) for x in response]
 
     def cmd_add(self, cmd_name, cmd_type, command_line):
         """This method is used to add a command. Generating configuration files and restarting the monitoring engine \
