@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from centreon_sdk.network.network import Network, HTTPVerb
 from centreon_sdk.objects.base.acl_action import ACLAction
 from centreon_sdk.objects.base.acl_menu import ACLMenu
+from centreon_sdk.objects.base.acl_resource import ACLResource
 from centreon_sdk.objects.base.cent_engine_cfg import CentEngineCFG
 from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
 from centreon_sdk.objects.base.contact_group import ContactGroup
@@ -1381,12 +1382,16 @@ class Centreon:
         """This method is used to show the available ACL resources
 
         :return: Returns a list of ACL resources
-        :rtype: list of dict
+        :rtype: list of :ref:`class_acl_resource`
         """
         data_dict = {"action": "show",
                      "object": "aclresource"}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        response = response["result"]
+        for acl_resource in response:
+            acl_resource["id_unique"] = int(acl_resource["id_unique"])
+            acl_resource["activate"] = bool(acl_resource["activate"])
+        return [ACLResource(**x) for x in response]
 
     def acl_resource_add(self, acl_resource_name, acl_resource_alias):
         """This method is used to add a new ACL resource

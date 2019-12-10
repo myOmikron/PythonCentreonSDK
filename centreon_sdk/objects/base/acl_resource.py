@@ -20,6 +20,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import enum
 
 
+class ACLResource:
+    """This class represents an ACL resource
+
+    :param id_unique: ID of the ACL resource
+    :type id_unique: int
+    :param name: Name of the ACL resource
+    :type name: str
+    :param alias: Alias of the ACL resource
+    :type alias: str
+    :param comment: Comment of the ACL resource
+    :type comment: str
+    :param activate: Is the ACL resource enabled?
+    :type activate: bool
+    """
+    def __init__(self, id_unique, name, alias, comment, activate):
+        self.id_unique = id_unique
+        self.name = name
+        self.alias = alias
+        self.comment = comment
+        self.activate = activate
+
+
 class ACLResourceParam(enum.Enum):
     NAME = "name"
     ALIAS = "alias"
