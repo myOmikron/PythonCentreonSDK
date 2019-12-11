@@ -1,6 +1,9 @@
-========================
-Docuemntation of objects
-========================
+=============
+Documentation
+=============
 
 .. toctree::
+
+    centreon
+    basic_objects
 

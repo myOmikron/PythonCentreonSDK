@@ -67,7 +67,8 @@ class Network:
                                   "gui access": "gui_access",
                                   "macro value": "macro_value",
                                   "macro name": "macro_name",
-                                  "id": "id_unique"}
+                                  "id": "id_unique",
+                                  "type": "cmd_type"}
 
     def make_request(self, verb, *, params=None, data=None, use_encode_json=True, use_header=True):
         """This method is used to make request to the REST endpoint

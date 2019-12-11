@@ -20,8 +20,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import enum
 
 
+class ACLMenu:
+    """This class represents a ACL menu rule
+
+    :param id_unique: ID of the ACL menu rule
+    :type id_unique: int
+    :param name: Name of the ACL menu rule
+    :type name: str
+    :param alias: Alias of the ACL menu rule
+    :type alias: str
+    :param comment: Comment of the ACL menu rule
+    :type comment: str
+    :param activate: Is the ACL menu rule enabled?
+    :type activate: bool
+    """
+    def __init__(self, id_unique, name, alias, comment, activate):
+        self.id_unique = id_unique
+        self.name = name
+        self.alias = alias
+        self.comment = comment
+        self.activate = activate
+
+
 class ACLMenuParam(enum.Enum):
+    """This class represents a parameter from a ACL Menu"""
     NAME = "name"
+    """Name of the acl menu rule (str)"""
     ALIAS = "alias"
+    """Alias of the acl menu rule (str)"""
     ACTIVATE = "activate"
+    """Is the acl menu rule enabled? (bool)"""
     COMMENT = "comment"
+    """Comment of the acl menu rule (str)"""

@@ -20,10 +20,36 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import enum
 
 
+class ACLResource:
+    """This class represents an ACL resource
+
+    :param id_unique: ID of the ACL resource
+    :type id_unique: int
+    :param name: Name of the ACL resource
+    :type name: str
+    :param alias: Alias of the ACL resource
+    :type alias: str
+    :param comment: Comment of the ACL resource
+    :type comment: str
+    :param activate: Is the ACL resource enabled?
+    :type activate: bool
+    """
+    def __init__(self, id_unique, name, alias, comment, activate):
+        self.id_unique = id_unique
+        self.name = name
+        self.alias = alias
+        self.comment = comment
+        self.activate = activate
+
+
 class ACLResourceParam(enum.Enum):
+    """This class represents the available parameter for a :ref:`class_acl_resource`"""
     NAME = "name"
+    """Name of the ACL resource (str)"""
     ALIAS = "alias"
+    """Alias of the ACL resource (str)"""
     ACTIVATE = "activate"
+    """Is the ACL resource enabled? (bool)"""
 
 
 class ACLResourceGrantAction(enum.Enum):
@@ -36,6 +62,7 @@ class ACLResourceGrantAction(enum.Enum):
     ADDFILTER_INSTANCE = ("addfilter_instance", False)
     ADDFILTER_HOSTCATEGORY = ("addfilter_hostcategory", False)
     ADDFILTER_SERVICECATEGORY = ("addfilter_servicecategory", False)
+    # TODO: Refactor
 
 
 class ACLResourceRevokeAction(enum.Enum):
@@ -48,3 +75,4 @@ class ACLResourceRevokeAction(enum.Enum):
     DELFILTER_INSTANCE = "delfilter_instance"
     DELFILTER_HOSTCATEGORY = "delfilter_hostcategory"
     DELFILTER_SERVICECATEGORY = "delfilter_service_category"
+    # TODO: Refactor
