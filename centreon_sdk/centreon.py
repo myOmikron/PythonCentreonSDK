@@ -19,7 +19,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
 from centreon_sdk.network.network import Network, HTTPVerb
+from centreon_sdk.objects.base.acl_action import ACLAction
+from centreon_sdk.objects.base.acl_menu import ACLMenu
+from centreon_sdk.objects.base.acl_resource import ACLResource
+from centreon_sdk.objects.base.cent_broker_cfg import CentBrokerCFG
 from centreon_sdk.objects.base.cent_engine_cfg import CentEngineCFG
+from centreon_sdk.objects.base.cmd import CMDType, CMD
 from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
 from centreon_sdk.objects.base.contact_group import ContactGroup
 from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactTemplateAuthType
@@ -747,12 +752,16 @@ class Centreon:
         """This method is used to show the available ACL actions
 
         :return: Returns a list of ACL actions
-        :rtype: list of dict
+        :rtype: list of :ref:`class_acl_action`
         """
         data_dict = {"action": "show",
                      "object": "aclaction"}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        response = response["result"]
+        for acl_action in response:
+            acl_action["id_unique"] = int(acl_action["id_unique"])
+            acl_action["activate"] = bool(acl_action["activate"])
+        return [ACLAction(**x) for x in response]
 
     def acl_action_add(self, acl_action_name, acl_action_description):
         """This method is used to add an ACL action
@@ -792,7 +801,7 @@ class Centreon:
         :param acl_action_name: Name of the ACL action
         :type acl_action_name: str
         :param param_name: Name of the param
-        :type param_name: str
+        :type param_name: :ref:`class_acl_action_param`
         :param param_value: Value of the param
         :type param_value: str
 
@@ -801,7 +810,7 @@ class Centreon:
         """
         data_dict = {"action": "setparam",
                      "object": "aclaction",
-                     "values": ";".join([acl_action_name, param_name, param_value])}
+                     "values": ";".join([acl_action_name, param_name.value, param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
@@ -862,12 +871,16 @@ class Centreon:
         """This method is used to retrieve information about ACL groups
 
         :return: Returns a list of ACL groups
-        :rtype: list of dict
+        :rtype: list of :ref:`class_acl_group`
         """
         data_dict = {"action": "show",
                      "object": "aclgroup"}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        response = response["result"]
+        for acl_group in response:
+            acl_group["id_unique"] = int(acl_group["id_unique"])
+            acl_group["activate"] = bool(acl_group["activate"])
+        return [ACLMenu(**x) for x in acl_group]
 
     def acl_group_add(self, acl_group_name, acl_group_alias):
         """This method is used to add an ACL group
@@ -902,7 +915,7 @@ class Centreon:
         return method_utils.check_if_empty_list(response)
 
     def acl_group_set_param(self, acl_group_name, param_name, param_value):
-        """This method is used to change a specific paremeter of an ACL group
+        """This method is used to change a specific parameter of an ACL group
 
         :param acl_group_name: Name of the ACL group to modify
         :type acl_group_name: str
@@ -1371,12 +1384,16 @@ class Centreon:
         """This method is used to show the available ACL resources
 
         :return: Returns a list of ACL resources
-        :rtype: list of dict
+        :rtype: list of :ref:`class_acl_resource`
         """
         data_dict = {"action": "show",
                      "object": "aclresource"}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        response = response["result"]
+        for acl_resource in response:
+            acl_resource["id_unique"] = int(acl_resource["id_unique"])
+            acl_resource["activate"] = bool(acl_resource["activate"])
+        return [ACLResource(**x) for x in response]
 
     def acl_resource_add(self, acl_resource_name, acl_resource_alias):
         """This method is used to add a new ACL resource
@@ -1492,12 +1509,15 @@ class Centreon:
         """This method is used to show the available Centreon broker cfg
 
         :return: Returns the available centreon broker cfg
-        :rtype: list of dict
+        :rtype: list of :ref:`class_cent_broker_cfg`
         """
         data_dict = {"action": "show",
                      "object": "centbrokercfg"}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        response = response["result"]
+        for cent_broker_cfg in response:
+            cent_broker_cfg["id_unique"] = int(cent_broker_cfg["id_unique"])
+        return [CentBrokerCFG(**x) for x in response]
 
     def cent_broker_cfg_add(self, cent_broker_cfg_name, cent_broker_cfg_instance):
         """This method is used to add a centreon broker cfg
@@ -1867,12 +1887,18 @@ class Centreon:
         """This method is used to list all available commands
 
         :return: Returns the available commands
-        :rtype: list of dict
+        :rtype: list of :ref:`class_cmd`
         """
         data_dict = {"action": "show",
                      "object": "cmd"}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        response = response["result"]
+        for cmd in response:
+            cmd["id_unique"] = int(cmd["id_unique"])
+            cmd["cmd_type"] = CMDType.CHECK if cmd["cmd_type"] == CMDType.CHECK.value else CMDType.DISCOVERY \
+                if cmd["cmd_type"] == CMDType.DISCOVERY.value else CMDType.MISC \
+                if cmd["cmd_type"] == CMDType.MISC.value else CMDType.NOTIFY
+        return [CMD(**x) for x in response]
 
     def cmd_add(self, cmd_name, cmd_type, command_line):
         """This method is used to add a command. Generating configuration files and restarting the monitoring engine \
@@ -6078,3 +6104,5 @@ class Centreon:
         response = response["result"]
         for line in response:
             print(line)
+
+    # TODO: Add RealTimeAcknowledgement
