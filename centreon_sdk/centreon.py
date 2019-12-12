@@ -40,6 +40,7 @@ from centreon_sdk.objects.base.instance import Instance
 from centreon_sdk.objects.base.ldap import LDAP, LDAPServer
 from centreon_sdk.objects.base.macro import Macro
 from centreon_sdk.objects.base.poller import Poller
+from centreon_sdk.objects.base.real_time_acknowledgement import RealTimeAcknowledgement
 from centreon_sdk.objects.base.real_time_downtime import RealTimeDowntimeHost, RealTimeDowntimeService
 from centreon_sdk.objects.base.resource_cfg import ResourceCFG
 from centreon_sdk.objects.base.service import Service
@@ -6105,4 +6106,105 @@ class Centreon:
         for line in response:
             print(line)
 
-    # TODO: Add RealTimeAcknowledgement
+    def real_time_acknowledgement_show_host(self):
+        """This method is used to show all available real time acknowledgements for a host
+
+        :return: Returns a list of real time acknowledgements
+        :rtype: list of :ref:`class_real_time_acknowledgement`
+        """
+        data_dict = {"action": "applycfg",
+                     "object": "rtacknowledgement"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for rt_acknowledgement in response:
+            rt_acknowledgement["sticky"] = True if rt_acknowledgement == "2" else False
+            rt_acknowledgement["id_unique"] = int(rt_acknowledgement["id_unique"])
+            rt_acknowledgement["notify_contacts"] = bool(rt_acknowledgement["notify_contacts"])
+            rt_acknowledgement["persistent_comment"] = bool(rt_acknowledgement["persistent_comment"])
+        return [RealTimeAcknowledgement(**x) for x in response]
+
+    def real_time_acknowledgement_show_service(self):
+        """This method is used to show all available real time acknowledgements for a service
+
+        :return: Returns a list of real time acknowledgements
+        :rtype: list of :ref:`class_real_time_acknowledgement`
+        """
+        data_dict = {"action": "applycfg",
+                     "object": "rtacknowledgement"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        for rt_acknowledgement in response:
+            rt_acknowledgement["sticky"] = True if rt_acknowledgement == "2" else False
+            rt_acknowledgement["id_unique"] = int(rt_acknowledgement["id_unique"])
+            rt_acknowledgement["notify_contacts"] = bool(rt_acknowledgement["notify_contacts"])
+            rt_acknowledgement["persistent_comment"] = bool(rt_acknowledgement["persistent_comment"])
+        return [RealTimeAcknowledgement(**x) for x in response]
+
+    def real_time_acknowledgement_add_host(self, host_name, description, sticky, notify_contacts, persistent_comment):
+        """This method is used to add a new acknowledgement for a host
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param description: Description of the acknowledgement
+        :type description: str
+        :param sticky: Is the acknowledgement maintained in case of a change of status
+        :type sticky: bool
+        :param notify_contacts: Should notification be send to the contacts linked to the object
+        :type notify_contacts: bool
+        :param persistent_comment: Should the acknowledgement be maintained in the case of a restart of the scheduler
+        :type persistent_comment: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "rtacknowledgement",
+                     "values": ";".join(["HOST", host_name, description, "2" if sticky else "0",
+                                         str(int(notify_contacts)), str(int(persistent_comment))])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_acknowledgement_add_service(self, host_name, services, description, sticky, notify_contacts,
+                                              persistent_comment):
+        """This method is used to add a new acknowledgement for a service
+
+        :param host_name: Name of the host
+        :type host_name: str
+        :param services: List of service descriptions
+        :type services: list of str
+        :param description: Description of the acknowledgement
+        :type description: str
+        :param sticky: Is the acknowledgement maintained in case of a change of status
+        :type sticky: bool
+        :param notify_contacts: Should notification be send to the contacts linked to the object
+        :type notify_contacts: bool
+        :param persistent_comment: Should the acknowledgement be maintained in the case of a restart of the scheduler
+        :type persistent_comment: bool
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "add",
+                     "object": "rtacknowledgement",
+                     "values": ";".join(["SVC", ",".join([host_name, "|".join(services)]), description,
+                                         "2" if sticky else "0", str(int(notify_contacts)),
+                                         str(int(persistent_comment))])}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
+    def real_time_acknowledgement_cancel(self, acknowledgement_name):
+        """This method is used to cancel a acknowledgement
+
+        :param acknowledgement_name: Name of the acknowledged resources. \
+        In case of service: "host_name,service_description"
+        :type acknowledgement_name: str
+
+        :return: Returns True if the operation was successful
+        :rtype: bool
+        """
+        data_dict = {"action": "cancel",
+                     "object": "rtacknowledgement",
+                     "values": acknowledgement_name}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        return method_utils.check_if_empty_list(response)
+
