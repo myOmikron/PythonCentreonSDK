@@ -16,20 +16,31 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
 """
 
-from centreon_sdk.builder.field_builder import FieldBuilder
-from centreon_sdk.builder.host_builder import HostBuilder
-from centreon_sdk.centreon import Centreon
-from centreon_sdk.network.network import HTTPVerb
-from centreon_sdk.objects.base.acl_group import ACLGroupParam
+from centreon_sdk.util import method_utils
 
 
-if __name__ == '__main__':
-    centreon = Centreon("REST", "HpcuwG4T", "https://centreon.omikron.pw/centreon/api/index.php", verify=False)
-    result = centreon.instance_show()
-    if isinstance(result, list):
-        for item in result:
-            print(item.__dict__)
-    else:
-        print(result)
+class FieldBuilder:
+    """This class is used to build field queries. Specify all fields as kwargs, you want to receive.
+
+    Example:
+        ```FieldBuilder(id=True, output=True).build()```
+
+        Returns the str: ```id,output```
+    """
+    def __init__(self, **kwargs):
+        self.args = {}
+        for item in kwargs:
+            self.args[item] = kwargs[item]
+
+    def build(self):
+        """This method is used to build the field query string
+
+        :return: Returns the field query string
+        :rtype: str
+        """
+        var_dict = method_utils.replace_keys_from_dict("id_unique", "id", self.args)
+        return ",".join([item for item in var_dict if var_dict[item]])

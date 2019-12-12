@@ -17,19 +17,28 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
-
-from centreon_sdk.builder.field_builder import FieldBuilder
-from centreon_sdk.builder.host_builder import HostBuilder
-from centreon_sdk.centreon import Centreon
-from centreon_sdk.network.network import HTTPVerb
-from centreon_sdk.objects.base.acl_group import ACLGroupParam
+import enum
 
 
-if __name__ == '__main__':
-    centreon = Centreon("REST", "HpcuwG4T", "https://centreon.omikron.pw/centreon/api/index.php", verify=False)
-    result = centreon.instance_show()
-    if isinstance(result, list):
-        for item in result:
-            print(item.__dict__)
-    else:
-        print(result)
+class ServiceGroup:
+    """This class represents a service group
+
+    :param id_unique: ID of the service group
+    :type id_unique: int
+    :param name: Name of the service group
+    :type name: str
+    :param alias: Alias of the service group
+    :type alias: str
+    """
+    def __init__(self, id_unique, name, alias):
+        self.id_unique = id_unique
+        self.name = name
+        self.alias = alias
+
+
+class ServiceGroupParam(enum.Enum):
+    """This class represents a parameter from a service group"""
+    ACTIVATE = "activate"
+    NAME = "name"
+    ALIAS = "alias"
+    COMMENT = "COMMENT"

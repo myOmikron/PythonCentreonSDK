@@ -17,19 +17,33 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
-
-from centreon_sdk.builder.field_builder import FieldBuilder
-from centreon_sdk.builder.host_builder import HostBuilder
-from centreon_sdk.centreon import Centreon
-from centreon_sdk.network.network import HTTPVerb
-from centreon_sdk.objects.base.acl_group import ACLGroupParam
+import enum
 
 
-if __name__ == '__main__':
-    centreon = Centreon("REST", "HpcuwG4T", "https://centreon.omikron.pw/centreon/api/index.php", verify=False)
-    result = centreon.instance_show()
-    if isinstance(result, list):
-        for item in result:
-            print(item.__dict__)
-    else:
-        print(result)
+class ACLGroup:
+    """This class represents a ACLGroup
+
+    :param id_unique: ID of the ACLGroup
+    :type id_unique: int
+    :param name: Name of the ACLGroup
+    :type name: str
+    :param alias: Alias of the ACLGroup
+    :type alias: str
+    :param activate: Is the ACLGroup enabled?
+    :type activate: bool
+    """
+    def __init__(self, id_unique, name, alias, activate):
+        self.id_unique = id_unique
+        self.name = name
+        self.alias = alias
+        self.activate = activate
+
+
+class ACLGroupParam(enum.Enum):
+    """This class represents the available parameter for a ACLGroup"""
+    NAME = "name"
+    """Name of the ACLGroup (str)"""
+    ALIAS = "alias"
+    """Alias of the ACLGroup (str)"""
+    ACTIVATE = "activate"
+    """Activation status of the ACLGroup (bool)"""

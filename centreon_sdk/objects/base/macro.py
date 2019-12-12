@@ -18,18 +18,24 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-from centreon_sdk.builder.field_builder import FieldBuilder
-from centreon_sdk.builder.host_builder import HostBuilder
-from centreon_sdk.centreon import Centreon
-from centreon_sdk.network.network import HTTPVerb
-from centreon_sdk.objects.base.acl_group import ACLGroupParam
 
+class Macro:
+    """This class represents a macro
 
-if __name__ == '__main__':
-    centreon = Centreon("REST", "HpcuwG4T", "https://centreon.omikron.pw/centreon/api/index.php", verify=False)
-    result = centreon.instance_show()
-    if isinstance(result, list):
-        for item in result:
-            print(item.__dict__)
-    else:
-        print(result)
+    :param macro_name: Name of the macro
+    :type macro_name: str
+    :param macro_value: Value of the macro
+    :type macro_name: str
+    :param is_password: Is the macro an password?
+    :type is_password: bool
+    :param description: Description of the macro
+    :type description: str
+    :param source: Source the macro came from
+    :type source: str
+    """
+    def __init__(self, *, macro_name, macro_value, is_password, description, source):
+        self.macro_name = macro_name
+        self.macro_value = macro_value
+        self.is_password = is_password
+        self.description = description
+        self.source = source
