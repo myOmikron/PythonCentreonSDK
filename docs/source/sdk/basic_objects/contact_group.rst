@@ -4,6 +4,7 @@ Contact Group
 
 .. toctree::
 
+
 .. _class_contact_group:
 
 ContactGroup
