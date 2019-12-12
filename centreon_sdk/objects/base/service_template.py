@@ -50,7 +50,7 @@ class ServiceTemplate:
         self.description = description
         self.alias = alias
         self.check_command = check_command
-        self.check_command_args = check_command_arg
+        self.check_command_arg = check_command_arg
         self.normal_check_interval = normal_check_interval
         self.retry_check_interval = retry_check_interval
         self.max_check_attempts = max_check_attempts
