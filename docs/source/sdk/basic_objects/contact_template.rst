@@ -13,7 +13,7 @@ ContactTemplate
 .. autoclass:: centreon_sdk.objects.base.contact_template.ContactTemplate
     :members:
 
-.. _class_contacct_template_auth_type:
+.. _class_contact_template_auth_type:
 
 ContactTemplateAuthType
 +++++++++++++++++++++++
