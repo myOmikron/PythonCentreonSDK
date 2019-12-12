@@ -21,3 +21,4 @@ Basic Objects
     basic_objects/downtime.rst
     basic_objects/host_category.rst
     basic_objects/host_group.rst
+    basic_objects/host_group_service.rst

@@ -42,9 +42,9 @@ class HostGroupService:
     :param max_check_attempts: Maximum check attempts
     :type max_check_attempts: int
     :param active_checks_enabled: Are active checks enabled?
-    :type active_checks_enabled: :ref:`class_general_thee_way_option`
+    :type active_checks_enabled: :ref:`class_general_three_way_option`
     :param passive_checks_enabled: Are passive checks enabled?
-    :type passive_checks_enabled: :ref:`class_general_thee_way_option`
+    :type passive_checks_enabled: :ref:`class_general_three_way_option`
     """
     def __init__(self, host_group_id, host_group_name, id_unique, description, check_command, check_command_arg,
                  normal_check_interval, retry_check_interval, max_check_attempts, active_checks_enabled,
@@ -62,8 +62,8 @@ class HostGroupService:
         self.passive_checks_enabled = passive_checks_enabled
 
 
-class ServiceParam(enum.Enum):
-    """This class represents the parameters of a service"""
+class HostGroupServiceParam(enum.Enum):
+    """This class represents the parameters of a host group service"""
     DESCRIPTION = "description"
     TEMPLATE = "template"
     IS_VOLATILE = "is_volatile"
