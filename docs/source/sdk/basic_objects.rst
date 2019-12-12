@@ -14,3 +14,4 @@ Basic Objects
     basic_objects/cent_broker_cfg.rst
     basic_objects/cmd.rst
     basic_objects/contact.rst
+    basic_objects/contact_template.rst
