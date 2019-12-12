@@ -18,3 +18,4 @@ Basic Objects
     basic_objects/contact_group.rst
     basic_objects/dependency.rst
     basic_objects/downtime.rst
+    basic_objects/host_category.rst
