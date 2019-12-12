@@ -17,3 +17,4 @@ Basic Objects
     basic_objects/contact_template.rst
     basic_objects/contact_group.rst
     basic_objects/dependency.rst
+    basic_objects/downtime.rst
