@@ -6106,16 +6106,33 @@ class Centreon:
         for line in response:
             print(line)
 
-    def real_time_acknowledgement_show_host(self):
+    def real_time_acknowledgement_show(self):
+        """This method is used to show all available acknowledgements
+
+        :return: Returns a list of available downtimes in forrmat: [{"hosts": "", "services": ""}, {...}]
+        :rtype: list of dict
+        """
+        data_dict = {"action": "show",
+                     "object": "rtacknowledgement"}
+        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
+        response = response["result"]
+        return response
+
+    def real_time_acknowledgement_show_host(self, host_name):
         """This method is used to show all available real time acknowledgements for a host
+
+        :param host_name: Name of the host
+        :type host_name: str
 
         :return: Returns a list of real time acknowledgements
         :rtype: list of :ref:`class_real_time_acknowledgement`
         """
-        data_dict = {"action": "applycfg",
-                     "object": "rtacknowledgement"}
+        data_dict = {"action": "show",
+                     "object": "rtacknowledgement",
+                     "values": "HOST;" + host_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         response = response["result"]
+        print(response)
         for rt_acknowledgement in response:
             rt_acknowledgement["sticky"] = True if rt_acknowledgement == "2" else False
             rt_acknowledgement["id_unique"] = int(rt_acknowledgement["id_unique"])
@@ -6123,14 +6140,18 @@ class Centreon:
             rt_acknowledgement["persistent_comment"] = bool(rt_acknowledgement["persistent_comment"])
         return [RealTimeAcknowledgement(**x) for x in response]
 
-    def real_time_acknowledgement_show_service(self):
+    def real_time_acknowledgement_show_service(self, service_name):
         """This method is used to show all available real time acknowledgements for a service
+
+        :param service_name: Name of the service. Format: "host_name,service_description"
+        :type service_name: str
 
         :return: Returns a list of real time acknowledgements
         :rtype: list of :ref:`class_real_time_acknowledgement`
         """
-        data_dict = {"action": "applycfg",
-                     "object": "rtacknowledgement"}
+        data_dict = {"action": "show",
+                     "object": "rtacknowledgement",
+                     "values": "SVC;" + service_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         response = response["result"]
         for rt_acknowledgement in response:
