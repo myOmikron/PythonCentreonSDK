@@ -21,7 +21,25 @@ import enum
 
 
 class Downtime:
-    """This class represents a recurrent downtime"""
+    """This class represents a recurrent downtime
+
+    :param id_unique: ID of the downtime
+    :type id_unique: int
+    :param name: Name of the downtime
+    :type name: str
+    :param description: Description of the downtime
+    :type description: str
+    :param activate: Is the downtime activated?
+    :type activate: bool
+    :param hosts: Optional: Hosts the downtime should apply to
+    :type hosts: list of str
+    :param services: Optional: Services the downtime should apply to
+    :type services: list of str
+    :param service_groups: Optional: Service groups the downtime should apply to
+    :type service_groups: list of str
+    :param host_groups: Optional: Host groups the downtime should apply to
+    :type host_groups: list of str
+    """
     def __init__(self, id_unique, name, description, activate, hosts=None, services=None, service_groups=None,
                  host_groups=None):
         self.id_unique = id_unique
@@ -65,8 +83,8 @@ class DowntimePeriod:
     :type day_of_week: list of int
     :param day_of_month: Days of the month the period should apply
     :type day_of_month: list of int
-    :param month_cycle:
-    :type month_cycle:
+    :param month_cycle: First or last
+    :type month_cycle: str
     """
     def __init__(self, position, start_time, end_time, fixed, duration, day_of_week, day_of_month, month_cycle):
         self.position = position
@@ -77,7 +95,3 @@ class DowntimePeriod:
         self.day_of_week = day_of_week
         self.day_of_month = day_of_month
         self.month_cycle = month_cycle
-
-
-class DowntimeMonthCycle(enum.Enum):
-    pass
