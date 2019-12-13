@@ -5,7 +5,7 @@ with open("README.md") as f:
 
 setuptools.setup(
     name="centreon-sdk",
-    version="0.1.4",
+    version="0.1.5",
     author="Niklas Pfister",
     author_email="contact@omikron.pw",
     description="A SDK for python to communicate with Centreon",
