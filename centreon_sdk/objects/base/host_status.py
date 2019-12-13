@@ -53,8 +53,9 @@ class HostStatus:
     :param criticality: A specific criticity
     :type criticality: str
     """
-    def __init__(self, *, id_unique, name, alias, address, state, state_type, output, max_check_attempts, check_attempt,
-                 last_check, last_state_change, last_hard_state_change, acknowledged, instance_name, criticality):
+    def __init__(self, *, id_unique=None, name=None, alias=None, address=None, state=None, state_type=None,
+                 output=None, max_check_attempts=None, check_attempt=None, last_check=None, last_state_change=None,
+                 last_hard_state_change=None, acknowledged=None, instance_name=None, criticality=None):
         self.id_unique = id_unique
         self.name = name
         self.alias = alias
