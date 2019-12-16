@@ -133,7 +133,7 @@ class Centreon:
         param_dict["action"] = "list"
 
         response = self.network.make_request(HTTPVerb.GET, params=param_dict)
-        return [HostStatus(**x) for x in response]
+        return response
 
     def service_status_get(self, *, viewType=None, fields=None, status=None, hostgoup=None, servicegroup=None,
                            instance=None, search=None, searchHost=None, searchOutput=None, criticality=None,
@@ -175,11 +175,11 @@ class Centreon:
         :rtype: list of :ref:`class_service_status`:
         """
         param_dict = pack_locals(locals())
-        param_dict["object"] = "centreon_realtime_hosts"
+        param_dict["object"] = "centreon_realtime_services"
         param_dict["action"] = "list"
 
         response = self.network.make_request(HTTPVerb.GET, params=param_dict)
-        return [ServiceStatus(**x) for x in response]
+        return response
 
     def host_show(self):
         """This method is used to list all available hosts
