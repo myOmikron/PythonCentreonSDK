@@ -33,3 +33,6 @@ Basic Objects
     basic_objects/trap
     basic_objects/vendor
     basic_objects/macro
+    basic_objects/poller
+    basic_objects/real_time_acknowledgement
+    basic_objects/real_time_downtime

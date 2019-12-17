@@ -96,12 +96,11 @@ class Centreon:
 
     def host_status_get(self, *, viewType=None, fields=None, status=None, hostgroup=None, instance=None, search=None,
                         critically=None, sortType=None, order=None, limit=None, number=None):
-        """This method is used to get the host status
+        """This method is used to get the host status from a host object
 
         :param viewType: Select a predefined filter like in the monitoring view. One of *all*, *unhandled*, *problems*
         :type viewType: str
-        :param fields: The field list you want to get, separated by a ",". Use :ref:class_field_builder: to simplify \
-        the query
+        :param fields: The field list you want to get, separated by a ",".
         :type fields: str
         :param status: The status of hosts you want to get. One of *up*, *down*, *unreachable*, *pending*, *all*
         :type status: str
@@ -123,7 +122,7 @@ class Centreon:
         :type number: int
 
         :return: Returns a list of HostStatus
-        :rtype: list of :ref:`class_host_status`:
+        :rtype: list of dict
         """
         param_dict = pack_locals(locals())
         param_dict["object"] = "centreon_realtime_hosts"
@@ -135,12 +134,11 @@ class Centreon:
     def service_status_get(self, *, viewType=None, fields=None, status=None, hostgoup=None, servicegroup=None,
                            instance=None, search=None, searchHost=None, searchOutput=None, criticality=None,
                            sortType=None, order=None, limit=None, number=None):
-        """This method is used to get information about the service status
+        """This method is used to get information about the service status from a service object
 
         :param viewType: Select a predefined filter like in the monitoring view. One of *all*, *unhandled*, *problems*
         :type viewType: str
-        :param fields: The field list you want to get, separated by a ",". Use :ref:`class_field_builder` to simplify \
-        the query
+        :param fields: The field list you want to get, separated by a ",".
         :type fields: str
         :param status: The status of services you want to get. One of *ok*, *warning*, *critical*, *unknown*, \
         *pending*, *all*
@@ -169,7 +167,7 @@ class Centreon:
         :type number: int
 
         :return: Returns a list of ServiceStatus
-        :rtype: list of :ref:`class_service_status`
+        :rtype: list of dict
         """
         param_dict = pack_locals(locals())
         param_dict["object"] = "centreon_realtime_services"
@@ -5399,7 +5397,7 @@ class Centreon:
         """This method is used to show all available service categories
 
         :return: Returns a list of service categories
-        :rtype: list of :ref:`service_category`
+        :rtype: list of :ref:`class_service_category`
         """
         data_dict = {"action": "show",
                      "object": "sc"}
@@ -5442,12 +5440,12 @@ class Centreon:
         return method_utils.check_if_empty_list(response)
 
     def service_category_set_param(self, service_category_name, param_name, param_value):
-        """This method is used to set the parameter for a service category
+        """This method is used to set a parameter for a service category
 
         :param service_category_name: Name of the service category
         :type service_category_name: str
         :param param_name: Name of the parameter
-        :type param_name: :ref:`class_service_category_param̀
+        :type param_name: :ref:`class_service_category_param`
         :param param_value: Value of the parameter
         :type param_value: See :ref:`class_service_category`
 
