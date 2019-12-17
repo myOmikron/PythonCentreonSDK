@@ -26,3 +26,4 @@ Basic Objects
     basic_objects/ldap_configuration.rst
     basic_objects/resource_cfg.rst
     basic_objects/service_template.rst
+    basic_objects/service_group.rst
