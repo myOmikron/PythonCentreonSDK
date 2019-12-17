@@ -27,3 +27,4 @@ Basic Objects
     basic_objects/resource_cfg.rst
     basic_objects/service_template.rst
     basic_objects/service_group.rst
+    basic_objects/service_category.rst

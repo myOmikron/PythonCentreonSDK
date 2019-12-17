@@ -39,4 +39,6 @@ class ServiceCategory:
 class ServiceCategoryParam(enum.Enum):
     """This class represents the parameters of a service category"""
     NAME = "name"
+    """Name of the service category (str)"""
     DESCRIPTION = "description"
+    """Description of the service category (str)"""
