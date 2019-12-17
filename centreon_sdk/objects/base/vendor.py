@@ -39,5 +39,8 @@ class Vendor:
 class VendorParam(enum.Enum):
     """This class represents a vendor parameter"""
     NAME = "name"
+    """Name of the vendor (str)"""
     ALIAS = "alias"
+    """Alias of the vendor (str)"""
     DESCRIPTION = "description"
+    """Description of the vendor (str)"""

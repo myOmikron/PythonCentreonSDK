@@ -31,3 +31,4 @@ Basic Objects
     basic_objects/settings
     basic_objects/time_period
     basic_objects/trap
+    basic_objects/vendor
