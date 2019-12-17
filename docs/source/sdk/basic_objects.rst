@@ -11,20 +11,21 @@ Basic Objects
     basic_objects/acl_group
     basic_objects/acl_menu
     basic_objects/acl_resource
-    basic_objects/cent_broker_cfg.rst
-    basic_objects/cent_engine_cfg.rst
-    basic_objects/cmd.rst
-    basic_objects/contact.rst
-    basic_objects/contact_template.rst
-    basic_objects/contact_group.rst
-    basic_objects/dependency.rst
-    basic_objects/downtime.rst
-    basic_objects/host_category.rst
-    basic_objects/host_group.rst
-    basic_objects/host_group_service.rst
-    basic_objects/instance.rst
-    basic_objects/ldap_configuration.rst
-    basic_objects/resource_cfg.rst
-    basic_objects/service_template.rst
-    basic_objects/service_group.rst
-    basic_objects/service_category.rst
+    basic_objects/cent_broker_cfg
+    basic_objects/cent_engine_cfg
+    basic_objects/cmd
+    basic_objects/contact
+    basic_objects/contact_template
+    basic_objects/contact_group
+    basic_objects/dependency
+    basic_objects/downtime
+    basic_objects/host_category
+    basic_objects/host_group
+    basic_objects/host_group_service
+    basic_objects/instance
+    basic_objects/ldap_configuration
+    basic_objects/resource_cfg
+    basic_objects/service_template
+    basic_objects/service_group
+    basic_objects/service_category
+    basic_objects/settings

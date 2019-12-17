@@ -42,12 +42,11 @@ from centreon_sdk.objects.base.macro import Macro
 from centreon_sdk.objects.base.poller import Poller
 from centreon_sdk.objects.base.real_time_downtime import RealTimeDowntimeHost, RealTimeDowntimeService
 from centreon_sdk.objects.base.resource_cfg import ResourceCFG
-from centreon_sdk.objects.base.service import Service
+from centreon_sdk.objects.base.service import Service, ServiceNotificationOption
 from centreon_sdk.objects.base.service_category import ServiceCategory
 from centreon_sdk.objects.base.service_group import ServiceGroup
 from centreon_sdk.objects.base.service_status import ServiceStatus
-from centreon_sdk.objects.base.service_template import ServiceTemplate, ServiceTemplateNotificationOption, \
-    ServiceTemplateStalkingOption
+from centreon_sdk.objects.base.service_template import ServiceTemplate, ServiceTemplateStalkingOption
 from centreon_sdk.objects.base.settings import Settings, SettingsParam
 from centreon_sdk.objects.base.time_period import TimePeriod, TimePeriodException
 from centreon_sdk.objects.base.trap import Trap, TrapMatching
@@ -4881,7 +4880,7 @@ class Centreon:
                      "object": "stpl",
                      "values": ";".join([template_description, param_name.value, str(int(param_value))
                      if isinstance(param_value, bool) else param_value.value
-                     if isinstance(param_value, ServiceTemplateNotificationOption)
+                     if isinstance(param_value, ServiceNotificationOption)
                         or isinstance(param_value, ServiceTemplateStalkingOption) else param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
