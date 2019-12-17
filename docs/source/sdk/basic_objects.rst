@@ -33,3 +33,4 @@ Basic Objects
     basic_objects/trap
     basic_objects/vendor
     basic_objects/macro
+    basic_objects/poller
