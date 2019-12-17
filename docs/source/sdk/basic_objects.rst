@@ -32,3 +32,4 @@ Basic Objects
     basic_objects/time_period
     basic_objects/trap
     basic_objects/vendor
+    basic_objects/macro
