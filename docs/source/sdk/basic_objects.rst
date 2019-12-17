@@ -24,3 +24,4 @@ Basic Objects
     basic_objects/host_group_service.rst
     basic_objects/instance.rst
     basic_objects/ldap_configuration.rst
+    basic_objects/resource_cfg.rst
