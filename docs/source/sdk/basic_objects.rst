@@ -22,3 +22,4 @@ Basic Objects
     basic_objects/host_category.rst
     basic_objects/host_group.rst
     basic_objects/host_group_service.rst
+    basic_objects/instance.rst
