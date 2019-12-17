@@ -30,3 +30,4 @@ Basic Objects
     basic_objects/service_category
     basic_objects/settings
     basic_objects/time_period
+    basic_objects/trap
