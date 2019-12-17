@@ -60,16 +60,27 @@ class TimePeriod:
 class TimePeriodParam(enum.Enum):
     """This class represents a parameter for a time period"""
     NAME = "name"
+    """Name of the time period (str)"""
     ALIAS = "alias"
+    """Alias of the time period (str)"""
     SUNDAY = "sunday"
+    """Time period definition for sunday (str)"""
     MONDAY = "monday"
+    """Time period definition for monday (str)"""
     TUESDAY = "tuesday"
+    """Time period definition for tuesday (str)"""
     WEDNESDAY = "wednesday"
+    """Time period definition for wednesday (str)"""
     THURSDAY = "thursday"
+    """Time period definition for thursday (str)"""
     FRIDAY = "friday"
+    """Time period definition for friday (str)"""
     SATURDAY = "saturday"
+    """Time period definition for saturday (str)"""
     INCLUDE = "include"
+    """This parameter is used to include other time periods (str, list of str)"""
     EXCLUDE = "exclude"
+    """This parameter is used to exclude other time periods (str, list of str)"""
 
 
 class TimePeriodException:
