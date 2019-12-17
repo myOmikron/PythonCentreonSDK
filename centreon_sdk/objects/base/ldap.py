@@ -21,9 +21,9 @@ import enum
 
 
 class LDAP:
-    """This class represents a LDAP configuraiton
+    """This class represents a LDAP configuration
 
-    :param id_unique: ID of the configuraiton
+    :param id_unique: ID of the configuration
     :type id_unique: int
     :param name: Name of the configuration
     :type name: str
@@ -41,39 +41,66 @@ class LDAP:
 
 class LDAPParam(enum.Enum):
     NAME = "name"
+    """Name of the configuration (str)"""
     DESCRIPTION = "description"
+    """Description of the configuration (str)"""
     ENABLED = "enable"
+    """Is the configuration enabled (bool)"""
     ALIAS = "alias"
+    """Alias of the configuration (str)"""
     BIND_DN = "bind_dn"
+    """User to connect to LDAP server"""
     BIND_PASS = "bind_pass"
+    """Password to connect to LDAP server"""
     GROUP_BASE_SEARCH = "group_base_search"
+    """The base distinguished name (DN) for groups (str)"""
     GROUP_FILTER = "group_filter"
+    """The LDAP search filter for groups, %s will be replaced with "*" (str)"""
     GROUP_MEMBER = "group_member"
+    """The LDAP attribute for relation between group and user"""
     GROUP_NAME = "group_name"
+    """Group name attribute. Will be mapped to contact groups (str)"""
     LDAP_AUTO_IMPORT = "ldap_auto_import"
+    """Should LDAP automatically import new users? (bool)"""
     LDAP_CONTACT_TEMPLATE = "ldap_contact_tmpl"
+    """Contact template to set for imported users (str)"""
     LDAP_DNS_USE_DOMAIN = "ldap_dns_use_domain"
+    """"""
     LDAP_SEARCH_LIMIT = "ldap_search_limit"
+    """Search size limit (int)"""
     LDAP_SEARCH_TIMEOUT = "ldap_search_timeout"
+    """Timeout for searching for users (int)"""
     LDAP_SRV_DNS = "ldap_srv_dns"
+    """Use the DNS service to get LDAP hosts"""
     LDAP_STORE_PASSWORD = "ldap_store_password"
+    """Whether or not the password should be stored in the database (bool)"""
     LDAP_TEMPLATE = "ldap_template"
+    """LDAP template to use, "Posix" or "Active Directory" (str)"""
     PROTOCOL_VERSION = "protocol_version"
+    """Protocol version of LDAP, 2 or 3 (int)"""
     USER_BASE_SEARCH = "user_base_search"
+    """The base distinguished name (DN) for users (str)"""
     USER_EMAIL = "user_email"
+    """Specifies the attribute which holds the email information (str)"""
     USER_FILTER = "user_filter"
+    """The LDAP search filter for users (str)"""
     USER_FIRSTNAME = "user_firstname"
+    """User firstname attribute (str)"""
     USER_LASTNAME = "user_lastname"
+    """User lastname attribute (str)"""
     USER_NAME = "user_name"
+    """"""
     USER_PAGER = "user_pager"
+    """Specifies the attribute which holds the pager information (str)"""
     USER_GROUP = "user_group"
+    """The group attribute for user (str)"""
 
 
 class LDAPServer:
     """This class represents a ldap server
 
-    :param ip: IP of the server
-    :type ip: str
+    :param id_unique: ID of the server
+    :type id_unique: int
     :param address: Address of the server
     :type address: str
     :param port: Port of the server
@@ -97,7 +124,12 @@ class LDAPServer:
 class LDAPServerParam(enum.Enum):
     """This class represents a parameter of a ldap server"""
     HOST_ADDRESS = "host_address"
+    """Address of the LDAP server (str)"""
     HOST_PORT = "host_port"
+    """Port of the LDAP server (int)"""
     HOST_ORDER = "host_order"
+    """Counter which represents the order (int)"""
     USE_SSL = "use_ssl"
+    """Use SSL (bool)"""
     USE_TLS = "use_tls"
+    """Use TLS (bool)"""
