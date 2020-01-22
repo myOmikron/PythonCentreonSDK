@@ -35,7 +35,6 @@ from centreon_sdk.objects.base.host import Host, HostParam
 from centreon_sdk.objects.base.host_category import HostCategory
 from centreon_sdk.objects.base.host_group import HostGroup
 from centreon_sdk.objects.base.host_group_service import HostGroupService
-from centreon_sdk.objects.base.host_status import HostStatus
 from centreon_sdk.objects.base.instance import Instance
 from centreon_sdk.objects.base.ldap import LDAP, LDAPServer
 from centreon_sdk.objects.base.macro import Macro
@@ -43,12 +42,10 @@ from centreon_sdk.objects.base.poller import Poller
 from centreon_sdk.objects.base.real_time_acknowledgement import RealTimeAcknowledgement
 from centreon_sdk.objects.base.real_time_downtime import RealTimeDowntimeHost, RealTimeDowntimeService
 from centreon_sdk.objects.base.resource_cfg import ResourceCFG
-from centreon_sdk.objects.base.service import Service
+from centreon_sdk.objects.base.service import Service, ServiceNotificationOption
 from centreon_sdk.objects.base.service_category import ServiceCategory
 from centreon_sdk.objects.base.service_group import ServiceGroup
-from centreon_sdk.objects.base.service_status import ServiceStatus
-from centreon_sdk.objects.base.service_template import ServiceTemplate, ServiceTemplateNotificationOption, \
-    ServiceTemplateStalkingOption
+from centreon_sdk.objects.base.service_template import ServiceTemplate, ServiceTemplateStalkingOption
 from centreon_sdk.objects.base.settings import Settings, SettingsParam
 from centreon_sdk.objects.base.time_period import TimePeriod, TimePeriodException
 from centreon_sdk.objects.base.trap import Trap, TrapMatching
@@ -99,12 +96,11 @@ class Centreon:
 
     def host_status_get(self, *, viewType=None, fields=None, status=None, hostgroup=None, instance=None, search=None,
                         critically=None, sortType=None, order=None, limit=None, number=None):
-        """This method is used to get the host status
+        """This method is used to get the host status from a host object
 
         :param viewType: Select a predefined filter like in the monitoring view. One of *all*, *unhandled*, *problems*
         :type viewType: str
-        :param fields: The field list you want to get, separated by a ",". Use :ref:class_field_builder: to simplify \
-        the query
+        :param fields: The field list you want to get, separated by a ",".
         :type fields: str
         :param status: The status of hosts you want to get. One of *up*, *down*, *unreachable*, *pending*, *all*
         :type status: str
@@ -126,7 +122,7 @@ class Centreon:
         :type number: int
 
         :return: Returns a list of HostStatus
-        :rtype: list of :ref:`class_host_status`:
+        :rtype: list of dict
         """
         param_dict = pack_locals(locals())
         param_dict["object"] = "centreon_realtime_hosts"
@@ -138,14 +134,13 @@ class Centreon:
     def service_status_get(self, *, viewType=None, fields=None, status=None, hostgoup=None, servicegroup=None,
                            instance=None, search=None, searchHost=None, searchOutput=None, criticality=None,
                            sortType=None, order=None, limit=None, number=None):
-        """This method is used to get information about the service status
+        """This method is used to get information about the service status from a service object
 
         :param viewType: Select a predefined filter like in the monitoring view. One of *all*, *unhandled*, *problems*
         :type viewType: str
-        :param fields: The field list you want to get, separated by a ",". Use :ref:class_field_builder: to simplify \
-        the query
+        :param fields: The field list you want to get, separated by a ",".
         :type fields: str
-        :param status: The status of services you want to get. One of *ok*, *warning*, *critical*, *unknown*,
+        :param status: The status of services you want to get. One of *ok*, *warning*, *critical*, *unknown*, \
         *pending*, *all*
         :type status: str
         :param hostgoup: Hostgroup id filter
@@ -158,7 +153,7 @@ class Centreon:
         :type search: str
         :param searchHost: Search pattern applied on the host
         :type searchHost: str
-        :param searchOutput: Search pattern apllied on the ouput
+        :param searchOutput: Search pattern applied on the output
         :type searchOutput: str
         :param criticality: A specific criticity
         :type criticality: str
@@ -172,7 +167,7 @@ class Centreon:
         :type number: int
 
         :return: Returns a list of ServiceStatus
-        :rtype: list of :ref:`class_service_status`:
+        :rtype: list of dict
         """
         param_dict = pack_locals(locals())
         param_dict["object"] = "centreon_realtime_services"
@@ -646,7 +641,7 @@ class Centreon:
         :param host_name: Name of a host
         :type host_name: str
         :param host_group_names: List of the names of the host group(s)
-        :type host_group_names; list of str
+        :type host_group_names: list of str
 
         :return: Returns True on success
         :rtype: bool
@@ -663,7 +658,7 @@ class Centreon:
         :param host_name: Name of a host
         :type host_name: str
         :param host_group_names: List of the names of the host group(s)
-        :type host_group_names; list of str
+        :type host_group_names: list of str
 
         :return: Returns True on success
         :rtype: bool
@@ -680,7 +675,7 @@ class Centreon:
         :param host_name: Name of a host
         :type host_name: str
         :param host_group_names: List of the names of the host group(s)
-        :type host_group_names; list of str
+        :type host_group_names: list of str
 
         :return: Returns True on success
         :rtype: bool
@@ -2145,7 +2140,7 @@ class Centreon:
         :param language: Language of the contact
         :type language: str
         :param authentication_type: Authentication type used be the contact
-        :type authentication_type: :ref:`class_contact_template_authentication_type`
+        :type authentication_type: :ref:`class_contact_template_auth_type`
 
         :return: Returns True if the operation was successful
         :rtype: bool
@@ -2234,7 +2229,7 @@ class Centreon:
         engine is required
 
         :return: Returns a list of all available contact groups
-        :rtype: :ref:`class:contact_group`
+        :rtype: :ref:`class_contact_group`
         """
         data_dict = {"action": "show",
                      "object": "cg"}
@@ -4882,7 +4877,7 @@ class Centreon:
                      "object": "stpl",
                      "values": ";".join([template_description, param_name.value, str(int(param_value))
                      if isinstance(param_value, bool) else param_value.value
-                     if isinstance(param_value, ServiceTemplateNotificationOption)
+                     if isinstance(param_value, ServiceNotificationOption)
                         or isinstance(param_value, ServiceTemplateStalkingOption) else param_value])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
@@ -5210,7 +5205,7 @@ class Centreon:
         Generating configuration files and restarting the engine is required
 
         :param service_group_name: Name of the service group
-        .type service_group_name: str
+        :type service_group_name: str
         :param service_group_alias: Alias of the service group
         :type service_group_alias: str
 
@@ -5402,7 +5397,7 @@ class Centreon:
         """This method is used to show all available service categories
 
         :return: Returns a list of service categories
-        :rtype: list of :ref:`service_category`
+        :rtype: list of :ref:`class_service_category`
         """
         data_dict = {"action": "show",
                      "object": "sc"}
@@ -5445,12 +5440,12 @@ class Centreon:
         return method_utils.check_if_empty_list(response)
 
     def service_category_set_param(self, service_category_name, param_name, param_value):
-        """This method is used to set the parameter for a service category
+        """This method is used to set a parameter for a service category
 
         :param service_category_name: Name of the service category
         :type service_category_name: str
         :param param_name: Name of the parameter
-        :type param_name: :ref:`class_service_category_param̀
+        :type param_name: :ref:`class_service_category_param`
         :param param_value: Value of the parameter
         :type param_value: See :ref:`class_service_category`
 

@@ -42,16 +42,27 @@ class Trap:
 class TrapParam(enum.Enum):
     """This class represents the parameter of a trap"""
     NAME = "name"
+    """Name of the trap (str)"""
     COMMENTS = "comments"
+    """Comments linked to the trap (str)"""
     OUTPUT = "output"
+    """Output of the trap (str)"""
     OID = "oid"
+    """OID of the trap (str)"""
     STATUS = "status"
+    """Status of the trap (:ref:`class_trap_matching_param`)"""
     VENDOR = "vendor"
+    """Name of the vendor (str)"""
     MATCHING_MODE = "matching_mode"
+    """Enable/disable the advanced regexp matching mode (bool)"""
     RESCHEDULE_SVC_ENABLE = "reschedule_svc_enable"
+    """Enable/disable rescheduling the service check if trap is received (bool)"""
     EXECUTION_COMMAND = "execution_command"
+    """Command to be executed when trap is received (str)"""
     EXECUTION_COMMAND_ENABLE = "execution_command_enable"
+    """Enable/disable execution command (bool)"""
     SUBMIT_RESULT_ENABLE = "submit_result_enable"
+    """Enable/disable submitting result to service (bool)"""
 
 
 class TrapMatching:
@@ -79,6 +90,18 @@ class TrapMatching:
 class TrapMatchingParam(enum.Enum):
     """This class represents a parameter of a matching rule of a trap"""
     STRING = "string"
+    """String to match (str)"""
     ORDER = "order"
+    """Priority order (int)"""
     STATUS = "status"
+    """Status to submit (:ref:`class_trap_matching_param`)"""
     REGEXP = "regexp"
+    """Matching regular expression (str)"""
+
+
+class TrapStatus(enum.Enum):
+    """This class represents a status of a trap"""
+    OK = "ok"
+    WARNING = "warning"
+    CRITICAL = "critical"
+    UNKNOWN = "unknown"
