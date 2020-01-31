@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import enum
 
+from centreon_sdk.objects.base.base import Base
 
-class Host:
+
+class Host(Base):
     """This class represents a host object
 
     :param name: Name of the host
@@ -34,13 +36,17 @@ class Host:
     :param id_unique: Id of the host
     :type id_unique: int
     """
+    def __init__(self, **kwargs):
+        super(Host, self).__init__(HostParam, [HostParam.NAME, HostParam.ALIAS, HostParam.ADDRESS, HostParam.INSTANCE])
 
-    def __init__(self, name, alias, address, activate, id_unique):
-        self.name = name
-        self.alias = alias
-        self.address = address
-        self.activate = activate
-        self.id_unique = id_unique
+        for item in kwargs:
+            try:
+                param = HostParam.__getattribute__(HostParam, item)
+                if param is HostParam.NAME and hasattr(self, item):
+                    self.set(param, [self.get(param), kwargs[item]])
+                self.set(param, kwargs[item])
+            except AttributeError:
+                print("Option {} is not in {}".format(item, str(self.param_class)))
 
 
 class HostParam(enum.Enum):
