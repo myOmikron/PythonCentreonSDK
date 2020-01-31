@@ -21,7 +21,7 @@ import enum
 import json
 import requests
 
-from centreon_sdk.exceptions.item_exsting_error import ItemAlreadyExistingError
+from centreon_sdk.exceptions.item_exsting_error import CentreonItemAlreadyExistingError
 from centreon_sdk.util import method_utils
 
 
@@ -98,7 +98,7 @@ class Network:
             response = self.session.post(self.config.vars["URL"], params=params, data=data, headers=header)
 
         if response.status_code == 409:
-            raise ItemAlreadyExistingError(response.text)
+            raise CentreonItemAlreadyExistingError(response.text)
         elif response.status_code is not 200:
             print(response.status_code, response.text)
             return

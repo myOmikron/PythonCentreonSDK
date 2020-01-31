@@ -19,6 +19,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
 
-class ItemAlreadyExistingError(Exception):
+class CentreonItemAlreadyExistingError(Exception):
     def __init__(self, text):
-        super(ItemAlreadyExistingError, self).__init__(text)
+        super(CentreonItemAlreadyExistingError, self).__init__(text)
