@@ -21,6 +21,7 @@ import enum
 import json
 import requests
 
+from centreon_sdk.exceptions.item_exsting_error import ItemAlreadyExistingError
 from centreon_sdk.util import method_utils
 
 
@@ -96,7 +97,9 @@ class Network:
         elif verb == HTTPVerb.POST:
             response = self.session.post(self.config.vars["URL"], params=params, data=data, headers=header)
 
-        if not response.status_code == 200:
+        if response.status_code == 409:
+            raise ItemAlreadyExistingError(response.text)
+        elif response.status_code is not 200:
             print(response.status_code, response.text)
             return
         json_decoded = json.loads(response.text)
