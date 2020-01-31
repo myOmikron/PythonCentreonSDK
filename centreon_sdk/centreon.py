@@ -24,10 +24,29 @@ from centreon_sdk.exceptions.item_exsting_error import CentreonItemAlreadyExisti
 
 
 class Centreon:
+    """This class is a wrapper for the api calls
+
+    :param username: Username to reach the api
+    :type username: str
+    :param password: Password for the user
+    :type password: str
+    :param url: URL to the centreon api
+    :type url: str
+    :param verify: Optional: You can turn off verifying the SSL certificate, Default True
+    :type verify: bool
+    """
+
     def __init__(self, username, password, url, verify=True):
         self.api = ApiWrapper(username, password, url, verify)
 
     def commit(self, obj, *, overwrite=False):
+        """This method is used to commit any changes made to a local object.
+
+        :param obj: Object to commit
+        :param obj: Union[:ref:`class_base`, list]
+        :param overwrite: Optional: Specify True if you want to overwrite any existing values. Default False
+        :param overwrite: bool
+        """
         if isinstance(obj, list):
             for item in obj:
                 self.commit(item)
@@ -38,11 +57,11 @@ class Centreon:
                     if not obj.has(param):
                         raise AttributesMissingError("Required Attribute is missing: {}".format(param))
                 self.api.host_add(obj.get(HostParam.NAME),
-                              obj.get(HostParam.ALIAS),
-                              obj.get(HostParam.ADDRESS),
-                              obj.get(HostParam.TEMPLATE, default=[]),
-                              obj.get(HostParam.INSTANCE),
-                              obj.get(HostParam.HOST_GROUPS, default=[]))
+                                  obj.get(HostParam.ALIAS),
+                                  obj.get(HostParam.ADDRESS),
+                                  obj.get(HostParam.TEMPLATE, default=[]),
+                                  obj.get(HostParam.INSTANCE),
+                                  obj.get(HostParam.HOST_GROUPS, default=[]))
 
             except CentreonItemAlreadyExistingError as err:
                 if not overwrite:
