@@ -30,6 +30,8 @@ class Base:
         if not isinstance(param_name, self.param_class):
             raise TypeError("This method only supports the {}".format(str(self.param_class)))
         self.__setattr__(param_name._name_, param_value)
+        if self.unset_params.__contains__(param_name):
+            self.unset_params.remove(param_name)
 
     def get(self, param_name, *, default=None):
         if not isinstance(param_name, self.param_class):
@@ -39,15 +41,12 @@ class Base:
         elif default is not None:
             return default
         else:
-            raise AttributeNotFoundError
+            raise AttributeNotFoundError("Attribute {} not found in {}".format(param_name, self))
 
     def has(self, param_name):
         if not isinstance(param_name, self.param_class):
             raise TypeError("This method only supports the {}".format(str(self.param_class)))
-        if hasattr(self, param_name._name_):
-            return True
-        else:
-            return False
+        return True if hasattr(self, param_name._name_) else False
 
     def unset(self, param_name):
         if not isinstance(param_name, self.param_class):
