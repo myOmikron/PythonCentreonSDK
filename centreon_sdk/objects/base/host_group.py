@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import enum
 
+from centreon_sdk.objects.base.base import Base
 
-class HostGroup:
+
+class HostGroup(Base):
     """This class represents a hostgroup
 
     :param id_unique: ID of the hostgroup
@@ -30,11 +32,17 @@ class HostGroup:
     :param alias: Alias of the hostgroup
     :type alias: str
     """
-    def __init__(self, id_unique, name, alias):
-        self.id_unique = id_unique
-        self.name = name
-        self.alias = alias
-
+    def __init__(self, **kwargs):
+        super(HostGroup, self).__init__(HostGroupParam, [HostGroupParam.NAME, HostGroupParam.ALIAS])
+        for item in kwargs:
+            try:
+                param = HostGroupParam.__getattribute__(HostGroupParam, item)
+                if param is HostGroupParam.NAME and hasattr(self, item):
+                    self.set(param, [self.get(param), kwargs[item]])
+                self.set(param, kwargs[item])
+            except AttributeError:
+                print("Option {} is not in {}".format(item, str(self.param_class)))
+            
 
 class HostGroupParam(enum.Enum):
     """This class represents a parameter for a hostgroup"""
