@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import enum
 
+from centreon_sdk.objects.base.base import Base
 
-class Contact:
+
+class Contact(Base):
     """This class represents a contact
 
     :param id_unique: ID of the contact
@@ -40,15 +42,18 @@ class Contact:
     :param activate: Is the user activated?
     :type activate: bool
     """
-    def __init__(self, id_unique, name, alias, email, pager, gui_access, admin, activate):
-        self.id_unique = id_unique
-        self.name = name
-        self.alias = alias
-        self.email = email
-        self.pager = pager
-        self.gui_access = gui_access
-        self.admin = admin
-        self.activate = activate
+    def __init__(self, **kwargs):
+        super(Contact, self).__init__(ContactParam, [ContactParam.NAME, ContactParam.ALIAS, ContactParam.EMAIL,
+                                                     ContactParam.PASSWORD, ContactParam.ADMIN, ContactParam.GUI_ACCESS,
+                                                     ContactParam.LANGUAGE, ContactParam.AUTHTYPE])
+        for item in kwargs:
+            try:
+                param = ContactParam.__getattribute__(ContactParam, item)
+                if param is ContactParam.NAME and hasattr(self, item):
+                    self.set(param, [self.get(param), kwargs[item]])
+                self.set(param, kwargs[item])
+            except AttributeError:
+                print("Option {} is not in {}".format(item, str(self.param_class)))
 
 
 class ContactAuthenticationType(enum.Enum):
@@ -64,7 +69,7 @@ class ContactParam(enum.Enum):
     COMMENT = "comment"
     EMAIL = "email"
     PASSWORD = "password"
-    ACCESS = "access"
+    GUI_ACCESS = "access"
     LANGUAGE = "language"
     ADMIN = "admin"
     AUTHTYPE = "authtype"
