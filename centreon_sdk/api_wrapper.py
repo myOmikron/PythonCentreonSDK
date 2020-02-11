@@ -37,7 +37,7 @@ from centreon_sdk.objects.base.host_group_service import HostGroupService
 from centreon_sdk.objects.base.host_template import HostTemplate
 from centreon_sdk.objects.base.instance import Instance
 from centreon_sdk.objects.base.ldap import LDAP, LDAPServer
-from centreon_sdk.objects.base.macro import Macro
+from centreon_sdk.objects.base.macro import Macro, MacroParam
 from centreon_sdk.objects.base.poller import Poller
 from centreon_sdk.objects.base.real_time_acknowledgement import RealTimeAcknowledgement
 from centreon_sdk.objects.base.real_time_downtime import RealTimeDowntimeHost, RealTimeDowntimeService
@@ -303,8 +303,16 @@ class ApiWrapper:
                      "object": "host",
                      "values": host_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        response = response["result"]
-        return [Macro(**x) for x in response]
+        ret = []
+        for macro in response["result"]:
+            m = Macro()
+            m.set(MacroParam.NAME, macro["macro_name"])
+            m.set(MacroParam.VALUE, macro["macro_value"])
+            m.set(MacroParam.SOURCE, macro["source"])
+            m.set(MacroParam.IS_PASSWORD, bool(macro["is_password"]))
+            m.set(MacroParam.DESCRIPTION, macro["description"])
+            ret.append(m)
+        return ret
 
     def host_set_macro(self, host_name, macro_name, macro_value):
         """This method is used to set a macro for a specific host
