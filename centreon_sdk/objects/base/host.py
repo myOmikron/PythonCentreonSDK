@@ -105,6 +105,8 @@ class HostParam(enum.Enum):
     """Icon of the host. (str)"""
     INSTANCE = "instance"
     """Instance the Host should be checked from"""
+    MACRO = "macro"
+    """Macro for a specific host (str)"""
     MAX_CHECK_ATTEMPTS = "max_check_attempts"
     """Maximum check attempts. (int)"""
     NAME = "name"
