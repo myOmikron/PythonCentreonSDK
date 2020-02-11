@@ -639,7 +639,12 @@ class ApiWrapper:
                      "object": "host",
                      "values": host_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        ret = []
+        for host_group in response:
+            hg = HostGroup()
+            hg.set(HostGroupParam.NAME, host_group["name"])
+            ret.append(hg)
+        return ret
 
     def host_add_host_group(self, host_name, host_group_names):
         """This method is used to add host group(s) to a host
