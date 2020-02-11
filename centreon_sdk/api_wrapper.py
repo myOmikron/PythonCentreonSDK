@@ -24,7 +24,7 @@ from centreon_sdk.objects.base.acl_resource import ACLResource
 from centreon_sdk.objects.base.cent_broker_cfg import CentBrokerCFG
 from centreon_sdk.objects.base.cent_engine_cfg import CentEngineCFG
 from centreon_sdk.objects.base.cmd import CMDType, CMD
-from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType
+from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType, ContactParam
 from centreon_sdk.objects.base.contact_group import ContactGroup
 from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactTemplateAuthType
 from centreon_sdk.objects.base.dependency import Dependency
@@ -573,7 +573,12 @@ class ApiWrapper:
                      "object": "host",
                      "values": host_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        ret = []
+        for host_group in response["result"]:
+            c = Contact()
+            c.set(ContactParam.NAME, host_group["name"])
+            ret.append(c)
+        return ret
 
     def host_add_contact(self, host_name, contact_names):
         """This method is used to add contact(s) to a host
