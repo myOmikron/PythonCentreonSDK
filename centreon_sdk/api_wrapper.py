@@ -32,8 +32,9 @@ from centreon_sdk.objects.base.downtime import Downtime, DowntimePeriod
 from centreon_sdk.objects.base.general import ThreeWayOption
 from centreon_sdk.objects.base.host import Host, HostParam
 from centreon_sdk.objects.base.host_category import HostCategory
-from centreon_sdk.objects.base.host_group import HostGroup
+from centreon_sdk.objects.base.host_group import HostGroup, HostGroupParam
 from centreon_sdk.objects.base.host_group_service import HostGroupService
+from centreon_sdk.objects.base.host_template import HostTemplate
 from centreon_sdk.objects.base.instance import Instance
 from centreon_sdk.objects.base.ldap import LDAP, LDAPServer
 from centreon_sdk.objects.base.macro import Macro
@@ -354,7 +355,12 @@ class ApiWrapper:
                      "object": "host",
                      "values": host_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        ret = []
+        for template in response["result"]:
+            ht = HostTemplate()
+            ht.set(HostParam.NAME, template["name"])
+            ret.append(ht)
+        return ret
 
     def host_set_template(self, host_name, template_name):
         """This method is used to set a template, if other templates are linked to the host, they are removed
