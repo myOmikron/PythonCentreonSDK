@@ -17,9 +17,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+import enum
+
+from centreon_sdk.objects.base.base import Base
 
 
-class Macro:
+class Macro(Base):
     """This class represents a macro
 
     :param macro_name: Name of the macro
@@ -33,9 +36,27 @@ class Macro:
     :param source: Source the macro came from
     :type source: str
     """
-    def __init__(self, macro_name, macro_value, is_password, description, source):
-        self.macro_name = macro_name
-        self.macro_value = macro_value
-        self.is_password = is_password
-        self.description = description
-        self.source = source
+    def __init__(self, **kwargs):
+        super(Macro, self).__init__(MacroParam, [MacroParam.NAME, MacroParam.VALUE])
+
+        for item in kwargs:
+            try:
+                param = MacroParam.__getattribute__(MacroParam, item)
+                if param is MacroParam.NAME and hasattr(self, item):
+                    self.set(param, [self.get(param), kwargs[item]])
+                self.set(param, kwargs[item])
+            except AttributeError:
+                print("Option {} is not in {}".format(item, str(self.param_class)))
+
+
+class MacroParam(enum.Enum):
+    NAME = "name"
+    """Name of the macro (str)"""
+    VALUE = "value"
+    """Value of the macro"""
+    IS_PASSWORD = "is_password"
+    """Is the macro value a password? (bool)"""
+    DESCRIPTION = "description"
+    """Description of the macro (str)"""
+    SOURCE = "source"
+    """Source the macro is initialized (str)"""
