@@ -39,4 +39,8 @@ class ContactGroup(Base):
 class ContactGroupParam(enum.Enum):
     """This class represents the parameter of a contact group"""
     NAME = "name"
+    """Name of the contact group (str)"""
     ALIAS = "alias"
+    """Alias of the contact group (str)"""
+    MEMBERS = "members"
+    """Members that are linked to the contact group (list of str)"""
