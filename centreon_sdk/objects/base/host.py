@@ -37,16 +37,8 @@ class Host(Base):
     :type id_unique: int
     """
     def __init__(self, **kwargs):
-        super(Host, self).__init__(HostParam, [HostParam.NAME, HostParam.ALIAS, HostParam.ADDRESS, HostParam.INSTANCE])
-
-        for item in kwargs:
-            try:
-                param = HostParam.__getattribute__(HostParam, item)
-                if param is HostParam.NAME and hasattr(self, item):
-                    self.set(param, [self.get(param), kwargs[item]])
-                self.set(param, kwargs[item])
-            except AttributeError:
-                print("Option {} is not in {}".format(item, str(self.param_class)))
+        super(Host, self).__init__(HostParam, [HostParam.NAME, HostParam.ALIAS, HostParam.ADDRESS, HostParam.INSTANCE],
+                                   kwargs)
 
 
 class HostParam(enum.Enum):
