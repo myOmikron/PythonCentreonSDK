@@ -45,15 +45,7 @@ class Contact(Base):
     def __init__(self, **kwargs):
         super(Contact, self).__init__(ContactParam, [ContactParam.NAME, ContactParam.ALIAS, ContactParam.EMAIL,
                                                      ContactParam.PASSWORD, ContactParam.ADMIN, ContactParam.GUI_ACCESS,
-                                                     ContactParam.LANGUAGE, ContactParam.AUTHTYPE])
-        for item in kwargs:
-            try:
-                param = ContactParam.__getattribute__(ContactParam, item)
-                if param is ContactParam.NAME and hasattr(self, item):
-                    self.set(param, [self.get(param), kwargs[item]])
-                self.set(param, kwargs[item])
-            except AttributeError:
-                print("Option {} is not in {}".format(item, str(self.param_class)))
+                                                     ContactParam.LANGUAGE, ContactParam.AUTHTYPE], kwargs)
 
 
 class ContactAuthenticationType(enum.Enum):
