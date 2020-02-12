@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
-from centreon_sdk import HostParam, Host
+from centreon_sdk.objects.base.host import HostParam, Host
 from centreon_sdk.api_wrapper import ApiWrapper
 from centreon_sdk.exceptions.attributes_missing import AttributesMissingError
 from centreon_sdk.exceptions.item_exsting_error import CentreonItemAlreadyExistingError
@@ -35,7 +35,6 @@ class Centreon:
     :param verify: Optional: You can turn off verifying the SSL certificate, Default True
     :type verify: bool
     """
-
     def __init__(self, username, password, url, verify=True):
         self.api = ApiWrapper(username, password, url, verify)
 
@@ -83,9 +82,9 @@ class Centreon:
                     self.api.host_set_template(obj.get(HostParam.NAME), obj.get(HostParam.TEMPLATE))
                 if obj.has(HostParam.HOST_GROUPS):
                     self.api.host_set_host_group(obj.get(HostParam.NAME), obj.get(HostParam.HOST_GROUPS))
-
+            # Set other parameters
             for attribute in obj.__dict__:
-                if attribute is not "required_params" and attribute is not "param_class":
+                if attribute is not "required_params" and attribute is not "param_class" and attribute is not "unset_params":
                     param = getattr(HostParam, attribute)
                     if param not in obj.required_params and param is not HostParam.TEMPLATE \
                             and param is not HostParam.HOST_GROUPS:
@@ -97,3 +96,29 @@ class Centreon:
                             self.api.host_set_contact_group(obj.get(HostParam.NAME), obj.get(HostParam.CONTACT_GROUPS))
                         else:
                             self.api.host_set_param(obj.get(HostParam.NAME), param, obj.get(param))
+            # Unset parameters
+            if overwrite:
+                for param in obj.unset_params:
+                    if param is HostParam.TEMPLATE:
+                        existing_templates = self.api.host_get_template(obj.get(HostParam.NAME))
+                        for template in existing_templates:
+                            self.api.host_del_template(obj.get(HostParam.NAME), template.get(HostParam.NAME))
+                    elif param is HostParam.HOST_GROUPS:
+                        existing_host_groups = self.api.host_get_host_group(obj.get(HostParam.NAME))
+                        self.api.host_del_host_group(obj.get(HostParam.NAME), existing_host_groups)
+                    elif param is HostParam.CONTACTS:
+                        existing_contacts = self.api.host_get_contact(obj.get(HostParam.NAME))
+                        self.api.host_del_contact(obj.get(HostParam.NAME), existing_contacts)
+                    elif param is HostParam.MACRO:
+                        existing_macros = self.api.host_get_macro(obj.get(HostParam.NAME))
+                        for macro in existing_macros:
+                            self.api.host_del_macro(obj.get(HostParam.NAME), macro)
+                    elif param is HostParam.CONTACT_GROUPS:
+                        existing_contact_groups = self.api.host_get_contact_group(obj.get(HostParam.NAME))
+                        self.api.host_del_contact_group(obj.get(HostParam.NAME), existing_contact_groups)
+                    elif param is HostParam.PARENT:
+                        existing_parents = self.api.host_get_parent(obj.get(HostParam.NAME))
+                        self.api.host_del_parent(obj.get(HostParam.NAME), existing_parents)
+                    else:
+                        self.api.host_set_param(obj.get(HostParam.NAME), param, "")
+                obj.unset_params = []
