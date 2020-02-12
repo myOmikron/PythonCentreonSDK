@@ -449,7 +449,12 @@ class ApiWrapper:
                      "object": "host",
                      "values": host_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        ret = []
+        for parent in response["result"]:
+            p = Host()
+            p.set(HostParam.NAME, parent["name"])
+            ret.append(p)
+        return ret
 
     def host_set_parent(self, host_name, parent_names):
         """This method is used to set the parent of a host
