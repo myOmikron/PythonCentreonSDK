@@ -23,6 +23,4 @@ from centreon_sdk.objects.base.base import Base
 
 class HostTemplate(Base):
     def __init__(self, **kwargs):
-        super().__init__(HostParam, [HostParam.NAME, HostParam.ALIAS])
-        for item in kwargs:
-            self.set(item, kwargs[item])
+        super().__init__(HostParam, [HostParam.NAME, HostParam.ALIAS], kwargs)
