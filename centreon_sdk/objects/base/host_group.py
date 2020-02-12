@@ -33,15 +33,7 @@ class HostGroup(Base):
     :type alias: str
     """
     def __init__(self, **kwargs):
-        super(HostGroup, self).__init__(HostGroupParam, [HostGroupParam.NAME, HostGroupParam.ALIAS])
-        for item in kwargs:
-            try:
-                param = HostGroupParam.__getattribute__(HostGroupParam, item)
-                if param is HostGroupParam.NAME and hasattr(self, item):
-                    self.set(param, [self.get(param), kwargs[item]])
-                self.set(param, kwargs[item])
-            except AttributeError:
-                print("Option {} is not in {}".format(item, str(self.param_class)))
+        super(HostGroup, self).__init__(HostGroupParam, [HostGroupParam.NAME, HostGroupParam.ALIAS], kwargs)
             
 
 class HostGroupParam(enum.Enum):
