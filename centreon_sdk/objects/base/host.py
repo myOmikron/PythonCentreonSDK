@@ -115,6 +115,8 @@ class HostParam(enum.Enum):
     """Notification period for the host. (str)"""
     OBSESS_OVER_HOST = "obsess_over_host"
     """Determines whether or not the obsess over host is enabled. (:ref:`class_general_three_way_option`)"""
+    PARENT = "parent"
+    """Parent of the host (Host, str)"""
     PASSIVE_CHECKS_ENABLED = "passive_checks_enabled"
     """Are passive checks enabled? (:ref:`class_general_three_way_option`)"""
     PROCESS_PERF_DATA = "process_perf_data"
