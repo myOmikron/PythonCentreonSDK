@@ -37,16 +37,7 @@ class Macro(Base):
     :type source: str
     """
     def __init__(self, **kwargs):
-        super(Macro, self).__init__(MacroParam, [MacroParam.NAME, MacroParam.VALUE])
-
-        for item in kwargs:
-            try:
-                param = MacroParam.__getattribute__(MacroParam, item)
-                if param is MacroParam.NAME and hasattr(self, item):
-                    self.set(param, [self.get(param), kwargs[item]])
-                self.set(param, kwargs[item])
-            except AttributeError:
-                print("Option {} is not in {}".format(item, str(self.param_class)))
+        super(Macro, self).__init__(MacroParam, [MacroParam.NAME, MacroParam.VALUE], kwargs)
 
 
 class MacroParam(enum.Enum):
