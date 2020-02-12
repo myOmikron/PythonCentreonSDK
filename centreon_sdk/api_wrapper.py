@@ -503,7 +503,10 @@ class ApiWrapper:
         """
         data_dict = {"action": "delparent",
                      "object": "host",
-                     "values": ";".join([host_name, "|".join(parent_names)])}
+                     "values": ";".join([host_name, "|".join([parent.get(Host.NAME) for parent in parent_names]
+                                                             if all(isinstance(x, Host) for x in parent_names)
+                                                             else parent_names)
+                                                     if isinstance(parent_names, list) else parent_names])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
