@@ -443,7 +443,7 @@ class ApiWrapper:
         :type host_name: str
 
         :return: Returns list of parents
-        :rtype: list of dict
+        :rtype:
         """
         data_dict = {"action": "getparent",
                      "object": "host",
@@ -517,7 +517,7 @@ class ApiWrapper:
         :type host_name: str
 
         :return: Returns a dict, which holds the contact group information
-        :rtype: dict
+        :rtype: list of ContactGroup
         """
         data_dict = {"action": "getcontactgroup",
                      "object": "host",
@@ -571,7 +571,7 @@ class ApiWrapper:
         :param host_name: Name of the host
         :type host_name: str
         :param contact_group_names: List of the contact group(s)
-        :type contact_group_names: list of str
+        :type contact_group_names: list of Union[str, ContactGroup]
 
         :return: Returns True on success
         :rtype: bool
@@ -717,7 +717,7 @@ class ApiWrapper:
         :param host_name: Name of a host
         :type host_name: str
         :param host_group_names: List of the names of the host group(s)
-        :type host_group_names: list of str
+        :type host_group_names: list of Union[str, HostGroup]
 
         :return: Returns True on success
         :rtype: bool
