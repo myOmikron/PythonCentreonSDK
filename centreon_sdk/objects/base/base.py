@@ -21,10 +21,19 @@ from centreon_sdk.exceptions.attribute_not_found import AttributeNotFoundError
 
 
 class Base:
-    def __init__(self, param_class, required_params):
+    def __init__(self, param_class, required_params, kwargs):
         self.required_params = required_params
         self.unset_params = []
         self.param_class = param_class
+
+        for item in kwargs:
+            try:
+                param = param_class.__getattribute__(param_class, item)
+                if param is param_class.NAME and hasattr(self, item):
+                    self.set(param, [self.get(param), kwargs[item]])
+                self.set(param, kwargs[item])
+            except AttributeError:
+                print("Option {} is not in {}".format(item, str(self.param_class)))
 
     def set(self, param_name, param_value):
         if not isinstance(param_name, self.param_class):
