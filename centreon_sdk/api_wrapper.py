@@ -628,7 +628,7 @@ class ApiWrapper:
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
-    def host_del_contact(self, host_name, contact_names):
+    def host_del_contact(self, host_name, contacts):
         """This method is used to delete contact(s) for a host
 
         :param host_name: Name of the host
@@ -641,7 +641,10 @@ class ApiWrapper:
         """
         data_dict = {"action": "delcontact",
                      "object": "host",
-                     "values": ";".join([host_name, "|".join(contact_names)])}
+                     "values": ";".join([host_name, "|".join([contact.get(ContactParam.NAME) for contact in contacts]
+                                                             if all(isinstance(x, Contact) for x in contacts)
+                                                             else contacts)
+                                                     if isinstance(contacts, list) else contacts])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
@@ -696,7 +699,7 @@ class ApiWrapper:
         data_dict = {"action": "sethostgroup",
                      "object": "host",
                      "values": ";".join([host_name, "|".join(host_group_names) if isinstance(host_group_names, list)
-                                         else host_group_names])}
+                     else host_group_names])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
