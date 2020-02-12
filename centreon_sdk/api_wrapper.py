@@ -716,7 +716,10 @@ class ApiWrapper:
         """
         data_dict = {"action": "delhostgroup",
                      "object": "host",
-                     "values": ";".join([host_name, "|".join(host_group_names)])}
+                     "values": ";".join([host_name, "|".join([hg.get(HostGroupParam.NAME) for hg in host_group_names]
+                                                             if all(isinstance(x, HostGroup) for x in host_group_names)
+                                                             else host_group_names)
+                                                    if isinstance(host_group_names, list) else host_group_names])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
