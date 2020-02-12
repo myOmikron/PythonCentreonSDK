@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import enum
 
+from centreon_sdk.objects.base.base import Base
 
-class ContactGroup:
+
+class ContactGroup(Base):
     """This class represents a contact group
 
     :param id_unique: ID of the contact group
@@ -30,10 +32,8 @@ class ContactGroup:
     :param alias: Alias of the contact group
     :type alias: str
     """
-    def __init__(self, id_unique, name, alias):
-        self.id_unique = id_unique
-        self.name = name
-        self.alias = alias
+    def __init__(self, **kwargs):
+        super(ContactGroup, self).__init__(ContactGroupParam, [ContactGroupParam.NAME, ContactGroupParam.ALIAS], kwargs)
 
 
 class ContactGroupParam(enum.Enum):
