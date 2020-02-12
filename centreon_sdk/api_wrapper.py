@@ -25,7 +25,7 @@ from centreon_sdk.objects.base.cent_broker_cfg import CentBrokerCFG
 from centreon_sdk.objects.base.cent_engine_cfg import CentEngineCFG
 from centreon_sdk.objects.base.cmd import CMDType, CMD
 from centreon_sdk.objects.base.contact import Contact, ContactAuthenticationType, ContactParam
-from centreon_sdk.objects.base.contact_group import ContactGroup
+from centreon_sdk.objects.base.contact_group import ContactGroup, ContactGroupParam
 from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactTemplateAuthType
 from centreon_sdk.objects.base.dependency import Dependency
 from centreon_sdk.objects.base.downtime import Downtime, DowntimePeriod
@@ -515,7 +515,13 @@ class ApiWrapper:
                      "object": "host",
                      "values": host_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return response["result"]
+        ret = []
+        for contact_group in response["result"]:
+            cg = ContactGroup()
+            cg.set(ContactGroupParam.NAME, contact_group["name"])
+            cg.set(ContactGroupParam.ALIAS, contact_group["alias"])
+            ret.append(cg)
+        return ret
 
     def host_add_contact_group(self, host_name, contact_group_names):
         """This method is used to add a contact group to a host
