@@ -333,7 +333,7 @@ class ApiWrapper:
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
-    def host_del_macro(self, host_name, macro_name):
+    def host_del_macro(self, host_name, macro):
         """This method is used to delete a macro for a specific host
 
         :param host_name: Name of the host
@@ -346,7 +346,7 @@ class ApiWrapper:
         """
         data_dict = {"action": "delmacro",
                      "object": "host",
-                     "values": ";".join([host_name, macro_name])}
+                     "values": ";".join([host_name, macro.get(MacroParam.NAME) if isinstance(macro, Macro) else macro])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
