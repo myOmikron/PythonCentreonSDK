@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from centreon_sdk.objects.base.acl_action import ACLAction, ACLActionParam
 from centreon_sdk.objects.base.host import HostParam, Host
 from centreon_sdk.api_wrapper import ApiWrapper
 from centreon_sdk.exceptions.attributes_missing import AttributesMissingError
@@ -52,6 +53,8 @@ class Centreon:
 
         if isinstance(obj, Host):
             self.__commit_host(obj, overwrite)
+        elif isinstance(obj, ACLAction):
+            self.__commit_acl_action(obj, overwrite)
 
     def __commit_host(self, obj, overwrite):
         try:
@@ -125,3 +128,33 @@ class Centreon:
                 else:
                     self.api.host_set_param(obj.get(HostParam.NAME), param, "")
             obj.unset_params = []
+
+    def __commit_acl_action(self, obj, overwrite):
+        try:
+            for param in obj.required_params:
+                if not obj.has(param):
+                    raise AttributesMissingError("Required Attribute is missing: {}".format(param))
+            self.api.acl_action_add(obj.get(ACLActionParam.NAME), obj.get(ACLActionParam.DESCRIPTION))
+        except CentreonItemAlreadyExistingError as err:
+            if not overwrite:
+                print(err)
+                return
+            # Set required parameter
+            acl_action_name = obj.get(ACLActionParam.NAME)
+            if isinstance(acl_action_name, list):
+                self.api.acl_action_set_param(acl_action_name[0], ACLActionParam.NAME, acl_action_name[1])
+                obj.set(HostParam.NAME, acl_action_name[1])
+            
+        # Set other parameter
+        acl_action_name = obj.get(ACLActionParam.NAME)
+        if obj.has(ACLActionParam.ACTIVATE):
+            self.api.acl_action_set_param(acl_action_name, ACLActionParam.ACTIVATE, obj.get(ACLActionParam.ACTIVATE))
+
+        # Grant actions
+        self.api.acl_action_grant(acl_action_name, obj.grant_rules)
+        # Revoke actions
+        self.api.acl_action_revoke(acl_action_name, obj.revoke_rules)
+
+        # Unset params
+        for param in obj.unset_params:
+            self.api.acl_action_set_param(acl_action_name, param, "")
