@@ -876,7 +876,7 @@ class ApiWrapper:
         :param acl_action_name: Name of the ACL action to modify
         :type acl_action_name: str
         :param acl_actions: Optional: List of ACL actions you want to grant, required if enable_all is False
-        :type acl_actions: list of :ref:`class_acl_action`
+        :type acl_actions: list of :ref:`class_acl_action_rules`
         :param enable_all: Optional: Set True, if you want to grant all available ACL actions
         :type enable_all: bool
 
@@ -885,7 +885,8 @@ class ApiWrapper:
         """
         data_dict = {"action": "grant",
                      "object": "aclaction",
-                     "values": ";".join([acl_action_name, "|".join(acl_actions if not enable_all else ["*"])])}
+                     "values": ";".join([acl_action_name, "|".join([x.value for x in acl_actions]
+                                                                   if not enable_all else ["*"])])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
@@ -904,7 +905,8 @@ class ApiWrapper:
         """
         data_dict = {"action": "revoke",
                      "object": "aclaction",
-                     "values": ";".join([acl_action_name, "|".join(acl_actions if not disable_all else ["*"])])}
+                     "values": ";".join([acl_action_name, "|".join([x.value for x in acl_actions]
+                                                                   if not disable_all else ["*"])])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
