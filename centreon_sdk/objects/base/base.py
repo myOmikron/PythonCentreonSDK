@@ -30,15 +30,25 @@ class Base:
             try:
                 param = param_class.__getattribute__(param_class, item)
                 if param is param_class.NAME and hasattr(self, item):
-                    self.set(param, [self.get(param), kwargs[item]])
-                self.set(param, kwargs[item])
+                    if isinstance(self.get(param), list):
+                        self.set(param, [self.get(param)[0], kwargs[item]])
+                    else:
+                        self.set(param, [self.get(param), kwargs[item]])
+                else:
+                    self.set(param, kwargs[item])
             except AttributeError:
                 print("Option {} is not in {}".format(item, str(self.param_class)))
 
     def set(self, param_name, param_value):
         if not isinstance(param_name, self.param_class):
             raise TypeError("This method only supports the {}".format(str(self.param_class)))
-        self.__setattr__(param_name._name_, param_value)
+        if param_name is self.param_class.NAME and self.has(param_name):
+            if isinstance(self.get(param_name), list):
+                self.set(param_name, [self.get(param_name)[0], param_value])
+            else:
+                self.set(param_name, [self.get(param_name), param_value])
+        else:
+            self.__setattr__(param_name._name_, param_value)
         if self.unset_params.__contains__(param_name):
             self.unset_params.remove(param_name)
 
