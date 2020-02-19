@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import enum
 
+from centreon_sdk.objects.base.base import Base
 
-class ACLAction:
+
+class ACLAction(Base):
     """This class represents a ACLAction
 
     :param id_unique: ID of the ACLAction
@@ -32,17 +34,27 @@ class ACLAction:
     :param activate: Is the ACLAction enabled?
     :type activate: bool
     """
-    def __init__(self, id_unique, name, description, activate):
-        self.id_unique = id_unique
-        self.name = name
-        self.description = description
-        self.activate = activate
+    def __init__(self, **kwargs):
+        super(ACLAction, self).__init__(ACLActionParam, [ACLActionParam.NAME, ACLActionParam.DESCRIPTION],
+                                        kwargs)
+        self.grant_rules = []
+        self.revoke_rules = []
+
+    def grant(self, acl_action_rule):
+        self.grant_rules.append(acl_action_rule)
+        if acl_action_rule in self.revoke_rules:
+            self.revoke_rules.remove(acl_action_rule)
+
+    def revoke(self, acl_action_rule):
+        self.revoke_rules.append(acl_action_rule)
+        if acl_action_rule in self.grant_rules:
+            self.grant_rules.remove(acl_action_rule)
 
 
 class ACLActionParam(enum.Enum):
     """This class represents an acl action parameter"""
     NAME = "name"
-    """Name of the acl action rule (str)"""
+    """Name of the acl action rule (:ref:`class_acl_action_rule`)"""
     DESCRIPTION = "description"
     """Description of the acl action rule (str)"""
     ACTIVATE = "activate"
