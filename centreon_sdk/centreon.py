@@ -17,7 +17,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from centreon_sdk import ACLGroupParam
 from centreon_sdk.objects.base.acl_action import ACLAction, ACLActionParam
+from centreon_sdk.objects.base.acl_group import ACLGroup
+from centreon_sdk.objects.base.acl_menu import ACLMenuParam
+from centreon_sdk.objects.base.acl_resource import ACLResourceParam
+from centreon_sdk.objects.base.contact import ContactParam
+from centreon_sdk.objects.base.contact_group import ContactGroup, ContactGroupParam
 from centreon_sdk.objects.base.host import HostParam, Host
 from centreon_sdk.api_wrapper import ApiWrapper
 from centreon_sdk.exceptions.attributes_missing import AttributesMissingError
@@ -55,6 +61,8 @@ class Centreon:
             self.__commit_host(obj, overwrite)
         elif isinstance(obj, ACLAction):
             self.__commit_acl_action(obj, overwrite)
+        elif isinstance(obj, ACLGroup):
+            self.__commit_acl_group(obj, overwrite)
 
     def __commit_host(self, obj, overwrite):
         try:
@@ -143,18 +151,55 @@ class Centreon:
             acl_action_name = obj.get(ACLActionParam.NAME)
             if isinstance(acl_action_name, list):
                 self.api.acl_action_set_param(acl_action_name[0], ACLActionParam.NAME, acl_action_name[1])
-                obj.set(HostParam.NAME, acl_action_name[1])
-            
+                obj.set(ACLActionParam.NAME, acl_action_name[1])
+            self.api.acl_action_set_param(obj.get(ACLActionParam.NAME), ACLActionParam.DESCRIPTION,
+                                          obj.get(ACLActionParam.DESCRIPTION))
         # Set other parameter
         acl_action_name = obj.get(ACLActionParam.NAME)
         if obj.has(ACLActionParam.ACTIVATE):
             self.api.acl_action_set_param(acl_action_name, ACLActionParam.ACTIVATE, obj.get(ACLActionParam.ACTIVATE))
 
         # Grant actions
-        self.api.acl_action_grant(acl_action_name, obj.grant_rules)
+        if len(obj.grant_rules) > 0:
+            self.api.acl_action_grant(acl_action_name, obj.grant_rules)
         # Revoke actions
-        self.api.acl_action_revoke(acl_action_name, obj.revoke_rules)
+        if len(obj.revoke_rules) > 0:
+            self.api.acl_action_revoke(acl_action_name, obj.revoke_rules)
 
         # Unset params
         for param in obj.unset_params:
             self.api.acl_action_set_param(acl_action_name, param, "")
+
+    def __commit_acl_group(self, obj, overwrite):
+        try:
+            for param in obj.required_params:
+                if not obj.has(param):
+                    raise AttributesMissingError("Required Attribute is missing: {}".format(param))
+            self.api.acl_group_add(obj.get(ACLGroupParam.NAME), obj.get(ACLGroupParam.ALIAS))
+        except CentreonItemAlreadyExistingError as err:
+            if not overwrite:
+                print(err)
+                return
+            # Set required parameter
+            acl_group_name = obj.get(ACLGroupParam.NAME)
+            if isinstance(acl_group_name, list):
+                self.api.acl_group_set_param(acl_group_name[0], ACLGroupParam.NAME, acl_group_name[1])
+                obj.set(ACLActionParam.NAME, acl_group_name[1])
+            obj.set(obj.get(ACLGroupParam.NAME), ACLGroupParam.ALIAS, obj.get(ACLGroupParam.ALIAS))
+
+        # Set other parameter
+        acl_group_name = obj.get(ACLGroupParam.NAME)
+        if obj.has(ACLGroupParam.ACTIVATE):
+            self.api.acl_action_set_param(acl_group_name, ACLGroupParam.ACTIVATE, obj.get(ACLGroupParam.ACTIVATE))
+
+        # Set linked rules
+        self.api.acl_group_set_contact(acl_group_name, [x.get(ContactParam.NAME) for x in obj.linked_contacts])
+        self.api.acl_group_set_contact_group(acl_group_name,
+                                             [x.get(ContactGroupParam.NAME) for x in obj.linked_contact_groups])
+        self.api.acl_group_set_menu(acl_group_name, [x.get(ACLMenuParam.NAME) for x in obj.linked_menu_rules])
+        self.api.acl_group_set_action(acl_group_name, [x.get(ACLActionParam.NAME) for x in obj.linked_action_rules])
+        self.api.acl_group_set_resource(acl_group_name,
+                                        [x.get(ACLResourceParam.NAME) for x in obj.linked_resource_rules])
+        # Unset params
+        for param in obj.unset_params:
+            self.api.acl_group_set_param(acl_group_name, param, "")
