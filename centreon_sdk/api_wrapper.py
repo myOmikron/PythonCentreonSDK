@@ -506,7 +506,7 @@ class ApiWrapper:
                      "values": ";".join([host_name, "|".join([parent.get(Host.NAME) for parent in parent_names]
                                                              if all(isinstance(x, Host) for x in parent_names)
                                                              else parent_names)
-                                                     if isinstance(parent_names, list) else parent_names])}
+                     if isinstance(parent_names, list) else parent_names])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
@@ -652,7 +652,7 @@ class ApiWrapper:
                      "values": ";".join([host_name, "|".join([contact.get(ContactParam.NAME) for contact in contacts]
                                                              if all(isinstance(x, Contact) for x in contacts)
                                                              else contacts)
-                                                     if isinstance(contacts, list) else contacts])}
+                     if isinstance(contacts, list) else contacts])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
@@ -727,7 +727,7 @@ class ApiWrapper:
                      "values": ";".join([host_name, "|".join([hg.get(HostGroupParam.NAME) for hg in host_group_names]
                                                              if all(isinstance(x, HostGroup) for x in host_group_names)
                                                              else host_group_names)
-                                                    if isinstance(host_group_names, list) else host_group_names])}
+                     if isinstance(host_group_names, list) else host_group_names])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
@@ -1510,7 +1510,7 @@ class ApiWrapper:
         :param acl_grant_action: Grant action to perform
         :type acl_grant_action: :ref:`class_acl_resource_grant_action`
         :param acl_resource_names: List of the resource names
-        :type acl_resource_names: list of str
+        :type acl_resource_names: list of :ref:`class_host`
         :param use_wildcard: Optional: Set True, if the wildcard should be used. Not all actions support wildcards. \
         See :ref:`class_acl_resource_grant_action` for further information. If the operation doesn't support a \
         wildcard, but it is used anyway, the option is ignored and all resources in acl_resource_names are used. \
@@ -1523,7 +1523,7 @@ class ApiWrapper:
         data_dict = {"action": acl_grant_action.value[0],
                      "object": "aclresource",
                      "values": ";".join([acl_group_name, "*" if use_wildcard and acl_grant_action.value[1] else
-                     "|".join(acl_resource_names)])}
+                                        "|".join([x.NAME for x in acl_resource_names])])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
