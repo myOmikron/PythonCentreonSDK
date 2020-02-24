@@ -21,13 +21,18 @@ from centreon_sdk import ACLGroupParam
 from centreon_sdk.objects.base.acl_action import ACLAction, ACLActionParam
 from centreon_sdk.objects.base.acl_group import ACLGroup
 from centreon_sdk.objects.base.acl_menu import ACLMenuParam, ACLMenu
-from centreon_sdk.objects.base.acl_resource import ACLResourceParam
+from centreon_sdk.objects.base.acl_resource import ACLResourceParam, ACLResource
 from centreon_sdk.objects.base.contact import ContactParam
 from centreon_sdk.objects.base.contact_group import ContactGroup, ContactGroupParam
 from centreon_sdk.objects.base.host import HostParam, Host
 from centreon_sdk.api_wrapper import ApiWrapper
 from centreon_sdk.exceptions.attributes_missing import AttributesMissingError
 from centreon_sdk.exceptions.item_exsting_error import CentreonItemAlreadyExistingError
+from centreon_sdk.objects.base.host_category import HostCategory
+from centreon_sdk.objects.base.host_group import HostGroup
+from centreon_sdk.objects.base.instance import Instance
+from centreon_sdk.objects.base.service_category import ServiceCategory
+from centreon_sdk.objects.base.service_group import ServiceGroup
 
 
 class Centreon:
@@ -42,6 +47,7 @@ class Centreon:
     :param verify: Optional: You can turn off verifying the SSL certificate, Default True
     :type verify: bool
     """
+
     def __init__(self, username, password, url, verify=True):
         self.api = ApiWrapper(username, password, url, verify)
 
@@ -65,6 +71,8 @@ class Centreon:
             self.__commit_acl_group(obj, overwrite)
         elif isinstance(obj, ACLMenu):
             self.__commit_acl_menu(obj, overwrite)
+        elif isinstance(obj, ACLResource):
+            self.__commit_acl_resource(obj, overwrite)
 
     def __commit_host(self, obj, overwrite):
         try:
@@ -237,4 +245,107 @@ class Centreon:
             self.api.acl_menu_grant(acl_menu_name, True, grant_ro, read_only=True)
         for grant_ro in obj.menu_revoke:
             self.api.acl_menu_revoke(acl_menu_name, True, grant_ro)
+
+    def __commit_acl_resource(self, obj, overwrite):
+        try:
+            for param in obj.required_params:
+                if not obj.has(param):
+                    raise AttributesMissingError("Required Attribute is missing: {}".format(param))
+            self.api.acl_resource_add(obj.get(ACLResourceParam.NAME), obj.get(ACLResourceParam.ALIAS))
+        except CentreonItemAlreadyExistingError as err:
+            if not overwrite:
+                print(err)
+                return
+            # Set required parameter
+            acl_resource_name = obj.get(ACLResourceParam.NAME)
+            if isinstance(acl_resource_name, list):
+                self.api.acl_resource_set_param(acl_resource_name[0], ACLResourceParam.NAME, acl_resource_name[1])
+                obj.set(ACLResourceParam.NAME, acl_resource_name[1])
+            obj.set(obj.get(ACLResourceParam.NAME), ACLResourceParam.ALIAS, obj.get(ACLResourceParam.ALIAS))
+
+        # Set other parameter
+        acl_resource_name = obj.get(ACLResourceParam.NAME)
+        if obj.has(ACLResourceParam.ACTIVATE):
+            self.api.acl_action_set_param(acl_resource_name, ACLResourceParam.ACTIVATE,
+                                          obj.get(ACLResourceParam.ACTIVATE))
+
+        # Set resource accesses
+        # Grant resources
+        grant_host_list = []
+        grant_host_group_list = []
+        grant_service_group_list = []
+        for grant_object in obj.grant_resources_list:
+            if isinstance(grant_object, Host):
+                grant_host_list.append(grant_object)
+            elif isinstance(grant_object, HostGroup):
+                grant_host_group_list.append(grant_object)
+            elif isinstance(grant_object, ServiceGroup):
+                grant_service_group_list.append(grant_object)
+            # Metaservice is missing in API Documentation
+        if len(grant_host_list) > 1:
+            self.api.acl_resource_grant_revoke(acl_resource_name, "grant_host", grant_host_list)
+        if len(grant_host_group_list) > 1:
+            self.api.acl_resource_grant_revoke(acl_resource_name, "grant_hostgroup", grant_host_group_list)
+        if len(grant_service_group_list) > 1:
+            self.api.acl_resource_grant_revoke(acl_resource_name, "grant_servicegroup", grant_service_group_list)
+        # Revoke resources
+        revoke_host_list = []
+        revoke_host_group_list = []
+        revoke_service_group_list = []
+        for revoke_object in obj.revoke_resources_list:
+            if isinstance(revoke_object, Host):
+                revoke_host_list.append(revoke_object)
+            elif isinstance(revoke_object, HostGroup):
+                revoke_host_group_list.append(revoke_object)
+            elif isinstance(revoke_object, ServiceGroup):
+                revoke_service_group_list.append(revoke_object)
+            # Metaservice is missing in API Documentation
+        if len(revoke_host_list) > 1:
+            self.api.acl_resource_grant_revoke(acl_resource_name, "revoke_host", revoke_host_list)
+        if len(revoke_host_group_list) > 1:
+            self.api.acl_resource_grant_revoke(acl_resource_name, "revoke_hostgroup", revoke_host_group_list)
+        if len(revoke_service_group_list) > 1:
+            self.api.acl_resource_grant_revoke(acl_resource_name, "revoke_servicegroup", revoke_service_group_list)
+        # Add / Remove exclusions
+        self.api.acl_resource_grant_revoke(acl_resource_name, "addhostexclusion", obj.add_filter_list)
+        self.api.acl_resource_grant_revoke(acl_resource_name, "delhostexclusion", obj.add_filter_list)
+        # Add filter
+        add_filter_instance_list = []
+        add_filter_host_category_list = []
+        add_filter_service_category_list = []
+        for add_filter_object in obj.add_filter_list:
+            if isinstance(add_filter_object, Instance):
+                add_filter_instance_list.append(add_filter_object)
+            elif isinstance(add_filter_object, HostCategory):
+                add_filter_host_category_list.append(add_filter_object)
+            elif isinstance(add_filter_object, ServiceCategory):
+                add_filter_service_category_list.append(add_filter_object)
+        if len(add_filter_instance_list) > 1:
+            self.api.acl_resource_grant_revoke(acl_resource_name, "addfilter_instance", add_filter_instance_list)
+        if len(add_filter_host_category_list) > 1:
+            self.api.acl_resource_grant_revoke(acl_resource_name, "addfilter_hostcategory",
+                                               add_filter_host_category_list)
+        if len(add_filter_service_category_list) > 1:
+            self.api.acl_resource_grant_revoke(acl_resource_name, "addfilter_servicecategory",
+                                               add_filter_service_category_list)
+        # Delete filter
+        del_filter_instance_list = []
+        del_filter_host_category_list = []
+        del_filter_service_category_list = []
+        for del_filter_object in obj.del_filter_list:
+            if isinstance(del_filter_object, Instance):
+                del_filter_instance_list.append(del_filter_object)
+            elif isinstance(del_filter_object, HostCategory):
+                del_filter_host_category_list.append(del_filter_object)
+            elif isinstance(del_filter_object, ServiceCategory):
+                del_filter_service_category_list.append(del_filter_object)
+        if len(del_filter_instance_list) > 1:
+            self.api.acl_resource_grant_revoke(acl_resource_name, "delfilter_instance", del_filter_instance_list)
+        if len(del_filter_host_category_list) > 1:
+            self.api.acl_resource_grant_revoke(acl_resource_name, "delfilter_hostcategory",
+                                               del_filter_host_category_list)
+        if len(del_filter_service_category_list) > 1:
+            self.api.acl_resource_grant_revoke(acl_resource_name, "delfilter_servicecategory",
+                                               del_filter_service_category_list)
+
 
