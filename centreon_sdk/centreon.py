@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from centreon_sdk import ACLGroupParam
 from centreon_sdk.objects.base.acl_action import ACLAction, ACLActionParam
 from centreon_sdk.objects.base.acl_group import ACLGroup
-from centreon_sdk.objects.base.acl_menu import ACLMenuParam
+from centreon_sdk.objects.base.acl_menu import ACLMenuParam, ACLMenu
 from centreon_sdk.objects.base.acl_resource import ACLResourceParam
 from centreon_sdk.objects.base.contact import ContactParam
 from centreon_sdk.objects.base.contact_group import ContactGroup, ContactGroupParam
@@ -63,6 +63,8 @@ class Centreon:
             self.__commit_acl_action(obj, overwrite)
         elif isinstance(obj, ACLGroup):
             self.__commit_acl_group(obj, overwrite)
+        elif isinstance(obj, ACLMenu):
+            self.__commit_acl_menu(obj, overwrite)
 
     def __commit_host(self, obj, overwrite):
         try:
@@ -203,3 +205,36 @@ class Centreon:
         # Unset params
         for param in obj.unset_params:
             self.api.acl_group_set_param(acl_group_name, param, "")
+
+    def __commit_acl_menu(self, obj, overwrite):
+        try:
+            for param in obj.required_params:
+                if not obj.has(param):
+                    raise AttributesMissingError("Required Attribute is missing: {}".format(param))
+            self.api.acl_menu_add(obj.get(ACLMenuParam.NAME), obj.get(ACLMenuParam.ALIAS))
+        except CentreonItemAlreadyExistingError as err:
+            if not overwrite:
+                print(err)
+                return
+            # Set required parameter
+            acl_menu_name = obj.get(ACLMenuParam.NAME)
+            if isinstance(acl_menu_name, list):
+                self.api.acl_menu_set_param(acl_menu_name[0], ACLMenuParam.NAME, acl_menu_name[1])
+                obj.set(ACLActionParam.NAME, acl_menu_name[1])
+            obj.set(obj.get(ACLMenuParam.NAME), ACLMenuParam.ALIAS, obj.get(ACLMenuParam.ALIAS))
+
+        # Set other parameter
+        acl_menu_name = obj.get(ACLMenuParam.NAME)
+        if obj.has(ACLMenuParam.ACTIVATE):
+            self.api.acl_menu_set_param(acl_menu_name, ACLMenuParam.ACTIVATE, obj.get(ACLMenuParam.ACTIVATE))
+        if obj.has(ACLMenuParam.COMMENT):
+            self.api.acl_menu_set_param(acl_menu_name, ACLMenuParam.COMMENT, obj.get(ACLMenuParam.COMMENT))
+
+        # Set menu accesses
+        for grant_rw in obj.menu_grant_rw:
+            self.api.acl_menu_grant(acl_menu_name, True, grant_rw)
+        for grant_ro in obj.menu_grant_ro:
+            self.api.acl_menu_grant(acl_menu_name, True, grant_ro, read_only=True)
+        for grant_ro in obj.menu_revoke:
+            self.api.acl_menu_revoke(acl_menu_name, True, grant_ro)
+
