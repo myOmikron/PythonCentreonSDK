@@ -1502,38 +1502,13 @@ class ApiWrapper:
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return response["result"]
 
-    def acl_resource_grant(self, acl_group_name, acl_grant_action, acl_resource_names, use_wildcard=False):
-        """This method is used to grant resources in an ACL resource rule
-
-        :param acl_group_name: Name of the ACL group
-        :type acl_group_name: str
-        :param acl_grant_action: Grant action to perform
-        :type acl_grant_action: :ref:`class_acl_resource_grant_action`
-        :param acl_resource_names: List of the resource names
-        :type acl_resource_names: list of :ref:`class_base`
-        :param use_wildcard: Optional: Set True, if the wildcard should be used. Not all actions support wildcards. \
-        See :ref:`class_acl_resource_grant_action` for further information. If the operation doesn't support a \
-        wildcard, but it is used anyway, the option is ignored and all resources in acl_resource_names are used. \
-        Default: False
-        :type use_wildcard: bool
-
-        :return: Returns True if the operation was successful
-        :rtype: bool
-        """
-        data_dict = {"action": acl_grant_action.value[0],
-                     "object": "aclresource",
-                     "values": ";".join([acl_group_name, "*" if use_wildcard and acl_grant_action.value[1] else
-                                        "|".join([x.NAME for x in acl_resource_names])])}
-        response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
-        return method_utils.check_if_empty_list(response)
-
-    def acl_resource_revoke(self, acl_group_name, acl_revoke_action, acl_resource_names, use_wildcard=False):
+    def acl_resource_grant_revoke(self, acl_group_name, acl_revoke_action, acl_resource_names, use_wildcard=False):
         """This method is used to revoke resources in an ACL resource rule
 
         :param acl_group_name: Name of the ACL group
         :type acl_group_name: str
         :param acl_revoke_action: Revoke action to perform
-        :type acl_revoke_action: :ref:`class_acl_resource_revoke_action`
+        :type acl_revoke_action: str
         :param acl_resource_names: List of the resource names
         :type acl_resource_names: list of :ref:`class_base`
         :param use_wildcard: Optional: Set True, if the wildcard should be used. Default: False
@@ -1542,7 +1517,7 @@ class ApiWrapper:
         :return: Returns True if the operation was successful
         :rtype: bool
         """
-        data_dict = {"action": acl_revoke_action.value,
+        data_dict = {"action": acl_revoke_action,
                      "object": "aclresource",
                      "values": ";".join([acl_group_name, "*" if use_wildcard else
                                          "|".join([x.NAME for x in acl_resource_names])])}
