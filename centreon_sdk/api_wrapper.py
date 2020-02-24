@@ -1510,7 +1510,7 @@ class ApiWrapper:
         :param acl_grant_action: Grant action to perform
         :type acl_grant_action: :ref:`class_acl_resource_grant_action`
         :param acl_resource_names: List of the resource names
-        :type acl_resource_names: list of :ref:`class_host`
+        :type acl_resource_names: list of :ref:`class_base`
         :param use_wildcard: Optional: Set True, if the wildcard should be used. Not all actions support wildcards. \
         See :ref:`class_acl_resource_grant_action` for further information. If the operation doesn't support a \
         wildcard, but it is used anyway, the option is ignored and all resources in acl_resource_names are used. \
@@ -1535,7 +1535,7 @@ class ApiWrapper:
         :param acl_revoke_action: Revoke action to perform
         :type acl_revoke_action: :ref:`class_acl_resource_revoke_action`
         :param acl_resource_names: List of the resource names
-        :type acl_resource_names: list of str
+        :type acl_resource_names: list of :ref:`class_base`
         :param use_wildcard: Optional: Set True, if the wildcard should be used. Default: False
         :type use_wildcard: bool
 
@@ -1544,7 +1544,8 @@ class ApiWrapper:
         """
         data_dict = {"action": acl_revoke_action.value,
                      "object": "aclresource",
-                     "values": ";".join([acl_group_name, "*" if use_wildcard else "|".join(acl_resource_names)])}
+                     "values": ";".join([acl_group_name, "*" if use_wildcard else
+                                         "|".join([x.NAME for x in acl_resource_names])])}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
         return method_utils.check_if_empty_list(response)
 
