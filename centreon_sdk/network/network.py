@@ -86,7 +86,7 @@ class Network:
         :type use_header: bool
 
         :return: json encoded string
-        :rtype: str
+        :rtype: dict
         """
         response = None
         header = self.config.vars["header"] if use_header else None
