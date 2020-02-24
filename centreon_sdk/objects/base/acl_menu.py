@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import enum
 
+from centreon_sdk.objects.base.base import Base
 
-class ACLMenu:
+
+class ACLMenu(Base):
     """This class represents a ACL menu rule
 
     :param id_unique: ID of the ACL menu rule
@@ -34,12 +36,32 @@ class ACLMenu:
     :param activate: Is the ACL menu rule enabled?
     :type activate: bool
     """
-    def __init__(self, id_unique, name, alias, comment, activate):
-        self.id_unique = id_unique
-        self.name = name
-        self.alias = alias
-        self.comment = comment
-        self.activate = activate
+    def __init__(self, **kwargs):
+        super(ACLMenu, self).__init__(ACLMenuParam, [ACLMenuParam.NAME, ACLMenuParam.ALIAS], kwargs)
+        self.menu_grant_rw = []
+        self.menu_grant_ro = []
+        self.menu_revoke = []
+
+    def grant_rw(self, menu_pages):
+        self.menu_grant_rw.append(menu_pages)
+        if menu_pages in self.menu_revoke:
+            self.menu_revoke.remove(menu_pages)
+        if menu_pages in self.menu_grant_ro:
+            self.menu_grant_ro.remove(menu_pages)
+
+    def grant_ro(self, menu_pages):
+        self.menu_grant_ro.append(menu_pages)
+        if menu_pages in self.menu_grant_rw:
+            self.menu_grant_rw.remove(menu_pages)
+        if menu_pages in self.menu_revoke:
+            self.menu_revoke.remove(menu_pages)
+
+    def grant_revoke(self, menu_pages):
+        self.menu_revoke.append(menu_pages)
+        if menu_pages in self.grant_ro:
+            self.menu_grant_ro.remove(menu_pages)
+        if menu_pages in self.menu_grant_rw:
+            self.menu_grant_rw.remove(menu_pages)
 
 
 class ACLMenuParam(enum.Enum):
