@@ -253,6 +253,10 @@ class Centreon:
         for grant_ro in obj.menu_revoke:
             self.api.acl_menu_revoke(acl_menu_name, True, grant_ro)
 
+        # Unset parameter
+        if ACLMenuParam.COMMENT in obj.unset_params:
+            self.api.acl_menu_set_param(acl_menu_name, ACLMenuParam.COMMENT, "")
+
     def __commit_acl_resource(self, obj, overwrite):
         try:
             for param in obj.required_params:
@@ -405,7 +409,7 @@ class Centreon:
                 param = getattr(CentBrokerCFGParam, attribute)
                 if param not in obj.required_params:
                     self.api.cent_broker_cfg_set_param(obj.get(CentBrokerCFGParam.NAME), param, obj.get(param))
-        
+
         # Unset parameter
         for param in obj.unset_params:
             self.api.cent_broker_cfg_set_param(cent_broker_name, param, "")
