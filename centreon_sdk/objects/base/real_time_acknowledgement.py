@@ -50,7 +50,7 @@ class RealTimeAcknowledgement(Base):
 
 class RealTimeAcknowledgementParam(enum.Enum):
     NAME = "name"
-    """Name of the host or service, in case of service in format \"host_name,service_description\" (str)"""
+    """Host or Service the downtime should be applied to (Union[Host,Service])"""
     DESCRIPTION = "description"
     """Description of the acknowledgement (str)"""
     STICKY = "sticky"
