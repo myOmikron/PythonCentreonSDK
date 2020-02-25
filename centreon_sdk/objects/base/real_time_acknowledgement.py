@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+import enum
 
 
 class RealTimeAcknowledgement:
@@ -39,14 +40,20 @@ class RealTimeAcknowledgement:
     :param persistent_comment: Acknowledgement will be maintained in the case of a restart of the scheduler
     :type persistent_comment: bool
     """
-    def __init__(self, id_unique, host_name, entry_time, author, comment_data, sticky,
-                 notify_contacts, persistent_comment, service_name=None):
-        self.id_unique = id_unique
-        self.host_name = host_name
-        self.entry_time = entry_time
-        self.author = author
-        self.comment_data = comment_data
-        self.sticky = sticky
-        self.notify_contacts = notify_contacts
-        self.persistent_comment = persistent_comment
-        self.service_name = service_name
+    def __init__(self, **kwargs):
+        super(RealTimeAcknowledgement, self).__init__(RealTimeAcknowledgementParam,
+                                                      [RealTimeAcknowledgementParam.NAME,
+                                                       RealTimeAcknowledgementParam.DESCRIPTION], kwargs)
+
+
+class RealTimeAcknowledgementParam(enum.Enum):
+    NAME = "name"
+    """Name of the host or service, in case of service in format \"host_name,service_description\" (str)"""
+    DESCRIPTION = "description"
+    """Description of the acknowledgement (str)"""
+    STICKY = "sticky"
+    """Acknowledgement maintained in case of change of status, must be 0 or 2. Default 2 (int)"""
+    NOTIFY = "notfiy"
+    """Notification send to the contacts linked to the object, must be 0 or 1. Default 0 (int)"""
+    PERSISTENT = "persistent"
+    """Maintain acknowledgement in case of a restart of the scheduler, must be 0 or 1. Default 1 (int)"""
