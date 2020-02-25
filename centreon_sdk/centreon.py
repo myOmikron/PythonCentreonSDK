@@ -23,7 +23,7 @@ from centreon_sdk.objects.base.acl_group import ACLGroup
 from centreon_sdk.objects.base.acl_menu import ACLMenuParam, ACLMenu
 from centreon_sdk.objects.base.acl_resource import ACLResourceParam, ACLResource
 from centreon_sdk.objects.base.contact import ContactParam
-from centreon_sdk.objects.base.contact_group import ContactGroup, ContactGroupParam
+from centreon_sdk.objects.base.contact_group import ContactGroupParam
 from centreon_sdk.objects.base.host import HostParam, Host
 from centreon_sdk.api_wrapper import ApiWrapper
 from centreon_sdk.exceptions.attributes_missing import AttributesMissingError
@@ -292,7 +292,7 @@ class Centreon:
         revoke_host_list = []
         revoke_host_group_list = []
         revoke_service_group_list = []
-        for revoke_object in obj.revoke_resources_list:
+        for revoke_object in obj.revoke_resource_list:
             if isinstance(revoke_object, Host):
                 revoke_host_list.append(revoke_object)
             elif isinstance(revoke_object, HostGroup):
