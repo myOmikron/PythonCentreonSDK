@@ -31,6 +31,8 @@ from centreon_sdk.exceptions.item_exsting_error import CentreonItemAlreadyExisti
 from centreon_sdk.objects.base.host_category import HostCategory
 from centreon_sdk.objects.base.host_group import HostGroup
 from centreon_sdk.objects.base.instance import Instance
+from centreon_sdk.objects.base.real_time_acknowledgement import RealTimeAcknowledgement, RealTimeAcknowledgementParam
+from centreon_sdk.objects.base.service import Service, ServiceParam
 from centreon_sdk.objects.base.service_category import ServiceCategory
 from centreon_sdk.objects.base.service_group import ServiceGroup
 
@@ -73,6 +75,8 @@ class Centreon:
             self.__commit_acl_menu(obj, overwrite)
         elif isinstance(obj, ACLResource):
             self.__commit_acl_resource(obj, overwrite)
+        elif isinstance(obj, RealTimeAcknowledgement):
+            self.__commit_real_time_acknowledgement(obj)
 
     def __commit_host(self, obj, overwrite):
         try:
@@ -348,4 +352,29 @@ class Centreon:
             self.api.acl_resource_grant_revoke(acl_resource_name, "delfilter_servicecategory",
                                                del_filter_service_category_list)
 
+    def __commit_real_time_acknowledgement(self, obj):
+        try:
+            for param in obj.required_params:
+                if not obj.has(param):
+                    raise AttributesMissingError("Required Attribute is missing: {}".format(param))
+            if isinstance(obj.get(RealTimeAcknowledgementParam.NAME), Host):
+                self.api.real_time_acknowledgement_add_host(obj.get(RealTimeAcknowledgementParam.NAME).get(HostParam.NAME),
+                                                            obj.get(RealTimeAcknowledgementParam.DESCRIPTION),
+                                                            True if not obj.has(RealTimeAcknowledgementParam.STICKY)
+                                                            else obj.get(RealTimeAcknowledgementParam.STICKY),
+                                                            False if not obj.has(RealTimeAcknowledgementParam.NOTIFY)
+                                                            else obj.get(RealTimeAcknowledgementParam.NOTIFY),
+                                                            True if not obj.has(RealTimeAcknowledgementParam.PERSISTENT)
+                                                            else obj.get(RealTimeAcknowledgementParam.PERSISTENT))
+            elif isinstance(obj.get(RealTimeAcknowledgementParam.NAME), Service):
+                self.api.real_time_acknowledgement_add_host(obj.get(RealTimeAcknowledgementParam.NAME).get(ServiceParam.NAME),
+                                                            obj.get(RealTimeAcknowledgementParam.DESCRIPTION),
+                                                            True if not obj.has(RealTimeAcknowledgementParam.STICKY)
+                                                            else obj.get(RealTimeAcknowledgementParam.STICKY),
+                                                            False if not obj.has(RealTimeAcknowledgementParam.NOTIFY)
+                                                            else obj.get(RealTimeAcknowledgementParam.NOTIFY),
+                                                            True if not obj.has(RealTimeAcknowledgementParam.PERSISTENT)
+                                                            else obj.get(RealTimeAcknowledgementParam.PERSISTENT))
+        except CentreonItemAlreadyExistingError as err:
+            print(err)
 
