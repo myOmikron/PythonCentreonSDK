@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import enum
 
+from centreon_sdk.objects.base.base import Base
 
-class RealTimeAcknowledgement:
+
+class RealTimeAcknowledgement(Base):
     """This class represents a realtime acknowledgement
 
     :param id_unique: ID of the acknowledgement
