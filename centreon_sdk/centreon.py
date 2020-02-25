@@ -22,6 +22,7 @@ from centreon_sdk.objects.base.acl_action import ACLAction, ACLActionParam
 from centreon_sdk.objects.base.acl_group import ACLGroup
 from centreon_sdk.objects.base.acl_menu import ACLMenuParam, ACLMenu
 from centreon_sdk.objects.base.acl_resource import ACLResourceParam, ACLResource
+from centreon_sdk.objects.base.cent_broker_cfg import CentBrokerCFG, CentBrokerCFGParam
 from centreon_sdk.objects.base.contact import ContactParam
 from centreon_sdk.objects.base.contact_group import ContactGroupParam
 from centreon_sdk.objects.base.host import HostParam, Host
@@ -77,6 +78,8 @@ class Centreon:
             self.__commit_acl_resource(obj, overwrite)
         elif isinstance(obj, RealTimeAcknowledgement):
             self.__commit_real_time_acknowledgement(obj)
+        elif isinstance(obj, CentBrokerCFG):
+            self.__commit_cent_broker_cfg(obj, overwrite)
 
     def __commit_host(self, obj, overwrite):
         try:
@@ -378,3 +381,31 @@ class Centreon:
         except CentreonItemAlreadyExistingError as err:
             print(err)
 
+    def __commit_cent_broker_cfg(self, obj, overwrite):
+        try:
+            for param in obj.required_params:
+                if not obj.has(param):
+                    raise AttributesMissingError("Required Attribute is missing: {}".format(param))
+            self.api.cent_broker_cfg_add(obj.get(CentBrokerCFGParam.NAME), obj.get(CentBrokerCFGParam.INSTANCE))
+        except CentreonItemAlreadyExistingError as err:
+            if not overwrite:
+                print(err)
+                return
+            # Set required parameter
+            cent_broker_name = obj.get(CentBrokerCFGParam.NAME)
+            if isinstance(cent_broker_name, list):
+                self.api.cent_broker_cfg_set_param(cent_broker_name[0], CentBrokerCFGParam.NAME, cent_broker_name[1])
+                obj.set(CentBrokerCFGParam.NAME, cent_broker_name[1])
+            obj.set(obj.get(CentBrokerCFGParam.NAME), CentBrokerCFGParam.ALIAS, obj.get(CentBrokerCFGParam.ALIAS))
+
+        # Set other parameter
+        cent_broker_name = obj.get(CentBrokerCFGParam.NAME)
+        for attribute in obj.__dict__:
+            if attribute is not "required_params" and attribute is not "param_class" and attribute is not "unset_params":
+                param = getattr(CentBrokerCFGParam, attribute)
+                if param not in obj.required_params:
+                    self.api.cent_broker_cfg_set_param(obj.get(CentBrokerCFGParam.NAME), param, obj.get(param))
+        
+        # Unset parameter
+        for param in obj.unset_params:
+            self.api.cent_broker_cfg_set_param(cent_broker_name, param, "")
