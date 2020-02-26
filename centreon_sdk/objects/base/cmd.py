@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import enum
 
+from centreon_sdk.objects.base.base import Base
 
-class CMD:
+
+class CMD(Base):
     """This class represents a command
 
     :param id_unique: ID of the command
@@ -32,11 +34,8 @@ class CMD:
     :param line: Command line arguments for the command
     :type line: str
     """
-    def __init__(self, id_unique, name, cmd_type, line):
-        self.id_unique = id_unique
-        self.name = name
-        self.cmd_type = cmd_type
-        self.line = line
+    def __init__(self, **kwargs):
+        super(CMD, self).__init__(CMDParam, [CMDParam.NAME, CMDParam.TYPE, CMDParam.LINE], kwargs)
 
 
 class CMDType(enum.Enum):
