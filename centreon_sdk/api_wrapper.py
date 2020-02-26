@@ -1962,9 +1962,9 @@ class ApiWrapper:
         :param cmd_name: Name of the command
         :type cmd_name: str
         :param param_name: Name of the parameter
-        :type param_value: :ref:`class_cmd_param`
+        :type param_name: :ref:`class_cmd_param`
         :param param_value: Value of the parameter
-        :type param_name: str
+        :type param_value: str
 
         :return: Returns True if the operation was successful
         :rtype: bool
