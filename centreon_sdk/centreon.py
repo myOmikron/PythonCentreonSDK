@@ -23,6 +23,7 @@ from centreon_sdk.objects.base.acl_group import ACLGroup
 from centreon_sdk.objects.base.acl_menu import ACLMenuParam, ACLMenu
 from centreon_sdk.objects.base.acl_resource import ACLResourceParam, ACLResource
 from centreon_sdk.objects.base.cent_broker_cfg import CentBrokerCFG, CentBrokerCFGParam
+from centreon_sdk.objects.base.cmd import CMD, CMDParam
 from centreon_sdk.objects.base.contact import ContactParam
 from centreon_sdk.objects.base.contact_group import ContactGroupParam
 from centreon_sdk.objects.base.host import HostParam, Host
@@ -80,6 +81,8 @@ class Centreon:
             self.__commit_real_time_acknowledgement(obj)
         elif isinstance(obj, CentBrokerCFG):
             self.__commit_cent_broker_cfg(obj, overwrite)
+        elif isinstance(obj, CMD):
+            self.__commit_cmd(obj, overwrite)
 
     def __commit_host(self, obj, overwrite):
         try:
@@ -413,3 +416,32 @@ class Centreon:
         # Unset parameter
         for param in obj.unset_params:
             self.api.cent_broker_cfg_set_param(cent_broker_name, param, "")
+
+    def __commit_cmd(self, obj, overwrite):
+        try:
+            for param in obj.required_params:
+                if not obj.has(param):
+                    raise AttributesMissingError("Required Attribute is missing: {}".format(param))
+            self.api.cmd_add(obj.get(CMDParam.NAME), obj.get(CMDParam.TYPE), obj.get(CMDParam.LINE))
+        except CentreonItemAlreadyExistingError as err:
+            if not overwrite:
+                print(err)
+                return
+            # Set required parameter
+            cmd_name = obj.get(CMDParam.NAME)
+            if isinstance(cmd_name, list):
+                self.api.cmd_set_param(cmd_name[0], CMDParam.NAME, cmd_name[1])
+                obj.set(CMDParam.NAME, cmd_name[1])
+            for param in obj.required_params:
+                if param is not CMDParam.NAME:
+                    obj.set(obj.get(CMDParam.NAME), param, obj.get(param))
+        # Set other parameter
+        cmd_name = obj.get(CMDParam.NAME)
+        for attribute in obj.__dict__:
+            if attribute is not "required_params" and attribute is not "param_class" and attribute is not "unset_params":
+                param = getattr(CMDParam, attribute)
+                if param not in obj.required_params:
+                    self.api.cmd_set_param(obj.get(CMDParam.NAME), param, obj.get(param))
+        # Unset parameter
+        for param in obj.unset_params:
+            self.api.cmd_set_param(cmd_name, param, obj.get(param))
