@@ -26,6 +26,7 @@ from centreon_sdk.objects.base.cent_broker_cfg import CentBrokerCFG, CentBrokerC
 from centreon_sdk.objects.base.cmd import CMD, CMDParam
 from centreon_sdk.objects.base.contact import ContactParam, Contact
 from centreon_sdk.objects.base.contact_group import ContactGroupParam
+from centreon_sdk.objects.base.contact_template import ContactTemplate, ContactTemplateParam
 from centreon_sdk.objects.base.host import HostParam, Host
 from centreon_sdk.api_wrapper import ApiWrapper
 from centreon_sdk.exceptions.attributes_missing import AttributesMissingError
@@ -85,6 +86,8 @@ class Centreon:
             self.__commit_cmd(obj, overwrite)
         elif isinstance(obj, Contact):
             self.__commit_contact(obj, overwrite)
+        elif isinstance(obj, ContactTemplate):
+            self.__commit_contact_template(obj, overwrite)
 
     def __commit_host(self, obj, overwrite):
         try:
@@ -472,21 +475,64 @@ class Centreon:
                 if param is not ContactParam.NAME:
                     self.api.contact_set_param(obj.get(ContactParam.NAME), param, obj.get(param))
         # Set other parameter
-        cmd_name = obj.get(CMDParam.ALIAS)
+        contact_name = obj.get(ContactParam.ALIAS)
         for attribute in obj.__dict__:
             if attribute is not "required_params" and attribute is not "param_class" and attribute is not "unset_params":
-                param = getattr(CMDParam, attribute)
+                param = getattr(ContactParam, attribute)
                 if param not in obj.required_params:
                     if param is ContactParam.ENABLED:
                         if obj.get(param):
-                            self.api.contact_enable(cmd_name)
+                            self.api.contact_enable(contact_name)
                         else:
-                            self.api.contact_disable(cmd_name)
+                            self.api.contact_disable(contact_name)
                     else:
-                        self.api.contact_set_param(cmd_name, param, obj.get(param))
+                        self.api.contact_set_param(contact_name, param, obj.get(param))
         # Unset parameter
         for param in obj.unset_params:
             if param is ContactParam.ENABLED:
-                self.api.contact_enable(cmd_name)
+                self.api.contact_enable(contact_name)
             else:
                 self.api.contact_set_param(obj.get(ContactParam.ALIAS), param, obj.get(param))
+
+    def __commit_contact_template(self, obj, overwrite):
+        try:
+            for param in obj.required_params:
+                if not obj.has(param):
+                    raise AttributesMissingError("Required Attribute is missing: {}".format(param))
+            self.api.contact_template_add(obj.get(ContactTemplateParam.NAME), obj.get(ContactTemplateParam.ALIAS),
+                                          obj.get(ContactTemplateParam.EMAIL), obj.get(ContactTemplateParam.PASSWORD),
+                                          obj.get(ContactTemplateParam.ADMIN), obj.get(ContactTemplateParam.GUI_ACCESS),
+                                          obj.get(ContactTemplateParam.LANGUAGE), obj.get(ContactTemplateParam.AUTHTYPE))
+        except CentreonItemAlreadyExistingError as err:
+            if not overwrite:
+                print(err)
+                return
+            # Set required Parameters
+            contact_template_name = obj.get(ContactTemplateParam.ALIAS)
+            if isinstance(contact_template_name, list):
+                self.api.contact_template_set_param(contact_template_name[0], ContactTemplateParam.NAME,
+                                                    contact_template_name[1])
+                obj.set(ContactTemplateParam.NAME, contact_template_name[1])
+            for param in obj.required_params:
+                if param is not ContactTemplateParam.NAME:
+                    self.api.contact_template_set_param(obj.get(ContactTemplateParam.NAME), param, obj.get(param))
+        # Set other parameter
+        contact_template_name = obj.get(ContactTemplateParam.ALIAS)
+        for attribute in obj.__dict__:
+            if attribute is not "required_params" and attribute is not "param_class" and attribute is not "unset_params":
+                param = getattr(ContactTemplateParam, attribute)
+                if param not in obj.required_params:
+                    if param is ContactTemplateParam.ENABLED:
+                        if obj.get(param):
+                            self.api.contact_template_enable(contact_template_name)
+                        else:
+                            self.api.contact_template_disable(contact_template_name)
+                    else:
+                        self.api.contact_template_set_param(contact_template_name, param, obj.get(param))
+        # Unset parameter
+        for param in obj.unset_params:
+            if param is ContactTemplateParam.ENABLED:
+                self.api.contact_enable(contact_template_name)
+            else:
+                self.api.contact_template_set_param(obj.get(ContactTemplateParam.ALIAS), param, obj.get(param))
+
