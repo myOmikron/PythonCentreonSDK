@@ -24,7 +24,7 @@ from centreon_sdk.objects.base.acl_menu import ACLMenuParam, ACLMenu
 from centreon_sdk.objects.base.acl_resource import ACLResourceParam, ACLResource
 from centreon_sdk.objects.base.cent_broker_cfg import CentBrokerCFG, CentBrokerCFGParam
 from centreon_sdk.objects.base.cmd import CMD, CMDParam
-from centreon_sdk.objects.base.contact import ContactParam
+from centreon_sdk.objects.base.contact import ContactParam, Contact
 from centreon_sdk.objects.base.contact_group import ContactGroupParam
 from centreon_sdk.objects.base.host import HostParam, Host
 from centreon_sdk.api_wrapper import ApiWrapper
@@ -83,6 +83,8 @@ class Centreon:
             self.__commit_cent_broker_cfg(obj, overwrite)
         elif isinstance(obj, CMD):
             self.__commit_cmd(obj, overwrite)
+        elif isinstance(obj, Contact):
+            self.__commit_contact(obj, overwrite)
 
     def __commit_host(self, obj, overwrite):
         try:
@@ -447,3 +449,37 @@ class Centreon:
         # Unset parameter
         for param in obj.unset_params:
             self.api.cmd_set_param(cmd_name, param, obj.get(param))
+
+    def __commit_contact(self, obj, overwrite):
+        try:
+            for param in obj.required_params:
+                if not obj.has(param):
+                    raise AttributesMissingError("Required Attribute is missing: {}".format(param))
+            self.api.contact_add(obj.get(ContactParam.NAME), obj.get(ContactParam.ALIAS), obj.get(ContactParam.EMAIL),
+                                 obj.get(ContactParam.PASSWORD), obj.get(ContactParam.ADMIN),
+                                 obj.get(ContactParam.GUI_ACCESS), obj.get(ContactParam.LANGUAGE),
+                                 obj.get(ContactParam.AUTHTYPE))
+        except CentreonItemAlreadyExistingError as err:
+            if not overwrite:
+                print(err)
+                return
+            # Set required Parameters
+            contact_name = obj.get(ContactParam.NAME)
+            if isinstance(contact_name, list):
+                self.api.contact_set_param(contact_name[0], ContactParam.NAME, contact_name[1])
+                obj.set(ContactParam.NAME, contact_name[1])
+            for param in obj.required_params:
+                if param is not ContactParam.NAME:
+                    self.api.contact_set_param(obj.get(ContactParam.NAME), param, obj.get(param))
+        # Set other parameter
+        cmd_name = obj.get(CMDParam.NAME)
+        for attribute in obj.__dict__:
+            if attribute is not "required_params" and attribute is not "param_class" and attribute is not "unset_params":
+                param = getattr(CMDParam, attribute)
+                if param not in obj.required_params:
+                    self.api.contact_set_param(obj.get(CMDParam.NAME), param, obj.get(param))
+        # Unset parameter
+        for param in obj.unset_params:
+            self.api.contact_set_param(obj.get(ContactParam.ALIAS), param, obj.get(param))
+
+
