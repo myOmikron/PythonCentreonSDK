@@ -82,3 +82,4 @@ class ContactParam(enum.Enum):
     AUTOLOGIN_KEY = "autologin_key"
     TEMPLATE = "template"
     TIMEZONE = "timezone"
+    ENABLED = "enabled"

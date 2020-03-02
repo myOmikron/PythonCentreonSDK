@@ -464,7 +464,7 @@ class Centreon:
                 print(err)
                 return
             # Set required Parameters
-            contact_name = obj.get(ContactParam.NAME)
+            contact_name = obj.get(ContactParam.ALIAS)
             if isinstance(contact_name, list):
                 self.api.contact_set_param(contact_name[0], ContactParam.NAME, contact_name[1])
                 obj.set(ContactParam.NAME, contact_name[1])
@@ -472,14 +472,21 @@ class Centreon:
                 if param is not ContactParam.NAME:
                     self.api.contact_set_param(obj.get(ContactParam.NAME), param, obj.get(param))
         # Set other parameter
-        cmd_name = obj.get(CMDParam.NAME)
+        cmd_name = obj.get(CMDParam.ALIAS)
         for attribute in obj.__dict__:
             if attribute is not "required_params" and attribute is not "param_class" and attribute is not "unset_params":
                 param = getattr(CMDParam, attribute)
                 if param not in obj.required_params:
-                    self.api.contact_set_param(obj.get(CMDParam.NAME), param, obj.get(param))
+                    if param is ContactParam.ENABLED:
+                        if obj.get(param):
+                            self.api.contact_enable(cmd_name)
+                        else:
+                            self.api.contact_disable(cmd_name)
+                    else:
+                        self.api.contact_set_param(cmd_name, param, obj.get(param))
         # Unset parameter
         for param in obj.unset_params:
-            self.api.contact_set_param(obj.get(ContactParam.ALIAS), param, obj.get(param))
-
-
+            if param is ContactParam.ENABLED:
+                self.api.contact_enable(cmd_name)
+            else:
+                self.api.contact_set_param(obj.get(ContactParam.ALIAS), param, obj.get(param))
