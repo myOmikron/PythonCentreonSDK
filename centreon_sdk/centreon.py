@@ -205,7 +205,7 @@ class Centreon:
             if isinstance(acl_group_name, list):
                 self.api.acl_group_set_param(acl_group_name[0], ACLGroupParam.NAME, acl_group_name[1])
                 obj.set(ACLActionParam.NAME, acl_group_name[1])
-            obj.set(obj.get(ACLGroupParam.NAME), ACLGroupParam.ALIAS, obj.get(ACLGroupParam.ALIAS))
+            self.api.acl_group_set_param(obj.get(ACLGroupParam.NAME), ACLGroupParam.ALIAS, obj.get(ACLGroupParam.ALIAS))
 
         # Set other parameter
         acl_group_name = obj.get(ACLGroupParam.NAME)
@@ -239,7 +239,7 @@ class Centreon:
             if isinstance(acl_menu_name, list):
                 self.api.acl_menu_set_param(acl_menu_name[0], ACLMenuParam.NAME, acl_menu_name[1])
                 obj.set(ACLActionParam.NAME, acl_menu_name[1])
-            obj.set(obj.get(ACLMenuParam.NAME), ACLMenuParam.ALIAS, obj.get(ACLMenuParam.ALIAS))
+            self.api.acl_menu_set_param(obj.get(ACLMenuParam.NAME), ACLMenuParam.ALIAS, obj.get(ACLMenuParam.ALIAS))
 
         # Set other parameter
         acl_menu_name = obj.get(ACLMenuParam.NAME)
@@ -275,7 +275,8 @@ class Centreon:
             if isinstance(acl_resource_name, list):
                 self.api.acl_resource_set_param(acl_resource_name[0], ACLResourceParam.NAME, acl_resource_name[1])
                 obj.set(ACLResourceParam.NAME, acl_resource_name[1])
-            obj.set(obj.get(ACLResourceParam.NAME), ACLResourceParam.ALIAS, obj.get(ACLResourceParam.ALIAS))
+            self.api.acl_resource_set_param(obj.get(ACLResourceParam.NAME), ACLResourceParam.ALIAS,
+                                            obj.get(ACLResourceParam.ALIAS))
 
         # Set other parameter
         acl_resource_name = obj.get(ACLResourceParam.NAME)
@@ -403,7 +404,8 @@ class Centreon:
             if isinstance(cent_broker_name, list):
                 self.api.cent_broker_cfg_set_param(cent_broker_name[0], CentBrokerCFGParam.NAME, cent_broker_name[1])
                 obj.set(CentBrokerCFGParam.NAME, cent_broker_name[1])
-            obj.set(obj.get(CentBrokerCFGParam.NAME), CentBrokerCFGParam.ALIAS, obj.get(CentBrokerCFGParam.ALIAS))
+            self.api.cent_broker_cfg_set_param(obj.get(CentBrokerCFGParam.NAME), CentBrokerCFGParam.ALIAS,
+                                               obj.get(CentBrokerCFGParam.ALIAS))
 
         # Set other parameter
         cent_broker_name = obj.get(CentBrokerCFGParam.NAME)
@@ -434,7 +436,7 @@ class Centreon:
                 obj.set(CMDParam.NAME, cmd_name[1])
             for param in obj.required_params:
                 if param is not CMDParam.NAME:
-                    obj.set(obj.get(CMDParam.NAME), param, obj.get(param))
+                    self.api.cmd_set_param(obj.get(CMDParam.NAME), param, obj.get(param))
         # Set other parameter
         cmd_name = obj.get(CMDParam.NAME)
         for attribute in obj.__dict__:
