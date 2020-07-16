@@ -46,9 +46,14 @@ class ResourceCFG:
 
 
 class ResourceCFGParam(enum.Enum):
-    """This class represents the parameters, available for resource cfgs"""
+    """This class represents the parameters, available for resource configurations"""
     NAME = "name"
+    """Name of the macro, do not use $ symbols (str)"""
     VALUE = "value"
+    """Value of the macro (str)"""
     ACTIVATE = "activate"
+    """Is the configuration enabled? (bool)"""
     COMMENT = "comment"
+    """Comment linked to the configuration (str)"""
     INSTANCE = "instance"
+    """Instances that are tied to $USERn$ macros (list of str)"""

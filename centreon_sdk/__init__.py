@@ -18,8 +18,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-from centreon_sdk.builder.field_builder import FieldBuilder
-from centreon_sdk.builder.host_builder import HostBuilder
 from centreon_sdk.centreon import Centreon
 from centreon_sdk.network.network import HTTPVerb
 from centreon_sdk.objects.base.acl_group import ACLGroupParam

@@ -39,6 +39,10 @@ class ServiceGroup:
 class ServiceGroupParam(enum.Enum):
     """This class represents a parameter from a service group"""
     ACTIVATE = "activate"
+    """Specifies if service group is enabled (bool)"""
     NAME = "name"
+    """Name of the service group (str)"""
     ALIAS = "alias"
+    """Alias of the service group (str)"""
     COMMENT = "COMMENT"
+    """Comment of the service group (str)"""
