@@ -2334,7 +2334,7 @@ class Centreon:
         :return: Returns the list of linked contacts
         :rtype: list of dict
         """
-        data_dict = {"action": "disable",
+        data_dict = {"action": "getcontact",
                      "object": "cg",
                      "values": contact_group_name}
         response = self.network.make_request(HTTPVerb.POST, params=self.config.vars["params"], data=data_dict)
