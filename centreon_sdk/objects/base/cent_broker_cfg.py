@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import enum
 
+from centreon_sdk.objects.base.base import Base
 
-class CentBrokerCFG:
+
+class CentBrokerCFG(Base):
     """This class represents a centreon broker configuration
 
     :param id_unique: ID of the centreon broker configuration
@@ -30,10 +32,9 @@ class CentBrokerCFG:
     :param instance: Instance that is linked to the centreon broker configuration
     :type instance: str
     """
-    def __init__(self, id_unique, name, instance):
-        self.id_unique = id_unique
-        self.name = name
-        self.instance = instance
+    def __init__(self, **kwargs):
+        super(CentBrokerCFG, self).__init__(CentBrokerCFGParam, [CentBrokerCFGParam.NAME, CentBrokerCFGParam.INSTANCE],
+                                            kwargs)
 
 
 class CentBrokerCFGParam(enum.Enum):

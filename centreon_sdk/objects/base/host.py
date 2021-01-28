@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import enum
 
+from centreon_sdk.objects.base.base import Base
 
-class Host:
+
+class Host(Base):
     """This class represents a host object
 
     :param name: Name of the host
@@ -34,13 +36,9 @@ class Host:
     :param id_unique: Id of the host
     :type id_unique: int
     """
-
-    def __init__(self, name, alias, address, activate, id_unique):
-        self.name = name
-        self.alias = alias
-        self.address = address
-        self.activate = activate
-        self.id_unique = id_unique
+    def __init__(self, **kwargs):
+        super(Host, self).__init__(HostParam, [HostParam.NAME, HostParam.ALIAS, HostParam.ADDRESS, HostParam.INSTANCE],
+                                   kwargs)
 
 
 class HostParam(enum.Enum):
@@ -75,6 +73,10 @@ class HostParam(enum.Enum):
     """Enables or disables contact additive inheritance. (bool)"""
     CONTACT_GROUP_ADDITIVE_INHERITANCE = "cg_additive_inheritance"
     """Enables or disables contact group additive inheritance. (bool)"""
+    CONTACTS = "contacts"
+    """Contacts that are linked to a host"""
+    CONTACT_GROUPS = "contact_groups"
+    """Contact groups that are linked to a host"""
     EVENT_HANDLER = "event_handler"
     """Event handler command. (str)"""
     EVENT_HANDLER_ARGUMENTS = "event_handler_arguments"
@@ -87,10 +89,16 @@ class HostParam(enum.Enum):
     """Whether or not flap detection should be enabled. (:ref:`class_general_three_way_option`)"""
     FLAP_DETECTION_OPTIONS = "flap_detection_options"
     # TODO: Check what this option does!!!!
+    HOST_GROUPS = "host_groups"
+    """Host groups that are linked with the host"""
     HOST_NOTIFICATION_OPTIONS = "host_notification_options"
     """Notification option for a host. (:ref:`class_host_notification_option`)"""
     ICON_IMAGE = "icon_image"
     """Icon of the host. (str)"""
+    INSTANCE = "instance"
+    """Instance the Host should be checked from"""
+    MACRO = "macro"
+    """Macro for a specific host (str)"""
     MAX_CHECK_ATTEMPTS = "max_check_attempts"
     """Maximum check attempts. (int)"""
     NAME = "name"
@@ -107,6 +115,8 @@ class HostParam(enum.Enum):
     """Notification period for the host. (str)"""
     OBSESS_OVER_HOST = "obsess_over_host"
     """Determines whether or not the obsess over host is enabled. (:ref:`class_general_three_way_option`)"""
+    PARENT = "parent"
+    """Parent of the host (Host, str)"""
     PASSIVE_CHECKS_ENABLED = "passive_checks_enabled"
     """Are passive checks enabled? (:ref:`class_general_three_way_option`)"""
     PROCESS_PERF_DATA = "process_perf_data"
@@ -127,6 +137,8 @@ class HostParam(enum.Enum):
     """Determines which host states stalking should be enabled. (list of :ref:`class_host_stalking_option`)"""
     STATUSMAP_IMAGE = "statusmap_image"
     """Statusmap image, used by statusmap (str)"""
+    TEMPLATE = "template"
+    """Host templates that are linked with the host"""
     TIMEZONE = "timezone"
     """Timezone in which the host is located. Example: "Europe/Berlin" (str)"""
     URL = "notes_url"

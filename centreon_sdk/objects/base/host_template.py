@@ -17,37 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
-import enum
-
+from centreon_sdk.objects.base.host import HostParam
 from centreon_sdk.objects.base.base import Base
 
 
-class Macro(Base):
-    """This class represents a macro
-
-    :param macro_name: Name of the macro
-    :type macro_name: str
-    :param macro_value: Value of the macro
-    :type macro_name: str
-    :param is_password: Is the macro an password?
-    :type is_password: bool
-    :param description: Description of the macro
-    :type description: str
-    :param source: Source the macro came from
-    :type source: str
-    """
+class HostTemplate(Base):
     def __init__(self, **kwargs):
-        super(Macro, self).__init__(MacroParam, [MacroParam.NAME, MacroParam.VALUE], kwargs)
-
-
-class MacroParam(enum.Enum):
-    NAME = "name"
-    """Name of the macro (str)"""
-    VALUE = "value"
-    """Value of the macro"""
-    IS_PASSWORD = "is_password"
-    """Is the macro value a password? (bool)"""
-    DESCRIPTION = "description"
-    """Description of the macro (str)"""
-    SOURCE = "source"
-    """Source the macro is initialized (str)"""
+        super().__init__(HostParam, [HostParam.NAME, HostParam.ALIAS], kwargs)

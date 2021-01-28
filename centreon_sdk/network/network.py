@@ -21,6 +21,7 @@ import enum
 import json
 import requests
 
+from centreon_sdk.exceptions.item_exsting_error import CentreonItemAlreadyExistingError
 from centreon_sdk.util import method_utils
 
 
@@ -85,7 +86,7 @@ class Network:
         :type use_header: bool
 
         :return: json encoded string
-        :rtype: str
+        :rtype: dict
         """
         response = None
         header = self.config.vars["header"] if use_header else None
@@ -96,7 +97,9 @@ class Network:
         elif verb == HTTPVerb.POST:
             response = self.session.post(self.config.vars["URL"], params=params, data=data, headers=header)
 
-        if not response.status_code == 200:
+        if response.status_code == 409:
+            raise CentreonItemAlreadyExistingError(response.text)
+        elif response.status_code is not 200:
             print(response.status_code, response.text)
             return
         json_decoded = json.loads(response.text)

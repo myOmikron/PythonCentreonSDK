@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import enum
 
+from centreon_sdk.objects.base.base import Base
 
-class ContactTemplate:
+
+class ContactTemplate(Base):
     """This class represents a contact template
 
     :param name: Name of the contact
@@ -40,15 +42,15 @@ class ContactTemplate:
     :param activate: Is the template activated?
     :type activate: bool
     """
-    def __init__(self, name, alias, email, pager, admin, id_unique, gui_access, activate):
-        self.name = name
-        self.alias = alias
-        self.email = email
-        self.pager = pager
-        self.admin = admin
-        self.id_unique = id_unique
-        self.gui_access = gui_access
-        self.activate = activate
+    def __init__(self, **kwargs):
+        super(ContactTemplate, self).__init__(ContactTemplateParam, [ContactTemplateParam.NAME,
+                                                                     ContactTemplateParam.ALIAS,
+                                                                     ContactTemplateParam.EMAIL,
+                                                                     ContactTemplateParam.PASSWORD,
+                                                                     ContactTemplateParam.ADMIN,
+                                                                     ContactTemplateParam.GUI_ACCESS,
+                                                                     ContactTemplateParam.LANGUAGE,
+                                                                     ContactTemplateParam.AUTHTYPE], kwargs)
 
 
 class ContactTemplateAuthType(enum.Enum):
@@ -82,6 +84,7 @@ class ContactTemplateParam(enum.Enum):
     ADDRESS6 = "address6"
     LDAP_DN = "ldap_dn"
     ENABLE_NOTIFICATIONS = "enable_notifications"
+    ENABLED = "enabled"
     AUTOLOGIN_KEY = "autologin_key"
     TEMPLATE = "template"
     TIMEZONE = "timezone"

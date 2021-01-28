@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import enum
 
+from centreon_sdk.objects.base.base import Base
 
-class ACLResource:
+
+class ACLResource(Base):
     """This class represents an ACL resource
 
     :param id_unique: ID of the ACL resource
@@ -34,12 +36,44 @@ class ACLResource:
     :param activate: Is the ACL resource enabled?
     :type activate: bool
     """
-    def __init__(self, id_unique, name, alias, comment, activate):
-        self.id_unique = id_unique
-        self.name = name
-        self.alias = alias
-        self.comment = comment
-        self.activate = activate
+    def __init__(self, **kwargs):
+        super(ACLResource, self).__init__(ACLResourceParam, [ACLResourceParam.NAME, ACLResourceParam.ALIAS], kwargs)
+        self.grant_resources_list = []
+        self.revoke_resource_list = []
+        self.add_host_exclusion_list = []
+        self.del_host_exclusion_list = []
+        self.add_filter_list = []
+        self.del_filter_list = []
+
+    def grant_resource(self, obj):
+        self.grant_resources_list.append(obj)
+        if obj in self.revoke_resource_list:
+            self.revoke_resource_list.remove(obj)
+
+    def revoke_resource(self, obj):
+        self.revoke_resource_list.append(obj)
+        if obj in self.grant_resources_list:
+            self.grant_resources_list.remove(obj)
+
+    def add_host_exclusion(self, obj):
+        self.add_host_exclusion_list.append(obj)
+        if obj in self.del_host_exclusion_list:
+            self.del_host_exclusion_list.remove(obj)
+
+    def del_host_exclusion(self, obj):
+        self.del_host_exclusion_list.append(obj)
+        if obj in self.add_host_exclusion_list:
+            self.add_host_exclusion_list.remove(obj)
+
+    def add_filter(self, obj):
+        self.add_filter_list.append(obj)
+        if obj in self.del_filter_list:
+            self.del_filter_list.remove(obj)
+
+    def del_filter(self, obj):
+        self.del_filter_list.append(obj)
+        if obj in self.add_filter_list:
+            self.add_filter_list.remove(obj)
 
 
 class ACLResourceParam(enum.Enum):
@@ -50,29 +84,3 @@ class ACLResourceParam(enum.Enum):
     """Alias of the ACL resource (str)"""
     ACTIVATE = "activate"
     """Is the ACL resource enabled? (bool)"""
-
-
-class ACLResourceGrantAction(enum.Enum):
-    """This class represents the available grant actions in the format (command: str, Wildcard supported: bool)"""
-    GRANT_HOST = ("grant_host", True)
-    GRANT_HOSTGROUP = ("grant_hostgroup", True)
-    GRANT_SERVICEGROUP = ("grant_servicegroup", True)
-    GRANT_METASERVICE = ("grant_metaservice", False)
-    ADDHOSTEXCLUSION = ("addhostexclusion", False)
-    ADDFILTER_INSTANCE = ("addfilter_instance", False)
-    ADDFILTER_HOSTCATEGORY = ("addfilter_hostcategory", False)
-    ADDFILTER_SERVICECATEGORY = ("addfilter_servicecategory", False)
-    # TODO: Refactor
-
-
-class ACLResourceRevokeAction(enum.Enum):
-    """This class represents the available revoke actions"""
-    REVOKE_HOST = "revoke_host"
-    REVOKE_HOSTGROUP = "revoke_hostgroup"
-    REVOKE_SERVICEGROUP = "revoke_servicegroup"
-    REVOKE_METASERVICE = "revoke_metaservice"
-    DELHOSTEXCLUSION = "delhostexclusion"
-    DELFILTER_INSTANCE = "delfilter_instance"
-    DELFILTER_HOSTCATEGORY = "delfilter_hostcategory"
-    DELFILTER_SERVICECATEGORY = "delfilter_service_category"
-    # TODO: Refactor
