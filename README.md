@@ -1,4 +1,4 @@
-# Python Centreon SDK
+# PyCentreon
 
-For further information about this project, see [Documentation](https://docs.omikron.dev/centreon)
+For further information about this project, see [Documentation](https://github.com/cyrilmarcot/PyCentreon)
 
